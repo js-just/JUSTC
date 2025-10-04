@@ -1,0 +1,88 @@
+-- this is a comment                                            -- all commands should be separated with ",". newlines and tabs are not required and will be ignored. last command should end with "."
+github is <https://github.com/>,                                -- link
+roblox is "rbx",                                                -- string
+bool is true,                                                   -- boolean (true, false)
+null is null,                                                   -- null
+number is 123,                                                  -- number
+hexdecnum is #FF,                                               -- hexadecimal number
+hexdecnum2 is xFF,                                              -- hexadecimal number
+base64num is &FF,                                               -- BASE 64 number
+binarynum is b0100,                                             -- binary (BASE 2) number
+octalnum is o100,                                               -- octal number
+base32num is @FF,                                               -- BASE 32 number
+undef is undefined,                                             -- undefined
+json is JSON{"a": "b"},                                         -- json
+JUSTC(path/to/file.justc) COPY[var1, var2],                     -- import some variables from another justc file (from EXPORT command) (TYPE STRICT = error)
+JUSTC(path/to/file.justc) ALL,                                  -- import all variables from another justc file  (from EXPORT command) (TYPE STRICT = error)
+JUSTC(path/to/file.justc) REQUIRE[var7, var8],                  -- import some variables from another justc file (from RETURN command)
+JUSTC(path/to/file.justc) RUN,                                  -- import all variables from another justc file  (from RETURN command)
+IMPORT JUSTC(path/to/file.justc),                               -- import all variables from another justc file                        (TYPE STRICT = error)
+EXPORT [var1, var2],                                            -- export variables to be imported.
+jsonfile is JSON(path/to/file.json),                            -- get json from file
+env is ENV(envname),                                            -- env variable that can be set in just.config.js file (string | number | boolean)
+configvalue is CONFIG(type),                                    -- get config variable. CONFIG() will return JSON(just.config.js) (string | number | boolean)
+TYPE GLOBAL,                                                    -- TYPE should be first command, not required. LOCAL (default) = only this file, GLOBAL = all JUSTC files, STRICT = nothing can be exported/imported. TYPE GLOBAL is same as adding IMPORT JUSTC() to every file.
+bool2 isn't false,                                              -- this means that bool2 is true
+str isn't <https://just.is-a.dev/>,                             -- this means that str is string, not a link ("https://just.is-a.dev/")
+complex isif bool2 then "yes" elseif null then "nil" else "no", -- condition
+complexwithjson isif json.booleanvar then "yep" else "nah",     -- (json var name).(json var) to access JSON{"booleanvar": true}
+morecomplex isif roblox is "rbx" then 1 else 0,                 -- if roblox = "rbx", morecomplex will be 1, else morecomplex will be 0
+duplicatevar is VALUE(bool2),                                   -- get value of another variable
+jsonfromserver is HTTPJSON(<https://example.com/var.json>),     -- HTTP GET request, returns JSON if success and code 200, otherwise throws an error. HTTPJSON and HTTPTEXT argument 0 should be a link, string will throw an error. JSON parse error = throws an error.
+textfromserver is HTTPTEXT(VALUE(github)),                      -- HTTP GET request, returns string value if success and code 200, otherwise throws an error
+catcherrror is :HTTPTEXT(VALUE(str)) or "failed":,              -- in js it will be try{return await fetch(...).then(resp => resp.text())}catch(e){return "failed"}
+linktostring is STRING(VALUE(github)),                          -- convert link to string. STRING also can convert number, boolean, null, undefined
+stringtolink is LINK("https://google.com/example.json"),        -- convert string to link. will throw an error if string is not looks like a link
+numtostring is STRINGNUM(VALUE(base64num)),                     -- convert hexadecimal number or BASE 64 number or BASE 2 number or octal number to number and return string. this example will return "255"
+strinng is STRING(VALUE(base64num)),                            -- returns "&FF"
+strnggg is STRING(VALUE(binarynum)),                            -- returns "b0100"
+strnggd is STRING(VALUE(hexdecnum)),                            -- returns "#FF"
+strnggo is STRING(VALUE(octalnum)),                             -- returns "o100"
+strngg3 is STRING(VALUE(base32num)),                            -- returns "@FF"
+strinnngg is STRINGB64(VALUE(base64num)),                       -- returns "FF"
+strngg is STRINGBIN(VALUE(binarynum)),                          -- returns "0100"
+strnghex is STRINGHEX(VALUE(hexdecnum)),                        -- returns "FF"
+strngoct is STRINGOCT(VALUE(octalnum)),                         -- returns "100"
+strngb32 is STRINGB32(VALUE(base32num)),                        -- returns "FF"
+numberr is NUMBER(octalnum),                                    -- convert hex num or base 64 num or base 2 num or octal num or base 32 num to number.
+tobin is BINARY(123),                                           -- convert number or hex num or base 64 num or octal num or base 32 num to binary (base 2) number.
+tooct is OCTAL(123),                                            -- convert number or hex num or base 64 num or base2 num or base 32 num to octal number.
+tohex is HEXADECIMAL(123),                                      -- convert number or base 64 num or base 2 num or octal num or base 32 num to hexadecimal number.
+tob64 is BASE64(123),                                           -- convert number or hex num or base 2 num or octal num or base 32 num to base 64 number.
+tob64 is BASE32(123),                                           -- convert number or hex num or base 2 num or octal num or base 64 num to base 32 number.
+typeof is TYPEID(VALUE(str)),                                   -- returns type id (0 - F) (hexadecimal number) of argument 0
+typestr is TYPEOF(VALUE(str)),                                  -- returns type name (string) of argument 0
+joinstrings is "str1".."str2",                                  -- in js it will be "str1"+"str2"
+calcsmth is 12 / 2,                                             -- operators are: +, -, *, /, ^, %.
+filecontent is FILE(path/to/file),                              -- get file content. returns string
+filesize is STAT(path/to/file),                                 -- get file size (bytes). returns number
+version is $VERSION,                                            -- returns _just version or commit SHA (string)
+latestversion is $LATEST,                                       -- returns latest _just version (string)
+avlbledemoid is $DBID,                                          -- returns available demo built id (https://demo.just.is-a.dev/) (BASE 64 number)
+commitsha is $SHA,                                              -- returns GitHub commit SHA (your repository) (string)
+navbar is $NAV,                                                 -- returns generated HTML navbar element (string)
+sidebar is $PAGES,                                              -- returns generated HTML left sidebar element (string)
+css is $CSS,                                                    -- returns generated CSS file content (for $NAV and $PAGES) (string)
+pinum is $PI,                                                   -- returns Pi (number)
+mathh is V(2),                                                  -- V (square root), D (double), SQ (square), СU (cube), P (add 1), M (subtract 1), S (sin), C (cos), T (tan), N (negative), ABSOLUTE, CEIL, FLOOR.
+timestamp is $TIME,                                             -- returns current timestamp (BASE 64 number)
+backslash is $BACKSLASH,                                        -- returns backslash character string
+justcfromserver is HTTPJUSTC(<https://just.is-a.dev/var.justc>),-- HTTP GET request, returns JUSTC if success and code 200, otherwise throws an error. Argument 0 should be a link, string will throw an error.
+HTTPJUSTC(<http://js.is-a.dev/example.justc>) copy[var3, var4], -- import some variables from another justc file on web
+IMPORT HTTPJUSTC(<https://j.is-a.dev/compressed.justc>),        -- import all variables from another justc file on web
+ECHO VALUE(justcfromserver),                                    -- outputs VALUE(justcfromserver) to console. can be used for debug
+LOGFILE path/to/file.txt,                                       -- create a log file for debug. Throws an error if there is no LOG commands
+LOG VALUE(css),                                                 -- similar to ECHO, but it will not output anything to console. Appends a line to txt log file. Throws an error if there is no LOGFILE commands
+another_justc_object is |                                       -- nested JUSTC object. nested JUSTC objects should start with "|"
+    something is true.                                          -- last command in nested JUSTC objects should end with "."
+,                                                               -- defining JUSTC object is also a command, so it should end with "," or if it is the last command it should end with "."
+one_line_justc_object is |something is true.,                   -- nested JUSTC object in one line example.
+somethingidk is another_justc_object.something,                 -- access variable in nested JUSTC object or imported (file or http) JUSTC object.
+justc_obj is PARSEJUSTC("something is true."),                  -- similar to nested JUSTC object. Argument 0 should be a string, otherwise throws an error. Parse error = Throws an error
+json_obj is PARSEJSON(HTTPTEXT(VALUE(stringtolink))),           -- parse JSON string. Argument 0 should be a string, otherwise throws an error. Parse error = Throws an error
+hocon_obj is PARSEHOCON("a = b"),                               -- parse HOCON string. Argument 0 should be a string, otherwise throws an error. Parse error = Throws an error
+hoconfromserver is HTTPHOCON(<http://example.com/hocon>),       -- HTTP GET request, returns HOCON if success and code 200, otherwise throws an error. HTTPHOCON argument 0 should be a link, string will throw an error. HOCON parse error = throws an error.
+ALLOW JAVASCRIPT,                                               -- ALLOW JAVASCRIPT = calculations and strings may be parsed using js eval() (default). DISALLOW JAVASCRIPT = calculations and strings cannot be parsed using js eval(). This command should be first command or second command if TYPE command used.
+OUTPUT SPECIFIED,                                               -- SPECIFIED (default) = output only specified variables using RETURN command (Throws an error if there is no RETURN command), EVERYTHING = output every variable (Throws an error if there is RETURN command), DISABLED = outputs undefined.
+RETURN [filesize, commitsha] AS [var5, var6].                   -- return configuration variables (output). this command should be the last command. RETURN [ variables ] AS [ specified_variable_names ]
+-- types (name (id)) : Link (3), String (2), Boolean (4), null (7), undefined (8), Number (1), Hexadecimal number (9), BASE 64 number (A), Binary number (B), JSON object (5), JSON array (6), JUSTC object (0), Path (C), Error (D), Variable (E), Function (F), HOCON (10), NaN (11), Infinity (12), Syntax Error (13), Octal number (14), BASE 32 number (15), unknown (-1).

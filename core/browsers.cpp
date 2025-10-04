@@ -5,7 +5,7 @@
 extern "C" {
     char* lexer(const char* input) {
         if (input == nullptr) return nullptr;
-        auto parsed = lexer::parse(input);
+        auto parsed = Lexer::parse(input);
         return parsed;
     }
 }

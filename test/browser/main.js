@@ -18,12 +18,20 @@ async function runLexer() {
     
     if (inputString && inputString.length > 0) {
         try {
-            const result = wasmModule.ccall(
+            const resultptr = wasmModule.ccall(
                 'lexer',
-                'string',
+                'number',
                 ['string'],
                 [inputString]
             );
+            const resultjson = JSON.parse(wasmModule.UTF8ToString(resultptr));
+            wasmModule.ccall(
+                'free_string',
+                null,
+                ['number'],
+                resultptr
+            );
+            const result = JSON.stringify(resultjson);
             
             alert(result);
         } catch (error) {

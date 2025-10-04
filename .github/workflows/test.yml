@@ -28,12 +28,13 @@ jobs:
           version: latest
       - name: Compile C++ to WASM
         run: |
-          emcc core/browsers.cpp -o test/browser/justc.js \
-            -s EXPORTED_FUNCTIONS='["_reverseString","_getStringLength","_freeString","_malloc","_free"]' \
+          emcc core/browsers.cpp core/lexer.cpp -o test/browser/justc.js \
+            -s EXPORTED_FUNCTIONS='["_lexer","_freeParseResult","_getTokenCount","_getInput","_getToken","_malloc","_free"]' \
             -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8","lengthBytesUTF8"]' \
             -s MODULARIZE=1 \
             -s ALLOW_MEMORY_GROWTH=1 \
-            -s INVOKE_RUN=0
+            -s INVOKE_RUN=0 \
+            -std=c++11
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

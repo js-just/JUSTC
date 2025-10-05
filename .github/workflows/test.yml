@@ -38,8 +38,9 @@ jobs:
             -std=c++11 \
             -s DISABLE_EXCEPTION_CATCHING=0 \
             -s EXPORT_NAME='__justc__' \
-            --minify 1 \
+            --closure 1 \
             -s ASSERTIONS=0 \
+            -s MINIMAL_RUNTIME=2 \
             -Os
 
             mv test/browser/justc.core.wasm test/browser/justc.wasm

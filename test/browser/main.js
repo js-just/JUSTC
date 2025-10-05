@@ -54,16 +54,16 @@ async function runParser() {
     const input = prompt("Enter JUSTC code:");
     
     try {
-        const resultPtr = justcModule.ccall(
+        const resultPtr = wasmModule.ccall(
             'parse',
             'number',
             ['string'],
             [input]
         );
         
-        const resultJson = justcModule.UTF8ToString(resultPtr);
+        const resultJson = wasmModule.UTF8ToString(resultPtr);
         
-        justcModule.ccall(
+        wasmModule.ccall(
             'free_string',
             null,
             ['number'],

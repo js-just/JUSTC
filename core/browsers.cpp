@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <map>
 #include "lexer.h"
 #include "parser.h"
 
@@ -14,106 +13,62 @@ bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTok
     if (!tokensJson) return false;
     
     std::string jsonStr(tokensJson);
-    size_t pos = 0;
     
     size_t tokensStart = jsonStr.find("\"tokens\":[");
     if (tokensStart == std::string::npos) return false;
-    pos = tokensStart + 10;
+    
+    size_t pos = tokensStart + 10;
     
     while (pos < jsonStr.length()) {
-        size_t objStart = jsonStr.find('{', pos);
-        if (objStart == std::string::npos) break;
-        
-        size_t objEnd = jsonStr.find('}', objStart);
-        if (objEnd == std::string::npos) break;
-        
-        std::string tokenObj = jsonStr.substr(objStart, objEnd - objStart + 1);
-        ParserToken token;
-        
-        size_t typeStart = tokenObj.find("\"type\":\"");
-        if (typeStart != std::string::npos) {
-            typeStart += 8;
-            size_t typeEnd = tokenObj.find('"', typeStart);
-            if (typeEnd != std::string::npos) {
-                token.type = tokenObj.substr(typeStart, typeEnd - typeStart);
-                
-                std::string decodedType;
-                for (size_t i = 0; i < token.type.length(); ++i) {
-                    if (token.type[i] == '\\' && i + 1 < token.type.length()) {
-                        switch (token.type[i + 1]) {
-                            case '"': decodedType += '"'; break;
-                            case '\\': decodedType += '\\'; break;
-                            case 'n': decodedType += '\n'; break;
-                            case 't': decodedType += '\t'; break;
-                            case 'r': decodedType += '\r'; break;
-                            default: decodedType += token.type[i + 1]; break;
-                        }
-                        i++;
-                    } else {
-                        decodedType += token.type[i];
-                    }
-                }
-                token.type = decodedType;
-            }
-        }
-        
-        size_t valueStart = tokenObj.find("\"value\":\"");
-        if (valueStart != std::string::npos) {
-            valueStart += 9;
-            size_t valueEnd = tokenObj.find('"', valueStart);
-            if (valueEnd != std::string::npos) {
-                token.value = tokenObj.substr(valueStart, valueEnd - valueStart);
-                
-                std::string decodedValue;
-                for (size_t i = 0; i < token.value.length(); ++i) {
-                    if (token.value[i] == '\\' && i + 1 < token.value.length()) {
-                        switch (token.value[i + 1]) {
-                            case '"': decodedValue += '"'; break;
-                            case '\\': decodedValue += '\\'; break;
-                            case 'n': decodedValue += '\n'; break;
-                            case 't': decodedValue += '\t'; break;
-                            case 'r': decodedValue += '\r'; break;
-                            default: decodedValue += token.value[i + 1]; break;
-                        }
-                        i++;
-                    } else {
-                        decodedValue += token.value[i];
-                    }
-                }
-                token.value = decodedValue;
-            }
-        }
-        
-        size_t startStart = tokenObj.find("\"start\":");
-        if (startStart != std::string::npos) {
-            startStart += 8;
-            size_t startEnd = tokenObj.find_first_of(",}", startStart);
-            if (startEnd != std::string::npos) {
-                std::string startStr = tokenObj.substr(startStart, startEnd - startStart);
-                try {
-                    token.start = std::stoul(startStr);
-                } catch (...) {
-                    token.start = 0;
+        if (jsonStr[pos] == '{') {
+            ParserToken token;
+            size_t tokenEnd = jsonStr.find('}', pos);
+            if (tokenEnd == std::string::npos) break;
+            
+            std::string tokenStr = jsonStr.substr(pos, tokenEnd - pos + 1);
+            
+            size_t typeStart = tokenStr.find("\"type\":\"");
+            if (typeStart != std::string::npos) {
+                typeStart += 8;
+                size_t typeEnd = tokenStr.find('"', typeStart);
+                if (typeEnd != std::string::npos) {
+                    token.type = tokenStr.substr(typeStart, typeEnd - typeStart);
                 }
             }
-        }
-        
-        if (!token.type.empty()) {
-            parserTokens.push_back(token);
-        }
-        
-        pos = objEnd + 1;
-        
-        if (pos < jsonStr.length() && jsonStr[pos] == ',') {
-            pos++;
-        } else if (pos < jsonStr.length() && jsonStr[pos] == ']') {
+            
+            size_t valueStart = tokenStr.find("\"value\":\"");
+            if (valueStart != std::string::npos) {
+                valueStart += 9;
+                size_t valueEnd = tokenStr.find('"', valueStart);
+                if (valueEnd != std::string::npos) {
+                    token.value = tokenStr.substr(valueStart, valueEnd - valueStart);
+                }
+            }
+            
+            size_t startStart = tokenStr.find("\"start\":");
+            if (startStart != std::string::npos) {
+                startStart += 8;
+                size_t startEnd = tokenStr.find_first_of(",}", startStart);
+                if (startEnd != std::string::npos) {
+                    std::string startStr = tokenStr.substr(startStart, startEnd - startStart);
+                    token.start = std::atoi(startStr.c_str());
+                }
+            }
+            
+            if (!token.type.empty()) {
+                parserTokens.push_back(token);
+            }
+            
+            pos = tokenEnd + 1;
+        } else if (jsonStr[pos] == ']') {
             break;
+        } else {
+            pos++;
         }
     }
     
     return !parserTokens.empty();
 }
-
 } // namespace
 
 char* tokensToJson(const std::vector<Token>& tokens, const std::string& input) {
@@ -138,25 +93,10 @@ char* tokensToJson(const std::vector<Token>& tokens, const std::string& input) {
         
         json << "{";
         json << "\"type\":\"";
-        
-        for (char c : token.type) {
-            if (c == '"') json << "\\\"";
-            else if (c == '\\') json << "\\\\";
-            else json << c;
-        }
-        
+        json << token.type;
         json << "\",";
         json << "\"value\":\"";
-        
-        for (char c : token.value) {
-            if (c == '"') json << "\\\"";
-            else if (c == '\\') json << "\\\\";
-            else if (c == '\n') json << "\\n";
-            else if (c == '\t') json << "\\t";
-            else if (c == '\r') json << "\\r";
-            else json << c;
-        }
-        
+        json << token.value;
         json << "\",";
         json << "\"start\":" << token.start;
         json << "}";
@@ -196,15 +136,8 @@ char* parser(const char* tokensJson) {
             std::string result = Parser::parseTokens(parserTokens);
             return strdup(result.c_str());
         } else {
-            std::string inputStr(tokensJson);
-            auto lexerResult = Lexer::parse(inputStr);
-            
-            for (const auto& token : lexerResult.second) {
-                parserTokens.push_back({token.type, token.value, token.start});
-            }
-            
-            std::string result = Parser::parseTokens(parserTokens);
-            return strdup(result.c_str());
+            std::string error = "{\"error\":\"Failed to parse tokens JSON\"}";
+            return strdup(error.c_str());
         }
         
     } catch (const std::exception& e) {

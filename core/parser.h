@@ -5,8 +5,6 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
-#include <variant>
-#include <functional>
 
 enum class DataType {
     JUSTC_OBJECT = 0,
@@ -23,8 +21,8 @@ enum class DataType {
     ERROR = 13,
     VARIABLE = 14,
     FUNCTION = 15,
-    NAN = 17,
-    INFINITY = 18,
+    NOT_A_NUMBER = 17,
+    INFINITE = 18,
     SYNTAX_ERROR = 19,
     OCTAL = 20,
     UNKNOWN = -1
@@ -32,22 +30,27 @@ enum class DataType {
 
 struct Value {
     DataType type;
-    std::variant<
-        std::monostate,
-        double,                              // NUMBER
-        std::string,                         // STRING, LINK, PATH
-        bool,                                // BOOLEAN
-        std::shared_ptr<struct JUSTCObject>, // JUSTC_OBJECT
-        std::shared_ptr<struct JSONObject>,  // JSON_OBJECT
-        std::shared_ptr<struct JSONArray>    // JSON_ARRAY
-    > data;
     
-    Value() : type(DataType::UNKNOWN) {}
-    Value(DataType t) : type(t) {}
+    union {
+        double number_value;
+        bool boolean_value;
+    };
+    std::string string_value;
+    std::shared_ptr<void> complex_value;
+    
+    Value() : type(DataType::UNKNOWN), number_value(0) {}
+    Value(DataType t) : type(t), number_value(0) {}
     
     std::string toString() const;
     double toNumber() const;
     bool toBoolean() const;
+    
+    static Value createNumber(double num);
+    static Value createString(const std::string& str);
+    static Value createBoolean(bool b);
+    static Value createNull();
+    static Value createLink(const std::string& link);
+    static Value createPath(const std::string& path);
 };
 
 struct JSONObject {
@@ -61,6 +64,18 @@ struct JSONArray {
 struct JUSTCObject {
     std::unordered_map<std::string, Value> variables;
     std::vector<std::string> outputOrder;
+};
+
+struct ASTNode {
+    std::string type;
+    std::string identifier;
+    Value value;
+    std::vector<std::string> references;
+    std::vector<std::string> tokens;
+    size_t startPos;
+    
+    ASTNode(const std::string& t, const std::string& id = "", size_t start = 0) 
+        : type(t), identifier(id), startPos(start) {}
 };
 
 struct ParserToken {
@@ -79,7 +94,7 @@ private:
     std::unordered_map<std::string, std::vector<std::string>> dependencies;
     std::vector<std::string> outputVariables;
     std::vector<std::string> outputNames;
-    std::string outputMode; // "SPECIFIED", "EVERYTHING", "DISABLED"
+    std::string outputMode;
     bool allowJavaScript;
     bool globalScope;
     bool strictMode;
@@ -144,7 +159,6 @@ private:
     std::string valueToJson(const Value& value) const;
     std::string generateOutput();
     
-    // built-in
     Value functionVALUE(const std::vector<Value>& args);
     Value functionSTRING(const std::vector<Value>& args);
     Value functionLINK(const std::vector<Value>& args);
@@ -167,17 +181,16 @@ private:
     Value functionENV(const std::vector<Value>& args);
     Value functionCONFIG(const std::vector<Value>& args);
     
-    // math
-    Value functionV(const std::vector<Value>& args);  // sqrt
-    Value functionD(const std::vector<Value>& args);  // double
-    Value functionSQ(const std::vector<Value>& args); // square
-    Value functionCU(const std::vector<Value>& args); // cube
-    Value functionP(const std::vector<Value>& args);  // plus one
-    Value functionM(const std::vector<Value>& args);  // minus one
-    Value functionS(const std::vector<Value>& args);  // sin
-    Value functionC(const std::vector<Value>& args);  // cos
-    Value functionT(const std::vector<Value>& args);  // tan
-    Value functionN(const std::vector<Value>& args);  // negative
+    Value functionV(const std::vector<Value>& args);
+    Value functionD(const std::vector<Value>& args);
+    Value functionSQ(const std::vector<Value>& args);
+    Value functionCU(const std::vector<Value>& args);
+    Value functionP(const std::vector<Value>& args);
+    Value functionM(const std::vector<Value>& args);
+    Value functionS(const std::vector<Value>& args);
+    Value functionC(const std::vector<Value>& args);
+    Value functionT(const std::vector<Value>& args);
+    Value functionN(const std::vector<Value>& args);
     Value functionABSOLUTE(const std::vector<Value>& args);
     Value functionCEIL(const std::vector<Value>& args);
     Value functionFLOOR(const std::vector<Value>& args);
@@ -188,18 +201,6 @@ public:
     std::string parse();
     
     static std::string parseTokens(const std::vector<ParserToken>& tokens);
-};
-
-struct ASTNode {
-    std::string type;
-    std::string identifier;
-    Value value;
-    std::vector<std::string> references;
-    std::vector<ParserToken> tokens;
-    size_t startPos;
-    
-    ASTNode(const std::string& t, const std::string& id = "", size_t start = 0) 
-        : type(t), identifier(id), startPos(start) {}
 };
 
 #endif // PARSER_H

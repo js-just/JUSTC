@@ -9,17 +9,16 @@
 std::string Value::toString() const {
     switch (type) {
         case DataType::STRING:
-            return std::get<std::string>(data);
+            return string_value;
         case DataType::NUMBER:
-            return std::to_string(std::get<double>(data));
+            return std::to_string(number_value);
         case DataType::BOOLEAN:
-            return std::get<bool>(data) ? "true" : "false";
+            return boolean_value ? "true" : "false";
         case DataType::NULL_TYPE:
             return "null";
         case DataType::LINK:
-            return "<" + std::get<std::string>(data) + ">";
         case DataType::PATH:
-            return std::get<std::string>(data);
+            return string_value;
         default:
             return "unknown";
     }
@@ -28,15 +27,15 @@ std::string Value::toString() const {
 double Value::toNumber() const {
     switch (type) {
         case DataType::NUMBER:
-            return std::get<double>(data);
+            return number_value;
         case DataType::STRING:
             try {
-                return std::stod(std::get<std::string>(data));
+                return std::stod(string_value);
             } catch (...) {
                 return 0.0;
             }
         case DataType::BOOLEAN:
-            return std::get<bool>(data) ? 1.0 : 0.0;
+            return boolean_value ? 1.0 : 0.0;
         case DataType::NULL_TYPE:
             return 0.0;
         default:
@@ -47,11 +46,11 @@ double Value::toNumber() const {
 bool Value::toBoolean() const {
     switch (type) {
         case DataType::BOOLEAN:
-            return std::get<bool>(data);
+            return boolean_value;
         case DataType::NUMBER:
-            return std::get<double>(data) != 0.0;
+            return number_value != 0.0;
         case DataType::STRING:
-            return !std::get<std::string>(data).empty();
+            return !string_value.empty();
         case DataType::NULL_TYPE:
             return false;
         default:

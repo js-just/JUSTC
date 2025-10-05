@@ -34,7 +34,8 @@ jobs:
             -s MODULARIZE=1 \
             -s ALLOW_MEMORY_GROWTH=1 \
             -s INVOKE_RUN=0 \
-            -std=c++11
+            -std=c++11 \
+            -s DISABLE_EXCEPTION_CATCHING=0
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

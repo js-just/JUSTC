@@ -1323,40 +1323,7 @@ Value Parser::octalToValue(const std::string& octStr) {
     return result;
 }
 
-std::string Parser::parseTokens(const std::vector<ParserToken>& tokens) {
+ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens) {
     Parser parser(tokens);
-    ParseResult result = parser.parse();
-    
-    if (!result.error.empty()) {
-        return "{\"error\":\"" + result.error + "\"}";
-    }
-    
-    std::stringstream json;
-    json << "{\"return\":{";
-    bool first = true;
-    for (const auto& pair : result.returnValues) {
-        if (!first) json << ",";
-        first = false;
-        json << "\"" << pair.first << "\":";
-        switch (pair.second.type) {
-            case DataType::NUMBER:
-                json << pair.second.number_value;
-                break;
-            case DataType::STRING:
-                json << "\"" << pair.second.string_value << "\"";
-                break;
-            case DataType::BOOLEAN:
-                json << (pair.second.boolean_value ? "true" : "false");
-                break;
-            case DataType::NULL_TYPE:
-                json << "null";
-                break;
-            default:
-                json << "\"" << pair.second.toString() << "\"";
-                break;
-        }
-    }
-    json << "}}";
-    
-    return json.str();
+    return parser.parse();
 }

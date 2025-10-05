@@ -618,8 +618,11 @@ Value Parser::parsePrimary() {
             return parseFunctionCall();
         }
         
+        Value result;
+        result.type = DataType::VARIABLE;
+        result.string_value = varName;
         advance();
-        return Value::createVariable(varName);
+        return result;
     }
     else if (match("(")) {
         advance();
@@ -1116,23 +1119,38 @@ Value Parser::functionFLOOR(const std::vector<Value>& args) {
 }
 
 Value Parser::stringToValue(const std::string& str) {
-    return Value::createString(str);
+    Value result;
+    result.type = DataType::STRING;
+    result.string_value = str;
+    return result;
 }
 
 Value Parser::numberToValue(double num) {
-    return Value::createNumber(num);
+    Value result;
+    result.type = DataType::NUMBER;
+    result.number_value = num;
+    return result;
 }
 
 Value Parser::booleanToValue(bool b) {
-    return Value::createBoolean(b);
+    Value result;
+    result.type = DataType::BOOLEAN;
+    result.boolean_value = b;
+    return result;
 }
 
 Value Parser::linkToValue(const std::string& link) {
-    return Value::createLink(link);
+    Value result;
+    result.type = DataType::LINK;
+    result.string_value = link;
+    return result;
 }
 
 Value Parser::pathToValue(const std::string& path) {
-    return Value::createPath(path);
+    Value result;
+    result.type = DataType::PATH;
+    result.string_value = path;
+    return result;
 }
 
 Value Parser::hexToValue(const std::string& hexStr) {

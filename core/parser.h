@@ -51,6 +51,7 @@ struct Value {
     static Value createNull();
     static Value createLink(const std::string& link);
     static Value createPath(const std::string& path);
+    static Value createVariable(const std::string& varName);
 };
 
 struct JSONObject {

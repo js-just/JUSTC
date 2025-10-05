@@ -37,7 +37,7 @@ jobs:
             -s INVOKE_RUN=0 \
             -std=c++11 \
             -s DISABLE_EXCEPTION_CATCHING=0 \
-            -s EXPORT_NAME='__justc__' \ 
+            -s EXPORT_NAME='__justc__' \
             --minify 1 \
             -s ASSERTIONS=0 \
             -Os

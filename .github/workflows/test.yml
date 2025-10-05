@@ -37,7 +37,7 @@ jobs:
             -s INVOKE_RUN=0 \
             -std=c++11 \
             -s DISABLE_EXCEPTION_CATCHING=0 \
-            -s EXPORT_NAME='__JUSTC__'
+            -s EXPORT_NAME='__JUSTC__' \
             -s OUTPUT_NAME='justc'
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

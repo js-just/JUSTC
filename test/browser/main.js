@@ -48,42 +48,39 @@ async function runLexer(noAlert = false) {
     }
 }
 
-async function runParser(input_) {
+async function runParser() {
     await checkWASM();
 
-    const inputString = input_ || prompt("Enter JUSTC JSON tokens:");
-
-    if (inputString && inputString.length > 0) {
-        try {
-            const inputJSON = JSON.parse(inputString);
-            const resultptr = wasmModule.ccall(
-                'parser',
-                'number',
-                ['string'],
-                [inputJSON]
-            );
-            const resultjson = JSON.parse(wasmModule.UTF8ToString(resultptr));
-            wasmModule.ccall(
-                'free_string',
-                null,
-                ['number'],
-                [resultptr]
-            );
-            const result = JSON.stringify(resultjson);
-
-            alert(result);
-            return result
-        } catch (error) {
-            console.error("Error:", error);
-            alert("JUSTC/core/parser.cpp error.");
+    const input = document.getElementById('inputCode').value;
+    
+    try {
+        const resultPtr = justcModule.ccall(
+            'parse',
+            'number',
+            ['string'],
+            [input]
+        );
+        
+        if (!resultPtr) {
+            document.getElementById('output').textContent = "Ошибка: парсер вернул null";
+            return;
         }
-    } else {
-        alert("Cancelled: No input provided.");
+        
+        const resultJson = justcModule.UTF8ToString(resultPtr);
+        
+        justcModule.ccall(
+            'free_string',
+            null,
+            ['number'],
+            [resultPtr]
+        );
+        
+        alert(resultJson);
+        
+    } catch (error) {
+        console.error("Error:", error);
+        alert("JUSTC/core/parser.cpp error.");
     }
-}
-
-async function parseJUSTC() {
-    return await runParser(await runLexer(true));
 }
 
 initWasm();

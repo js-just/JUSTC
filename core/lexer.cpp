@@ -56,7 +56,7 @@ void Lexer::readComment() {
     }
 }
 
-Token Lexer::readString() {
+ParserToken Lexer::readString() {
     size_t start = ++position;
     std::string value = "";
     while (position < input.length() &&
@@ -65,20 +65,20 @@ Token Lexer::readString() {
         value += input[position++];
     }
     position++;
-    return Token("string", value, start);
+    return ParserToken{"string", value, start};
 }
 
-Token Lexer::readAngleString() {
+ParserToken Lexer::readAngleString() {
     size_t start = ++position;
     std::string value = "";
     while (position < input.length() && input[position] != '>') {
         value += input[position++];
     }
     position++;
-    return Token("link", value, start);
+    return ParserToken{"link", value, start};
 }
 
-Token Lexer::readNumber() {
+ParserToken Lexer::readNumber() {
     size_t start = position;
     bool point = false;
     while (position < input.length() && 
@@ -117,10 +117,10 @@ Token Lexer::readNumber() {
         type = "number";
     }
     
-    return Token(type, numStr, start);
+    return ParserToken{type, numStr, start};
 }
 
-Token Lexer::readIdentifier() {
+ParserToken Lexer::readIdentifier() {
     size_t start = position;
     while (position < input.length() &&
            (isLetter(input[position]) ||
@@ -133,11 +133,11 @@ Token Lexer::readIdentifier() {
     
     // Проверка ключевых слов с использованием глобальных констант
     if (std::find(keywords.begin(), keywords.end(), id) != keywords.end()) {
-        return Token("keyword", id, start);
+        return ParserToken{"keyword", id, start};
     } else if (smallkeywords.find(id) != smallkeywords.end()) {
-        return Token("keyword", smallkeywords.at(id), start);
+        return ParserToken{"keyword", smallkeywords.at(id), start};
     } else if (bigkeywords.find(id) != bigkeywords.end()) {
-        return Token("keyword", bigkeywords.at(id), start);
+        return ParserToken{"keyword", bigkeywords.at(id), start};
     }
     
     // Проверка специальных ключевых слов с помощью регулярных выражений
@@ -147,15 +147,15 @@ Token Lexer::readIdentifier() {
     std::regex undefined_regex("^undefined$");
     
     if (std::regex_match(id, keyword_regex)) {
-        return Token("keyword", id, start);
+        return ParserToken{"keyword", id, start};
     } else if (std::regex_match(id, boolean_regex)) {
-        return Token("boolean", id, start);
+        return ParserToken{"boolean", id, start};
     } else if (std::regex_match(id, null_regex)) {
-        return Token("null", id, start);
+        return ParserToken{"null", id, start};
     } else if (std::regex_match(id, undefined_regex)) {
-        return Token("undefined", id, start);
+        return ParserToken{"undefined", id, start};
     } else {
-        return Token("identifier", id, start);
+        return ParserToken{"identifier", id, start};
     }
 }
 
@@ -184,7 +184,7 @@ void Lexer::tokenize() {
         }
 
         if (ch == '.' && peek() == '.') {
-            tokens.push_back(Token("..", "..", position));
+            tokens.push_back(ParserToken{"..", "..", position});
             position += 2;
             continue;
         }
@@ -195,7 +195,7 @@ void Lexer::tokenize() {
         }            
 
         if (ch == ',' || ch == '.' || ch == '[' || ch == ']') {
-            tokens.push_back(Token(std::string(1, ch), std::string(1, ch), position));
+            tokens.push_back(ParserToken{std::string(1, ch), std::string(1, ch), position});
             position++;
             continue;
         }
@@ -206,21 +206,21 @@ void Lexer::tokenize() {
         }
 
         if (ch == '-') {
-            tokens.push_back(Token("minus", "-", position));
+            tokens.push_back(ParserToken{"minus", "-", position});
             position++;
             continue;
         }
 
-        tokens.push_back(Token(std::string(1, ch), std::string(1, ch), position));
+        tokens.push_back(ParserToken{std::string(1, ch), std::string(1, ch), position});
         position++;
     }
 }
 
-std::vector<Token> Lexer::getTokens() const {
+std::vector<ParserToken> Lexer::getTokens() const {
     return tokens;
 }
 
-std::pair<std::string, std::vector<Token>> Lexer::parse(const std::string& input) {
+std::pair<std::string, std::vector<ParserToken>> Lexer::parse(const std::string& input) {
     Lexer lexer(input);
     return std::make_pair(input, lexer.getTokens());
 }

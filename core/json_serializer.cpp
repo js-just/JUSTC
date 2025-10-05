@@ -51,7 +51,7 @@ std::string JsonSerializer::valueToJson(const Value& value) {
     }
 }
 
-std::string JsonSerializer::tokensToJson(const std::vector<Token>& tokens) {
+std::string JsonSerializer::tokensToJson(const std::vector<ParserToken>& tokens) {
     std::stringstream json;
     json << "[";
     
@@ -106,7 +106,7 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
     return json.str();
 }
 
-std::string JsonSerializer::serialize(const std::vector<Token>& tokens, const std::string& input) {
+std::string JsonSerializer::serialize(const std::vector<ParserToken>& tokens, const std::string& input) {
     std::stringstream json;
     json << "{";
     json << "\"input\":\"" << escapeJsonString(input) << "\",";

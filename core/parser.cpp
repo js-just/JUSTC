@@ -9,16 +9,19 @@
 std::string Value::toString() const {
     switch (type) {
         case DataType::STRING:
+        case DataType::LINK:
+        case DataType::PATH:
+        case DataType::VARIABLE:
             return string_value;
         case DataType::NUMBER:
+        case DataType::HEXADECIMAL:
+        case DataType::BINARY:
+        case DataType::OCTAL:
             return std::to_string(number_value);
         case DataType::BOOLEAN:
             return boolean_value ? "true" : "false";
         case DataType::NULL_TYPE:
             return "null";
-        case DataType::LINK:
-        case DataType::PATH:
-            return string_value;
         default:
             return "unknown";
     }
@@ -27,6 +30,9 @@ std::string Value::toString() const {
 double Value::toNumber() const {
     switch (type) {
         case DataType::NUMBER:
+        case DataType::HEXADECIMAL:
+        case DataType::BINARY:
+        case DataType::OCTAL:
             return number_value;
         case DataType::STRING:
             try {
@@ -56,6 +62,54 @@ bool Value::toBoolean() const {
         default:
             return false;
     }
+}
+
+Value Value::createNumber(double num) {
+    Value result;
+    result.type = DataType::NUMBER;
+    result.number_value = num;
+    return result;
+}
+
+Value Value::createString(const std::string& str) {
+    Value result;
+    result.type = DataType::STRING;
+    result.string_value = str;
+    return result;
+}
+
+Value Value::createBoolean(bool b) {
+    Value result;
+    result.type = DataType::BOOLEAN;
+    result.boolean_value = b;
+    return result;
+}
+
+Value Value::createNull() {
+    Value result;
+    result.type = DataType::NULL_TYPE;
+    return result;
+}
+
+Value Value::createLink(const std::string& link) {
+    Value result;
+    result.type = DataType::LINK;
+    result.string_value = link;
+    return result;
+}
+
+Value Value::createPath(const std::string& path) {
+    Value result;
+    result.type = DataType::PATH;
+    result.string_value = path;
+    return result;
+}
+
+Value Value::createVariable(const std::string& varName) {
+    Value result;
+    result.type = DataType::VARIABLE;
+    result.string_value = varName;
+    return result;
 }
 
 namespace {
@@ -564,11 +618,8 @@ Value Parser::parsePrimary() {
             return parseFunctionCall();
         }
         
-        Value result;
-        result.type = DataType::VARIABLE;
-        result.data = varName;
         advance();
-        return result;
+        return Value::createVariable(varName);
     }
     else if (match("(")) {
         advance();
@@ -696,7 +747,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     else if (op == "/") {
         double divisor = right.toNumber();
         if (divisor == 0) {
-            result.type = DataType::INFINITY;
+            result.type = DataType::INFINITE;
         } else {
             result = numberToValue(left.toNumber() / divisor);
         }
@@ -866,7 +917,7 @@ Value Parser::evaluateASTNode(const ASTNode& node) {
         Value result = node.value;
         
         if (result.type == DataType::VARIABLE) {
-            std::string refVar = std::get<std::string>(result.data);
+            std::string refVar = result.string_value;
             if (refVar == node.identifier) {
                 throw std::runtime_error("Variable cannot reference itself: " + node.identifier);
             }
@@ -878,10 +929,9 @@ Value Parser::evaluateASTNode(const ASTNode& node) {
     
     return node.value;
 }
-
 void Parser::extractReferences(const Value& value, std::vector<std::string>& references) {
     if (value.type == DataType::VARIABLE) {
-        references.push_back(std::get<std::string>(value.data));
+        references.push_back(value.string_value);
     }
     // TODO: get links from complex things
 }
@@ -891,7 +941,7 @@ Value Parser::functionVALUE(const std::vector<Value>& args) {
         throw std::runtime_error("VALUE function requires one variable argument");
     }
     
-    std::string varName = std::get<std::string>(args[0].data);
+    std::string varName = args[0].string_value;
     return resolveVariableValue(varName);
 }
 
@@ -1066,38 +1116,23 @@ Value Parser::functionFLOOR(const std::vector<Value>& args) {
 }
 
 Value Parser::stringToValue(const std::string& str) {
-    Value result;
-    result.type = DataType::STRING;
-    result.data = str;
-    return result;
+    return Value::createString(str);
 }
 
 Value Parser::numberToValue(double num) {
-    Value result;
-    result.type = DataType::NUMBER;
-    result.data = num;
-    return result;
+    return Value::createNumber(num);
 }
 
 Value Parser::booleanToValue(bool b) {
-    Value result;
-    result.type = DataType::BOOLEAN;
-    result.data = b;
-    return result;
+    return Value::createBoolean(b);
 }
 
 Value Parser::linkToValue(const std::string& link) {
-    Value result;
-    result.type = DataType::LINK;
-    result.data = link;
-    return result;
+    return Value::createLink(link);
 }
 
 Value Parser::pathToValue(const std::string& path) {
-    Value result;
-    result.type = DataType::PATH;
-    result.data = path;
-    return result;
+    return Value::createPath(path);
 }
 
 Value Parser::hexToValue(const std::string& hexStr) {
@@ -1114,9 +1149,9 @@ Value Parser::hexToValue(const std::string& hexStr) {
         std::stringstream ss;
         ss << std::hex << cleanHex;
         ss >> num;
-        result.data = static_cast<double>(num);
+        result.number_value = static_cast<double>(num);
     } catch (...) {
-        result.data = 0.0;
+        result.number_value = 0.0;
     }
     
     return result;
@@ -1133,9 +1168,9 @@ Value Parser::binaryToValue(const std::string& binStr) {
     
     try {
         unsigned int num = std::stoi(cleanBin, nullptr, 2);
-        result.data = static_cast<double>(num);
+        result.number_value = static_cast<double>(num);
     } catch (...) {
-        result.data = 0.0;
+        result.number_value = 0.0;
     }
     
     return result;
@@ -1152,9 +1187,9 @@ Value Parser::octalToValue(const std::string& octStr) {
     
     try {
         unsigned int num = std::stoi(cleanOct, nullptr, 8);
-        result.data = static_cast<double>(num);
+        result.number_value = static_cast<double>(num);
     } catch (...) {
-        result.data = 0.0;
+        result.number_value = 0.0;
     }
     
     return result;
@@ -1163,21 +1198,19 @@ Value Parser::octalToValue(const std::string& octStr) {
 std::string Parser::valueToJson(const Value& value) const {
     switch (value.type) {
         case DataType::NUMBER:
-            return std::to_string(std::get<double>(value.data));
-        case DataType::STRING:
-            return "\"" + std::get<std::string>(value.data) + "\"";
-        case DataType::BOOLEAN:
-            return std::get<bool>(value.data) ? "true" : "false";
-        case DataType::NULL_TYPE:
-            return "null";
-        case DataType::LINK:
-            return "\"" + std::get<std::string>(value.data) + "\"";
-        case DataType::PATH:
-            return "\"" + std::get<std::string>(value.data) + "\"";
         case DataType::HEXADECIMAL:
         case DataType::BINARY:
         case DataType::OCTAL:
-            return std::to_string(value.toNumber());
+            return std::to_string(value.number_value);
+        case DataType::STRING:
+        case DataType::LINK:
+        case DataType::PATH:
+        case DataType::VARIABLE:
+            return "\"" + value.string_value + "\"";
+        case DataType::BOOLEAN:
+            return value.boolean_value ? "true" : "false";
+        case DataType::NULL_TYPE:
+            return "null";
         default:
             return "null";
     }

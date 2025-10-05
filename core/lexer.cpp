@@ -9,7 +9,21 @@ Lexer::Lexer(const std::string& input) : input(input), position(0) {
     if (input.empty()) {
         throw std::invalid_argument("Invalid Input.");
     }
+    initializeKeywords();
     tokenize();
+}
+
+void Lexer::initializeKeywords() {
+    keywords = ::keywords;
+    smallkeywords = ::smallKeywords;
+    bigkeywords = ::bigKeywords;
+    
+    for (const auto& pair : smallkeywords) {
+        skw.push_back(pair.first);
+    }
+    for (const auto& pair : bigkeywords) {
+        bkw.push_back(pair.first);
+    }
 }
 
 void Lexer::invalidInput() {
@@ -131,7 +145,6 @@ ParserToken Lexer::readIdentifier() {
     
     std::string id = input.substr(start, position - start);
     
-    // Проверка ключевых слов с использованием глобальных констант
     if (std::find(keywords.begin(), keywords.end(), id) != keywords.end()) {
         return ParserToken{"keyword", id, start};
     } else if (smallkeywords.find(id) != smallkeywords.end()) {
@@ -140,7 +153,6 @@ ParserToken Lexer::readIdentifier() {
         return ParserToken{"keyword", bigkeywords.at(id), start};
     }
     
-    // Проверка специальных ключевых слов с помощью регулярных выражений
     std::regex keyword_regex("^is$|^isn't$|^isif$|^then$|^elseif$|^else$|^isifn't$|^elseifn't$|^then't$|^elsen't$|^or$|^orn't$");
     std::regex boolean_regex("^true$|^True$|^TRUE$|^yes$|^Yes$|^YES$|^false$|^False$|^FALSE$|^no$|^No$|^NO$");
     std::regex null_regex("^null$|^Null$|^NULL$|^nil$|^Nil$|^NIL$");

@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <memory>
 #include "parser.h"
+#include "keywords.h"
 
 class Lexer {
 private:
@@ -32,6 +33,9 @@ private:
     ParserToken readNumber();
     ParserToken readIdentifier();
     void tokenize();
+
+    void invalidInput();
+    void invalidUsage();
 
 public:
     Lexer(const std::string& input);

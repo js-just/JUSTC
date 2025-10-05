@@ -1,0 +1,5 @@
+a is b,
+c is 1,
+b is 10 + 2 - c,
+ECHO b,
+RETURN [b].

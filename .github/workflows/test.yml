@@ -39,7 +39,7 @@ jobs:
             -s DISABLE_EXCEPTION_CATCHING=0 \
             -s EXPORT_NAME='__justc__' \
             -s ASSERTIONS=0 \
-            -s MINIMAL_RUNTIME=2 \
+            # -s MINIMAL_RUNTIME=2 \
             -Os
 
             mv test/browser/justc.core.wasm test/browser/justc.wasm

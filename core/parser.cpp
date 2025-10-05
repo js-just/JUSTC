@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cctype>
 #include <iostream>
+#include <chrono>
 
 std::string Value::toString() const {
     switch (type) {
@@ -22,6 +23,10 @@ std::string Value::toString() const {
             return boolean_value ? "true" : "false";
         case DataType::NULL_TYPE:
             return "null";
+        case DataType::NOT_A_NUMBER:
+            return "NaN";
+        case DataType::INFINITE:
+            return "Infinity";
         default:
             return "unknown";
     }
@@ -44,6 +49,10 @@ double Value::toNumber() const {
             return boolean_value ? 1.0 : 0.0;
         case DataType::NULL_TYPE:
             return 0.0;
+        case DataType::NOT_A_NUMBER:
+            return std::numeric_limits<double>::quiet_NaN();
+        case DataType::INFINITE:
+            return std::numeric_limits<double>::infinity();
         default:
             return 0.0;
     }
@@ -154,11 +163,33 @@ bool isValidLink(const std::string& str) {
            (str.find('.') != std::string::npos && str.find('/') != std::string::npos);
 }
 
+long getCurrentTime() {
+    auto now = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+}
+
 } // namespace
 
 Parser::Parser(const std::vector<ParserToken>& tokens) 
     : tokens(tokens), position(0), outputMode("SPECIFIED"), allowJavaScript(true), 
-      globalScope(false), strictMode(false) {}
+      globalScope(false), strictMode(false), hasLogFile(false) {}
+
+// logs
+void Parser::addLog(const std::string& type, const std::string& message, size_t position) {
+    logs.push_back({type, message, position});
+    if (hasLogFile) {
+        appendToLogFile("[" + type + "] " + message);
+    }
+}
+
+void Parser::setLogFile(const std::string& path) {
+    logFilePath = path;
+    hasLogFile = true;
+}
+
+void Parser::appendToLogFile(const std::string& content) {
+    logFileContent += content + "\n";
+}
 
 ParserToken Parser::currentToken() const {
     if (position >= tokens.size()) {
@@ -196,7 +227,9 @@ void Parser::skipCommas() {
     while (match(",")) advance();
 }
 
-std::string Parser::parse() {
+ParseResult Parser::parse() {
+    ParseResult result;
+    
     try {
         while (!isEnd()) {
             skipCommas();
@@ -239,11 +272,29 @@ std::string Parser::parse() {
         
         evaluateAllVariables();
         
-        return generateOutput();
+        if (outputMode == "SPECIFIED" && !outputVariables.empty()) {
+            for (const auto& varName : outputVariables) {
+                auto it = variables.find(varName);
+                if (it != variables.end()) {
+                    size_t index = &varName - &outputVariables[0];
+                    std::string outputName = (index < outputNames.size()) ? outputNames[index] : varName;
+                    result.returnValues[outputName] = it->second;
+                }
+            }
+        } else if (outputMode == "EVERYTHING") {
+            result.returnValues = variables;
+        }
+        
+        result.logs = logs;
+        result.logFilePath = hasLogFile ? logFilePath : "";
+        result.logFileContent = hasLogFile ? logFileContent : "";
         
     } catch (const std::exception& e) {
-        return "{\"error\":\"" + std::string(e.what()) + "\"}";
+        result.error = e.what();
+        addLog("ERROR", e.what(), currentToken().start);
     }
+    
+    return result;
 }
 
 ASTNode Parser::parseTypeCommand() {
@@ -614,6 +665,14 @@ Value Parser::parsePrimary() {
     else if (match("identifier")) {
         std::string varName = currentToken().value;
         
+        if (varName == "$TIME" || varName == "$VERSION" || varName == "$LATEST" || 
+            varName == "$DBID" || varName == "$SHA" || varName == "$NAV" || 
+            varName == "$PAGES" || varName == "$CSS" || varName == "$PI" || 
+            varName == "$BACKSLASH") {
+            advance();
+            return executeFunction(varName.substr(1), {});
+        }
+        
         if (peekToken().type == "(") {
             return parseFunctionCall();
         }
@@ -678,7 +737,22 @@ ASTNode Parser::parseCommand() {
     
     if (command == "ECHO") {
         for (const auto& arg : args) {
-            std::cout << arg.toString() << std::endl;
+            std::string message = arg.toString();
+            addLog("ECHO", message, node.startPos);
+            std::cout << message << std::endl;
+        }
+    }
+    else if (command == "LOGFILE") {
+        if (!args.empty()) {
+            std::string path = args[0].toString();
+            setLogFile(path);
+            addLog("SYSTEM", "Log file set to: " + path, node.startPos);
+        }
+    }
+    else if (command == "LOG") {
+        for (const auto& arg : args) {
+            std::string message = arg.toString();
+            addLog("LOG", message, node.startPos);
         }
     }
     
@@ -686,7 +760,18 @@ ASTNode Parser::parseCommand() {
 }
 
 Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args) {
-    // Built-in
+    if (funcName == "TIME") {
+        long timestamp = getCurrentTime();
+        return hexToValue(std::to_string(timestamp));
+    }
+    else if (funcName == "PI") {
+        return numberToValue(3.14159265358979323846);
+    }
+    else if (funcName == "BACKSLASH") {
+        return stringToValue("\\");
+    }
+    
+    // built-in
     if (funcName == "VALUE") return functionVALUE(args);
     if (funcName == "STRING") return functionSTRING(args);
     if (funcName == "LINK") return functionLINK(args);
@@ -709,7 +794,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "ENV") return functionENV(args);
     if (funcName == "CONFIG") return functionCONFIG(args);
     
-    // Math
+    // math
     if (funcName == "V") return functionV(args);
     if (funcName == "D") return functionD(args);
     if (funcName == "SQ") return functionSQ(args);
@@ -907,11 +992,33 @@ Value Parser::resolveVariableValue(const std::string& varName) {
 }
 
 void Parser::evaluateAllVariables() {
-    for (auto& node : ast) {
-        if (node.type == "VARIABLE_DECLARATION") {
-            Value value = evaluateASTNode(node);
-            variables[node.identifier] = value;
+    bool changed;
+    int passes = 0;
+    const int MAX_PASSES = 100;
+    
+    do {
+        changed = false;
+        passes++;
+        
+        for (auto& node : ast) {
+            if (node.type == "VARIABLE_DECLARATION") {
+                std::string varName = node.identifier;
+                Value oldValue = variables[varName];
+                Value newValue = evaluateASTNode(node);
+                
+                if (newValue.type != DataType::UNKNOWN && 
+                    (oldValue.type == DataType::UNKNOWN || 
+                     oldValue.toString() != newValue.toString())) {
+                    variables[varName] = newValue;
+                    changed = true;
+                }
+            }
         }
+        
+    } while (changed && passes < MAX_PASSES);
+    
+    if (passes >= MAX_PASSES) {
+        throw std::runtime_error("Cannot resolve variable dependencies - possible circular reference");
     }
 }
 
@@ -932,6 +1039,7 @@ Value Parser::evaluateASTNode(const ASTNode& node) {
     
     return node.value;
 }
+
 void Parser::extractReferences(const Value& value, std::vector<std::string>& references) {
     if (value.type == DataType::VARIABLE) {
         references.push_back(value.string_value);
@@ -1034,7 +1142,9 @@ Value Parser::functionTYPEOF(const std::vector<Value>& args) {
 
 Value Parser::functionECHO(const std::vector<Value>& args) {
     for (const auto& arg : args) {
-        std::cout << arg.toString() << std::endl;
+        std::string message = arg.toString();
+        addLog("ECHO", message, currentToken().start);
+        std::cout << message << std::endl;
     }
     return Value();
 }
@@ -1213,68 +1323,40 @@ Value Parser::octalToValue(const std::string& octStr) {
     return result;
 }
 
-std::string Parser::valueToJson(const Value& value) const {
-    switch (value.type) {
-        case DataType::NUMBER:
-        case DataType::HEXADECIMAL:
-        case DataType::BINARY:
-        case DataType::OCTAL:
-            return std::to_string(value.number_value);
-        case DataType::STRING:
-        case DataType::LINK:
-        case DataType::PATH:
-        case DataType::VARIABLE:
-            return "\"" + value.string_value + "\"";
-        case DataType::BOOLEAN:
-            return value.boolean_value ? "true" : "false";
-        case DataType::NULL_TYPE:
-            return "null";
-        default:
-            return "null";
-    }
-}
-
-std::string Parser::generateOutput() {
-    std::stringstream json;
-    
-    if (outputMode == "DISABLED") {
-        return "{}";
-    }
-    
-    json << "{";
-    
-    std::vector<std::string> varsToOutput;
-    std::vector<std::string> namesToOutput;
-    
-    if (outputMode == "SPECIFIED" && !outputVariables.empty()) {
-        varsToOutput = outputVariables;
-        namesToOutput = outputNames.empty() ? outputVariables : outputNames;
-    } else if (outputMode == "EVERYTHING") {
-        for (const auto& pair : variables) {
-            varsToOutput.push_back(pair.first);
-            namesToOutput.push_back(pair.first);
-        }
-    }
-    
-    bool first = true;
-    for (size_t i = 0; i < varsToOutput.size(); ++i) {
-        const auto& varName = varsToOutput[i];
-        const auto& outputName = namesToOutput[i];
-        
-        auto it = variables.find(varName);
-        if (it != variables.end()) {
-            if (!first) json << ",";
-            first = false;
-            
-            json << "\"" << outputName << "\":" << valueToJson(it->second);
-        }
-    }
-    
-    json << "}";
-    return json.str();
-}
-
 std::string Parser::parseTokens(const std::vector<ParserToken>& tokens) {
     Parser parser(tokens);
-    return parser.parse();
+    ParseResult result = parser.parse();
+    
+    if (!result.error.empty()) {
+        return "{\"error\":\"" + result.error + "\"}";
+    }
+    
+    std::stringstream json;
+    json << "{\"return\":{";
+    bool first = true;
+    for (const auto& pair : result.returnValues) {
+        if (!first) json << ",";
+        first = false;
+        json << "\"" << pair.first << "\":";
+        switch (pair.second.type) {
+            case DataType::NUMBER:
+                json << pair.second.number_value;
+                break;
+            case DataType::STRING:
+                json << "\"" << pair.second.string_value << "\"";
+                break;
+            case DataType::BOOLEAN:
+                json << (pair.second.boolean_value ? "true" : "false");
+                break;
+            case DataType::NULL_TYPE:
+                json << "null";
+                break;
+            default:
+                json << "\"" << pair.second.toString() << "\"";
+                break;
+        }
+    }
+    json << "}}";
+    
+    return json.str();
 }

@@ -1,73 +1,23 @@
 #include "lexer.h"
+#include "keywords.h"
 #include <stdexcept>
 #include <cctype>
 #include <algorithm>
+#include <regex>
 
 Lexer::Lexer(const std::string& input) : input(input), position(0) {
     if (input.empty()) {
         throw std::invalid_argument("Invalid Input.");
     }
-    initializeKeywords();
     tokenize();
 }
 
-void Lexer::initializeKeywords() {
-    keywords = {
-        "TYPE", "GLOBAL", "LOCAL", "STRICT", "ALL", "JSON", 
-        "HTTPJSON", "HTTPTEXT", "HTTPJUSTC", "JUSTC", 
-        "IMPORT", "EXPORT", "COPY", "REQUIRE", "ENV", 
-        "CONFIG", "RUN", "VALUE", "FILE", "STAT", "STRING", 
-        "LINK", "STRINGNUM", "STRINGB64", "STRINGBIN", 
-        "STRINGHEX", "TYPEID", "TYPEOF", "OUTPUT", "RETURN",
-        "V", "D", "SQ", "CU", "P", "M", "S", "C", "T", "N",
-        "ECHO", "LOGFILE", "LOG", "PARSEJUSTC", "PARSEJSON",
-        "SPECIFIED", "EVERYTHING", "DISABLED", "AS",
-        "STRINGOCT", "NUMBER", "BINARY", "OCTAL", "BASE64",
-        "HEXADECIMAL", "PARSEHOCON", "HTTPHOCON", "BASE32",
-        "STRINGB32", "ABSOLUTE", "CEIL", "FLOOR", "ALLOW",
-        "DISALLOW", "JAVASCRIPT"
-    };
-    
-    smallkeywords = {
-        {"T", "TYPE"}, {"G", "GLOBAL"}, {"L", "LOCAL"}, {"SC", "STRICT"},
-        {"A", "ALL"}, {"JS", "JSON"}, {"JC", "JUSTC"}, {"I", "IMPORT"},
-        {"EX", "EXPORT"}, {"CP", "COPY"}, {"RQ", "REQUIRE"}, {"E", "ENV"},
-        {"HJS", "HTTPJSON"}, {"HT", "HTTPTEXT"}, {"HJ", "HTTPJUSTC"},
-        {"HH", "HTTPHOCON"}, {"CO", "CONFIG"}, {"R", "RUN"}, {"O", "VALUE"},
-        {"F", "FILE"}, {"FS", "STAT"}, {"ST", "STRING"}, {"SL", "LINK"},
-        {"SN", "STRINGNUM"}, {"S64", "STRINGB64"}, {"S02", "STRINGBIN"},
-        {"S16", "STRINGHEX"}, {"ID", "TYPEID"}, {"OF", "TYPEOF"},
-        {"OUT", "OUTPUT"}, {"RT", "RETURN"}, {"Q", "SQ"}, {"U", "CU"},
-        {"PJ", "PARSEJUSTC"}, {"PJS", "PARSEJSON"}, {"SP", "SPECIFIED"},
-        {"EV", "EVERYTHING"}, {"N", "DISABLED"}, 
-        {"NUM", "NUMBER"}, {"SO", "STRINGOCT"}, {"B", "BINARY"}, 
-        {"OC", "OCTAL"}, {"B64", "BASE64"}, {"HEX", "HEXADECIMAL"},
-        {"PH", "PARSEHOCON"}, {"S32", "STRINGB32"}, {"B32", "BASE32"},
-        {"AB", "ABSOLUTE"}, {"CE", "CEIL"}, {"FL", "FLOOR"}, {"AL", "ALLOW"},
-        {"DL", "DISALLOW"}, {"J", "JAVASCRIPT"},
-        {"HJC", "HTTPJUSTC"}, {"CF", "CONFIG"}, {"SZ", "STAT"}, 
-        {"S10", "STRINGNUM"}, {"SNUM", "STRINGNUM"}, {"TID", "TYPEID"},
-        {"TO", "TYPEOF"}, {"PUT", "RETURN"}, {"PJC", "PARSEJUSTC"},
-        {"SPEC", "SPECIFIED"}, {"EVERY", "EVERYTHING"}, {"DIS", "DISABLED"},
-        {"SOCT", "STRINGOCT"}, {"S08", "STRINGOCT"}, {"BIN", "BINARY"},
-        {"OCT", "OCTAL"}, {"HEXDEC", "HEXADECIMAL"}, {"B02", "BINARY"},
-        {"B08", "OCTAL"}, {"B10", "NUMBER"}, {"B16", "HEXADECIMAL"},
-        {"ABS", "ABSOLUTE"}
-    };
-    
-    bigkeywords = {
-        {"SQRT", "V"}, {"ROOT", "V"}, {"DOUBLE", "D"}, {"SQUARE", "SQ"},
-        {"CUBE", "CU"}, {"NEGATIVE", "N"}, {"SIN", "S"}, {"COS", "C"},
-        {"TAN", "T"}, {"SINE", "S"}, {"COSINE", "C"}, {"TANGENT", "T"}
-    };
-    
-    for (const auto& pair : smallkeywords) {
-        skw.push_back(pair.first);
-    }
-    
-    for (const auto& pair : bigkeywords) {
-        bkw.push_back(pair.first);
-    }
+void Lexer::invalidInput() {
+    throw std::invalid_argument("Invalid Input.");
+}
+
+void Lexer::invalidUsage() {
+    throw std::invalid_argument("Invalid Usage.");
 }
 
 bool Lexer::isWhitespace(char ch) const {
@@ -108,8 +58,8 @@ void Lexer::readComment() {
 
 Token Lexer::readString() {
     size_t start = ++position;
-    std::string value;
-    while (position < input.length() && 
+    std::string value = "";
+    while (position < input.length() &&
            (input[position] != '"' || 
            (input[position] == '"' && position > 0 && input[position - 1] == '\\'))) {
         value += input[position++];
@@ -120,7 +70,7 @@ Token Lexer::readString() {
 
 Token Lexer::readAngleString() {
     size_t start = ++position;
-    std::string value;
+    std::string value = "";
     while (position < input.length() && input[position] != '>') {
         value += input[position++];
     }
@@ -131,7 +81,6 @@ Token Lexer::readAngleString() {
 Token Lexer::readNumber() {
     size_t start = position;
     bool point = false;
-    
     while (position < input.length() && 
            (isDigit(input[position]) ||
             std::string(".#&bB").find(input[position]) != std::string::npos ||
@@ -173,8 +122,8 @@ Token Lexer::readNumber() {
 
 Token Lexer::readIdentifier() {
     size_t start = position;
-    while (position < input.length() && 
-           (isLetter(input[position]) || 
+    while (position < input.length() &&
+           (isLetter(input[position]) ||
             isDigit(input[position]) || 
             input[position] == '\'')) {
         position++;
@@ -182,89 +131,86 @@ Token Lexer::readIdentifier() {
     
     std::string id = input.substr(start, position - start);
     
+    // Проверка ключевых слов с использованием глобальных констант
     if (std::find(keywords.begin(), keywords.end(), id) != keywords.end()) {
         return Token("keyword", id, start);
     } else if (smallkeywords.find(id) != smallkeywords.end()) {
-        return Token("keyword", smallkeywords[id], start);
+        return Token("keyword", smallkeywords.at(id), start);
     } else if (bigkeywords.find(id) != bigkeywords.end()) {
-        return Token("keyword", bigkeywords[id], start);
+        return Token("keyword", bigkeywords.at(id), start);
     }
     
-    if (id == "is" || id == "isn't" || id == "isif" || id == "then" || 
-        id == "elseif" || id == "else" || id == "isifn't" || id == "elseifn't" || 
-        id == "then't" || id == "elsen't" || id == "or" || id == "orn't") {
+    // Проверка специальных ключевых слов с помощью регулярных выражений
+    std::regex keyword_regex("^is$|^isn't$|^isif$|^then$|^elseif$|^else$|^isifn't$|^elseifn't$|^then't$|^elsen't$|^or$|^orn't$");
+    std::regex boolean_regex("^true$|^True$|^TRUE$|^yes$|^Yes$|^YES$|^false$|^False$|^FALSE$|^no$|^No$|^NO$");
+    std::regex null_regex("^null$|^Null$|^NULL$|^nil$|^Nil$|^NIL$");
+    std::regex undefined_regex("^undefined$");
+    
+    if (std::regex_match(id, keyword_regex)) {
         return Token("keyword", id, start);
-    }
-    
-    std::string idLower = id;
-    std::transform(idLower.begin(), idLower.end(), idLower.begin(), ::tolower);
-    if (idLower == "true" || idLower == "yes" || idLower == "false" || idLower == "no") {
+    } else if (std::regex_match(id, boolean_regex)) {
         return Token("boolean", id, start);
-    }
-    
-    if (idLower == "null" || idLower == "nil") {
+    } else if (std::regex_match(id, null_regex)) {
         return Token("null", id, start);
-    }
-    
-    if (idLower == "undefined") {
+    } else if (std::regex_match(id, undefined_regex)) {
         return Token("undefined", id, start);
+    } else {
+        return Token("identifier", id, start);
     }
-    
-    return Token("identifier", id, start);
 }
 
 void Lexer::tokenize() {
     while (position < input.length()) {
         char ch = input[position];
-        
+
         if (isWhitespace(ch)) {
             position++;
             continue;
         }
-        
+
         if (ch == '-' && peek() == '-') {
             readComment();
             continue;
         }
-        
+
         if (ch == '"') {
             tokens.push_back(readString());
             continue;
         }
-        
+
         if (ch == '<') {
             tokens.push_back(readAngleString());
             continue;
         }
-        
+
         if (ch == '.' && peek() == '.') {
             tokens.push_back(Token("..", "..", position));
             position += 2;
             continue;
         }
-        
+
         if (isDigit(ch)) {
             tokens.push_back(readNumber());
             continue;
-        }
-        
+        }            
+
         if (ch == ',' || ch == '.' || ch == '[' || ch == ']') {
             tokens.push_back(Token(std::string(1, ch), std::string(1, ch), position));
             position++;
             continue;
         }
-        
+
+        if (isLetter(ch)) {
+            tokens.push_back(readIdentifier());
+            continue;
+        }
+
         if (ch == '-') {
             tokens.push_back(Token("minus", "-", position));
             position++;
             continue;
         }
-        
-        if (isLetter(ch)) {
-            tokens.push_back(readIdentifier());
-            continue;
-        }
-        
+
         tokens.push_back(Token(std::string(1, ch), std::string(1, ch), position));
         position++;
     }

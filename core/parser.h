@@ -54,6 +54,25 @@ struct Value {
     static Value createVariable(const std::string& varName);
 };
 
+struct LogEntry {
+    std::string type;
+    std::string message;
+    size_t position;
+    
+    LogEntry(const std::string& t, const std::string& m, size_t p) 
+        : type(t), message(m), position(p) {}
+};
+
+struct ParseResult {
+    std::unordered_map<std::string, Value> returnValues;
+    std::vector<LogEntry> logs;
+    std::string logFilePath;
+    std::string logFileContent;
+    std::string error;
+    
+    ParseResult() : logFilePath(""), logFileContent(""), error("") {}
+};
+
 struct JSONObject {
     std::unordered_map<std::string, Value> properties;
 };
@@ -100,6 +119,11 @@ private:
     bool globalScope;
     bool strictMode;
     
+    std::vector<LogEntry> logs;
+    std::string logFilePath;
+    std::string logFileContent;
+    bool hasLogFile;
+    
     ParserToken currentToken() const;
     ParserToken peekToken(size_t offset = 1) const;
     void advance();
@@ -107,6 +131,11 @@ private:
     bool match(const std::string& type, const std::string& value) const;
     bool isEnd() const;
     void skipCommas();
+    
+    // logs
+    void addLog(const std::string& type, const std::string& message, size_t position = 0);
+    void setLogFile(const std::string& path);
+    void appendToLogFile(const std::string& content);
     
     Value parseExpression();
     Value parsePrimary();
@@ -157,9 +186,7 @@ private:
     Value binaryToValue(const std::string& binStr);
     Value octalToValue(const std::string& octStr);
     
-    std::string valueToJson(const Value& value) const;
-    std::string generateOutput();
-    
+    // built-in
     Value functionVALUE(const std::vector<Value>& args);
     Value functionSTRING(const std::vector<Value>& args);
     Value functionLINK(const std::vector<Value>& args);
@@ -182,6 +209,7 @@ private:
     Value functionENV(const std::vector<Value>& args);
     Value functionCONFIG(const std::vector<Value>& args);
     
+    // math
     Value functionV(const std::vector<Value>& args);
     Value functionD(const std::vector<Value>& args);
     Value functionSQ(const std::vector<Value>& args);
@@ -199,9 +227,9 @@ private:
 public:
     Parser(const std::vector<ParserToken>& tokens);
     
-    std::string parse();
+    ParseResult parse();
     
-    static std::string parseTokens(const std::vector<ParserToken>& tokens);
+    static ParseResult parseTokens(const std::vector<ParserToken>& tokens);
 };
 
 #endif // PARSER_H

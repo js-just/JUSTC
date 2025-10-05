@@ -5,6 +5,7 @@
 #include <sstream>
 #include "lexer.h"
 #include "parser.h"
+#include "json_serializer.h"
 
 extern "C" {
 
@@ -71,57 +72,16 @@ bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTok
 }
 } // namespace
 
-char* tokensToJson(const std::vector<Token>& tokens, const std::string& input) {
-    std::stringstream json;
-    json << "{";
-    json << "\"input\":\"";
-    
-    for (char c : input) {
-        if (c == '"') json << "\\\"";
-        else if (c == '\\') json << "\\\\";
-        else if (c == '\n') json << "\\n";
-        else if (c == '\t') json << "\\t";
-        else if (c == '\r') json << "\\r";
-        else json << c;
-    }
-    
-    json << "\",";
-    json << "\"tokens\":[";
-    
-    for (size_t i = 0; i < tokens.size(); i++) {
-        const auto& token = tokens[i];
-        
-        json << "{";
-        json << "\"type\":\"";
-        json << token.type;
-        json << "\",";
-        json << "\"value\":\"";
-        json << token.value;
-        json << "\",";
-        json << "\"start\":" << token.start;
-        json << "}";
-        
-        if (i < tokens.size() - 1) {
-            json << ",";
-        }
-    }
-    
-    json << "]}";
-    
-    return strdup(json.str().c_str());
-}
-
 char* lexer(const char* input) {
     if (input == nullptr) return nullptr;
     
     try {
         auto parsed = Lexer::parse(input);
-        return tokensToJson(parsed.second, parsed.first);
+        std::string json = JsonSerializer::serialize(parsed.second, parsed.first);
+        return strdup(json.c_str());
         
     } catch (const std::exception& e) {
-        std::string error = "{\"error\":\"";
-        error += e.what();
-        error += "\"}";
+        std::string error = "{\"error\":\"" + std::string(e.what()) + "\"}";
         return strdup(error.c_str());
     }
 }
@@ -133,17 +93,16 @@ char* parser(const char* tokensJson) {
         std::vector<ParserToken> parserTokens;
         
         if (parseJsonTokens(tokensJson, parserTokens)) {
-            std::string result = Parser::parseTokens(parserTokens);
-            return strdup(result.c_str());
+            ParseResult result = Parser::parseTokens(parserTokens);
+            std::string json = JsonSerializer::serialize(result);
+            return strdup(json.c_str());
         } else {
             std::string error = "{\"error\":\"Failed to parse tokens JSON\"}";
             return strdup(error.c_str());
         }
         
     } catch (const std::exception& e) {
-        std::string error = "{\"error\":\"";
-        error += e.what();
-        error += "\"}";
+        std::string error = "{\"error\":\"" + std::string(e.what()) + "\"}";
         return strdup(error.c_str());
     }
 }
@@ -153,20 +112,12 @@ char* parse(const char* input) {
     
     try {
         auto lexerResult = Lexer::parse(input);
-        
-        std::vector<ParserToken> parserTokens;
-        for (const auto& token : lexerResult.second) {
-            parserTokens.push_back({token.type, token.value, token.start});
-        }
-        
-        std::string result = Parser::parseTokens(parserTokens);
-        
-        return strdup(result.c_str());
+        ParseResult result = Parser::parseTokens(lexerResult.second);
+        std::string json = JsonSerializer::serialize(result);
+        return strdup(json.c_str());
         
     } catch (const std::exception& e) {
-        std::string error = "{\"error\":\"";
-        error += e.what();
-        error += "\"}";
+        std::string error = "{\"error\":\"" + std::string(e.what()) + "\"}";
         return strdup(error.c_str());
     }
 }

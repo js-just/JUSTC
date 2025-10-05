@@ -2,7 +2,7 @@ let wasmModule;
 
 async function initWasm() {
     try {
-        wasmModule = await __JUSTC__();
+        wasmModule = await __justc__();
         console.log("WASM module loaded.");
     } catch (error) {
         console.error("Failed to load WASM module:", error);

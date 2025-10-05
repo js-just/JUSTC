@@ -30,7 +30,6 @@ jobs:
         run: |
           emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp core/keywords.cpp \
             -o test/browser/justc.core.js \
-            -s WASM_BINARY_FILE='justc.wasm' \
             -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free"]' \
             -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8"]' \
             -s MODULARIZE=1 \
@@ -39,6 +38,9 @@ jobs:
             -std=c++11 \
             -s DISABLE_EXCEPTION_CATCHING=0 \
             -s EXPORT_NAME='__justc__'
+
+            mv test/browser/justc.core.wasm test/browser/justc.wasm
+            sed -i 's/justc\.core\.wasm/justc.wasm/g' test/browser/justc.core.js
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

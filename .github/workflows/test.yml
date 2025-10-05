@@ -38,7 +38,6 @@ jobs:
             -std=c++11 \
             -s DISABLE_EXCEPTION_CATCHING=0 \
             -s EXPORT_NAME='__justc__' \
-            --closure 1 \
             -s ASSERTIONS=0 \
             -s MINIMAL_RUNTIME=2 \
             -Os

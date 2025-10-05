@@ -51,7 +51,7 @@ async function runLexer(noAlert = false) {
 async function runParser() {
     await checkWASM();
 
-    const input = document.getElementById('inputCode').value;
+    const input = prompt("Enter JUSTC code:");
     
     try {
         const resultPtr = justcModule.ccall(
@@ -60,11 +60,6 @@ async function runParser() {
             ['string'],
             [input]
         );
-        
-        if (!resultPtr) {
-            document.getElementById('output').textContent = "Ошибка: парсер вернул null";
-            return;
-        }
         
         const resultJson = justcModule.UTF8ToString(resultPtr);
         

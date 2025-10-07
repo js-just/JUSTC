@@ -6,6 +6,7 @@
 #include <cctype>
 #include <iostream>
 #include <chrono>
+#include <ctime>
 
 std::string Value::toString() const {
     switch (type) {
@@ -177,14 +178,23 @@ Parser::Parser(const std::vector<ParserToken>& tokens)
 std::string Parser::getCurrentTimestamp() const {
     auto now = std::chrono::system_clock::now();
     auto time_t = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
-    return ss.str();
+    
+    std::tm timeinfo;
+    
+    #ifdef _WIN32
+        localtime_s(&timeinfo, &time_t);
+    #else
+        localtime_r(&time_t, &timeinfo);  // POSIX (Linux/macOS/Emscripten)
+    #endif
+    
+    char buffer[80];
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
+    return std::string(buffer);
 }
 
 // logs
 void Parser::addLog(const std::string& type, const std::string& message, size_t position) {
-    std::string time = std::to_string(getCurrentTimestamp());
+    std::string time = getCurrentTimestamp();
     logs.push_back({type, message, position, time});
     if (hasLogFile && type == "LOG") {
         appendToLogFile("[" + time + "] " + message);

@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  wasm-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -49,7 +49,7 @@ jobs:
         with:
           path: test/browser
 
-  deploy:
+  wasm-deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

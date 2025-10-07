@@ -1,0 +1,95 @@
+name: Compile C++ to WASM
+
+on:
+  push:
+    branches: ["main"]
+    tags:
+  release:
+    types: [published, edited]
+  workflow_dispatch:
+    inputs:
+      dirname:
+        description: 'Directory name / Path'
+        required: true
+        default: 'development'
+        type: string
+
+env:
+  DEFAULT_DIR: 'development'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "wasm"
+  cancel-in-progress: false
+
+jobs:
+  determine-dirpath:
+    runs-on: ubuntu-latest
+    outputs:
+      dirpath: ${{ steps.set-dirpath.outputs.dirpath }}
+    steps:
+      - name: Set dirpath for push to main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: set-dirpath-push
+        run: echo "dirpath=${{ env.DEFAULT_DIR }}" >> $GITHUB_OUTPUT
+
+      - name: Set dirpath for tags
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        id: set-dirpath-tags
+        run: echo "dirpath=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Set dirpath for release
+        if: github.event_name == 'release'
+        id: set-dirpath-release
+        run: echo "dirpath=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+
+      - name: Set dirpath for workflow_dispatch
+        if: github.event_name == 'workflow_dispatch'
+        id: set-dirpath-dispatch
+        run: echo "dirpath=${{ github.event.inputs.dirname || env.DEFAULT_DIR }}" >> $GITHUB_OUTPUT
+
+      - name: Set default dirpath
+        if: steps.set-dirpath-push.outputs.dirpath == '' && steps.set-dirpath-tags.outputs.dirpath == '' && steps.set-dirpath-release.outputs.dirpath == '' && steps.set-dirpath-dispatch.outputs.dirpath == ''
+        id: set-dirpath-default
+        run: echo "dirpath=${{ env.DEFAULT_DIR }}" >> $GITHUB_OUTPUT
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: latest
+      - name: Compile C++ to WASM
+        run: |
+          emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp core/keywords.cpp \
+            -o browsers/justc.core.js \
+            -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free"]' \
+            -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8"]' \
+            -s MODULARIZE=1 \
+            -s ALLOW_MEMORY_GROWTH=1 \
+            -s INVOKE_RUN=0 \
+            -std=c++11 \
+            -s DISABLE_EXCEPTION_CATCHING=0 \
+            -s EXPORT_NAME='__justc__' \
+            -s ASSERTIONS=0 \
+            -Os
+
+            mv browsers/justc.core.wasm browsers/justc.wasm
+            sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/justc.core.js
+            mv browsers/core.js browsers/justc.js
+      - name: Commit
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-directory: "browsers"
+          destination-github-username: js-just
+          destination-repository-name: website
+          user-email: "support@juststudio.is-a.dev"
+          target-branch: main
+          target-directory: "justc/${{ steps.dirpath.outputs.dirpath }}"

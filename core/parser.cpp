@@ -174,11 +174,20 @@ Parser::Parser(const std::vector<ParserToken>& tokens)
     : tokens(tokens), position(0), outputMode("SPECIFIED"), allowJavaScript(true), 
       globalScope(false), strictMode(false), hasLogFile(false) {}
 
+std::string Parser::getCurrentTimestamp() const {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
+
 // logs
 void Parser::addLog(const std::string& type, const std::string& message, size_t position) {
-    logs.push_back({type, message, position});
-    if (hasLogFile) {
-        appendToLogFile("[" + type + "] " + message);
+    std::string time = std::to_string(getCurrentTimestamp());
+    logs.push_back({type, message, position, time});
+    if (hasLogFile && type == "LOG") {
+        appendToLogFile("[" + time + "] " + message);
     }
 }
 

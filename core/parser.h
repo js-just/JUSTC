@@ -58,9 +58,10 @@ struct LogEntry {
     std::string type;
     std::string message;
     size_t position;
+    std::string timestamp;
     
-    LogEntry(const std::string& t, const std::string& m, size_t p) 
-        : type(t), message(m), position(p) {}
+    LogEntry(const std::string& t, const std::string& m, size_t p, const std::string& ts = "") 
+        : type(t), message(m), position(p), timestamp(ts) {}
 };
 
 struct ParseResult {
@@ -135,6 +136,8 @@ private:
     bool match(const std::string& type, const std::string& value) const;
     bool isEnd() const;
     void skipCommas();
+
+    std::string getCurrentTimestamp() const;
     
     // logs
     void addLog(const std::string& type, const std::string& message, size_t position = 0);

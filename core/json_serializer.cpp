@@ -124,7 +124,8 @@ std::string JsonSerializer::serialize(const std::vector<LogEntry>& logs) {
         json << "{";
         json << "\"type\":\"" << escapeJsonString(log.type) << "\",";
         json << "\"message\":\"" << escapeJsonString(log.message) << "\",";
-        json << "\"position\":" << log.position;
+        json << "\"position\":" << log.position << ",";
+        json << "\"time\":\"" << escapeJsonString(log.timestamp) << "\"";
         json << "}";
         
         if (i < logs.size() - 1) {

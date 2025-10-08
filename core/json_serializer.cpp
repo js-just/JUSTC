@@ -77,6 +77,8 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
     std::stringstream json;
     json << "{";
     
+    #ifdef __EMSCRIPTEN__
+    
     if (!result.error.empty()) {
         json << "\"error\":\"" << escapeJsonString(result.error) << "\"";
     } else {
@@ -101,6 +103,17 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
         json << "\"logs\":\"" << escapeJsonString(result.logFileContent) << "\"";
         json << "}";
     }
+
+    #else
+
+    bool first = true;
+    for (const auto& pair : result.returnValues) {
+        if (!first) json << ",";
+        first = false;
+        json << "\"" << escapeJsonString(pair.first) << "\":" << valueToJson(pair.second);
+    }
+
+    #endif
     
     json << "}";
     return json.str();

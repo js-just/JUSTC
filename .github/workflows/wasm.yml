@@ -65,11 +65,13 @@ jobs:
         with:
           version: latest
       - name: Compile C++ to WASM
+        env:
+          OUTPUT_DIR: ${{ steps.dirpath.outputs.dirpath }}
         run: |
-          mkdir browsers/${{ steps.dirpath.outputs.dirpath }}
+          mkdir browsers/$OUTPUT_DIR
 
           emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp core/keywords.cpp \
-            -o browsers/${{ steps.dirpath.outputs.dirpath }}/justc.core.js \
+            -o browsers/$OUTPUT_DIR/justc.core.js \
             -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free"]' \
             -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8"]' \
             -s MODULARIZE=1 \
@@ -81,9 +83,9 @@ jobs:
             -s ASSERTIONS=0 \
             -Os
 
-          mv browsers/${{ steps.dirpath.outputs.dirpath }}/justc.core.wasm browsers/${{ steps.dirpath.outputs.dirpath }}/justc.wasm
-          sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/${{ steps.dirpath.outputs.dirpath }}/justc.core.js
-          mv browsers/${{ steps.dirpath.outputs.dirpath }}/core.js browsers/${{ steps.dirpath.outputs.dirpath }}/justc.js
+          mv browsers/$OUTPUT_DIR/justc.core.wasm browsers/$OUTPUT_DIR/justc.wasm
+          sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/$OUTPUT_DIR/justc.core.js
+          mv browsers/$OUTPUT_DIR/core.js browsers/$OUTPUT_DIR/justc.js
 
       - name: Commit
         uses: cpina/github-action-push-to-another-repository@main

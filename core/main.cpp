@@ -43,6 +43,7 @@ int main(int argc, char* argv[]) {
         std::string mode = "execute";
         std::string input;
         std::string output;
+        bool outputToConsole = false;
         
         // parse arguments
         bool gotFileOrCode = false;
@@ -56,6 +57,9 @@ int main(int argc, char* argv[]) {
             }
             else if (arg == "--lexer") {
                 mode = "lexer";
+            }
+            else if (arg == "--result") {
+                outputToConsole = true;
             }
             else if (arg == "-c" && i + 1 < argc) {
                 input = argv[++i];
@@ -81,15 +85,16 @@ int main(int argc, char* argv[]) {
         if (mode == "lexer") {
             auto lexerResult = Lexer::parse(input);
             json = JsonSerializer::serialize(lexerResult.second, lexerResult.first);
-            std::cout << json << std::endl;
         }
         else {
             auto lexerResult = Lexer::parse(input);
             auto parseResult = Parser::parseTokens(lexerResult.second);
             json = JsonSerializer::serialize(parseResult);
-            std::cout << json << std::endl;
         }
 
+        if (outputToConsole) {
+            std::cout << json << std::endl;
+        }
         if (outputToFile) {
             writeFile(output, json);
         }

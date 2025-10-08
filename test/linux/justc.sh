@@ -7,10 +7,11 @@ mkdir build
 cd build
 cmake ..
 make
+sudo make install
 
 FILE=../test/linux/test.justc
 
-./justc $FILE
+justc $FILE
 
 RESULT=$(cat $FILE)
 echo $RESULT

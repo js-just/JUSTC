@@ -47,3 +47,10 @@ elseif(WIN32)
 else()
     message(FATAL_ERROR "CURL library not found")
 endif()
+
+install(TARGETS justc DESTINATION bin)
+if(WIN32)
+    add_custom_command(TARGET justc POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:justc> ${CMAKE_BINARY_DIR}
+    )
+endif()

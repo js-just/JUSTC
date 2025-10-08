@@ -11,7 +11,7 @@ public:
 private:
     static Value fetchHttpContent(const std::string& url, const std::string& expectedType);
     static std::string executeHttpRequest(const std::string& url);
-    void Interpreter::processHttpRequests(const ParseResult& result);
+    void processHttpRequests(const ParseResult& result);
 };
 
 #endif // INTERPRETER_H

@@ -32,7 +32,7 @@ ParseResult Interpreter::interpret(const std::string& code) {
     return parseResult;
 }
 
-void Interpreter::processHttpRequests(ParseResult& result) {
+void Interpreter::processHttpRequests(const ParseResult& result) {
     for (auto& pair : result.returnValues) {
         if (pair.second.type == DataType::VARIABLE) {
             std::string varName = pair.second.string_value;

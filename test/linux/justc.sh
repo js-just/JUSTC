@@ -9,9 +9,9 @@ cmake ..
 make
 sudo make install
 
-FILE=../test/linux/test.justc
+FILE=../test/linux/test
 
-justc $FILE
+justc $FILE.justc $FILE.json
 
-RESULT=$(cat $FILE)
+RESULT=$(cat $FILE.json)
 echo $RESULT

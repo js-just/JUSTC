@@ -22,6 +22,16 @@ std::string readFile(const std::string& filename) {
     return std::string((std::istreambuf_iterator<char>(file)), 
                        std::istreambuf_iterator<char>());
 }
+void writeFile(const std::string& filename, const std::string& content) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to write to file: " + filename);
+    }
+    file << content;
+    if (!file.good()) {
+        throw std::runtime_error("Error occurred while writing to file: " + filename);
+    }
+}
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -32,8 +42,11 @@ int main(int argc, char* argv[]) {
     try {
         std::string mode = "execute";
         std::string input;
+        std::string output;
         
         // parse arguments
+        bool gotFileOrCode = false;
+        bool outputToFile = false;
         for (int i = 1; i < argc; i++) {
             std::string arg = argv[i];
             
@@ -46,9 +59,15 @@ int main(int argc, char* argv[]) {
             }
             else if (arg == "-c" && i + 1 < argc) {
                 input = argv[++i];
+                gotFileOrCode = true;
+            }
+            else if (arg[0] != '-' && gotFileOrCode) {
+                output = arg;
+                outputToFile = true;
             }
             else if (arg[0] != '-') {
                 input = readFile(arg);
+                gotFileOrCode = true;
             }
         }
         
@@ -58,16 +77,21 @@ int main(int argc, char* argv[]) {
             return 1;
         }
         
+        std::string json;
         if (mode == "lexer") {
             auto lexerResult = Lexer::parse(input);
-            std::string json = JsonSerializer::serialize(lexerResult.second, lexerResult.first);
+            json = JsonSerializer::serialize(lexerResult.second, lexerResult.first);
             std::cout << json << std::endl;
         }
         else {
             auto lexerResult = Lexer::parse(input);
             auto parseResult = Parser::parseTokens(lexerResult.second);
-            std::string json = JsonSerializer::serialize(parseResult);
+            json = JsonSerializer::serialize(parseResult);
             std::cout << json << std::endl;
+        }
+
+        if (outputToFile) {
+            writeFile(output, json);
         }
         
     } catch (const std::exception& e) {

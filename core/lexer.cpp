@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <regex>
 
-Lexer::Lexer(const std::string& input) : input(input), position(0) {
+Lexer::Lexer(const std::string& input) : input(input), position(0), dollarBefore(false) {
     if (input.empty()) {
         throw std::invalid_argument("Invalid Input.");
     }
@@ -134,9 +134,14 @@ ParserToken Lexer::readNumber() {
     return ParserToken{type, numStr, start};
 }
 
-bool dollarBefore = false;
 ParserToken Lexer::readIdentifier() {
     size_t start = position;
+    
+    if (dollarBefore) {
+        dollarBefore = false;
+        start = position - 1;
+    }
+    
     while (position < input.length() &&
            (isLetter(input[position]) ||
             isDigit(input[position]) || 
@@ -144,7 +149,7 @@ ParserToken Lexer::readIdentifier() {
         position++;
     }
     
-    std::string id = (dollarBefore ? "$" : "") + input.substr(start, position - start);
+    std::string id = input.substr(start, position - start);
     
     if (std::find(keywords.begin(), keywords.end(), id) != keywords.end()) {
         return ParserToken{"keyword", id, start};
@@ -178,6 +183,7 @@ void Lexer::addDollarBefore() {
         tokens.push_back(ParserToken{"$", "$", position - 1});
     }
 }
+
 void Lexer::tokenize() {
     while (position < input.length()) {
         char ch = input[position];
@@ -238,16 +244,18 @@ void Lexer::tokenize() {
             continue;
         }
 
-        dollarBefore = false;
         if (ch == '$') {
-            dollarBefore = true;
+            tokens.push_back(ParserToken{"$", "$", position});
             position++;
             continue;
         }
 
+        addDollarBefore();
         tokens.push_back(ParserToken{std::string(1, ch), std::string(1, ch), position});
         position++;
     }
+    
+    addDollarBefore();
 }
 
 std::vector<ParserToken> Lexer::getTokens() const {

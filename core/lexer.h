@@ -37,6 +37,9 @@ private:
     void invalidInput();
     void invalidUsage();
 
+    bool dollarBefore;
+    void addDollarBefore();
+
 public:
     Lexer(const std::string& input);
     std::vector<ParserToken> getTokens() const;

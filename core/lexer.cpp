@@ -134,6 +134,7 @@ ParserToken Lexer::readNumber() {
     return ParserToken{type, numStr, start};
 }
 
+bool dollarBefore = false;
 ParserToken Lexer::readIdentifier() {
     size_t start = position;
     while (position < input.length() &&
@@ -143,7 +144,7 @@ ParserToken Lexer::readIdentifier() {
         position++;
     }
     
-    std::string id = input.substr(start, position - start);
+    std::string id = (dollarBefore ? '$' : '') + input.substr(start, position - start);
     
     if (std::find(keywords.begin(), keywords.end(), id) != keywords.end()) {
         return ParserToken{"keyword", id, start};
@@ -154,7 +155,7 @@ ParserToken Lexer::readIdentifier() {
     }
     
     std::regex keyword_regex("^is$|^isn't$|^isif$|^then$|^elseif$|^else$|^isifn't$|^elseifn't$|^then't$|^elsen't$|^or$|^orn't$");
-    std::regex boolean_regex("^true$|^True$|^TRUE$|^yes$|^Yes$|^YES$|^false$|^False$|^FALSE$|^no$|^No$|^NO$");
+    std::regex boolean_regex("^true$|^True$|^TRUE$|^yes$|^Yes$|^YES$|^false$|^False$|^FALSE$|^no$|^No$|^NO$|^Y$|^y$|^N$|^n$");
     std::regex null_regex("^null$|^Null$|^NULL$|^nil$|^Nil$|^NIL$");
     std::regex undefined_regex("^undefined$");
     
@@ -171,42 +172,55 @@ ParserToken Lexer::readIdentifier() {
     }
 }
 
+void addDollarBefore() {
+    if (dollarBefore) {
+        dollarBefore = false;
+        tokens.push_back(ParserToken{"$", "$", position - 1});
+    }
+}
 void Lexer::tokenize() {
     while (position < input.length()) {
         char ch = input[position];
 
         if (isWhitespace(ch)) {
+            addDollarBefore();
             position++;
             continue;
         }
 
         if (ch == '-' && peek() == '-') {
+            addDollarBefore();
             readComment();
             continue;
         }
 
         if (ch == '"') {
+            addDollarBefore();
             tokens.push_back(readString());
             continue;
         }
 
         if (ch == '<') {
+            addDollarBefore();
             tokens.push_back(readAngleString());
             continue;
         }
 
         if (ch == '.' && peek() == '.') {
+            addDollarBefore();
             tokens.push_back(ParserToken{"..", "..", position});
             position += 2;
             continue;
         }
 
         if (isDigit(ch)) {
+            addDollarBefore();
             tokens.push_back(readNumber());
             continue;
         }            
 
         if (ch == ',' || ch == '.' || ch == '[' || ch == ']') {
+            addDollarBefore();
             tokens.push_back(ParserToken{std::string(1, ch), std::string(1, ch), position});
             position++;
             continue;
@@ -218,7 +232,15 @@ void Lexer::tokenize() {
         }
 
         if (ch == '-') {
+            addDollarBefore();
             tokens.push_back(ParserToken{"minus", "-", position});
+            position++;
+            continue;
+        }
+
+        dollarBefore = false;
+        if (ch == '$') {
+            dollarBefore = true;
             position++;
             continue;
         }

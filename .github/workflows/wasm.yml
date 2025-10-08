@@ -66,8 +66,10 @@ jobs:
           version: latest
       - name: Compile C++ to WASM
         run: |
+          mkdir browsers/${{ steps.dirpath.outputs.dirpath }}
+
           emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp core/keywords.cpp \
-            -o browsers/justc.core.js \
+            -o browsers/${{ steps.dirpath.outputs.dirpath }}/justc.core.js \
             -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free"]' \
             -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8"]' \
             -s MODULARIZE=1 \
@@ -79,9 +81,10 @@ jobs:
             -s ASSERTIONS=0 \
             -Os
 
-            mv browsers/justc.core.wasm browsers/justc.wasm
-            sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/justc.core.js
-            mv browsers/core.js browsers/justc.js
+          mv browsers/${{ steps.dirpath.outputs.dirpath }}/justc.core.wasm browsers/${{ steps.dirpath.outputs.dirpath }}/justc.wasm
+          sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/${{ steps.dirpath.outputs.dirpath }}/justc.core.js
+          mv browsers/${{ steps.dirpath.outputs.dirpath }}/core.js browsers/${{ steps.dirpath.outputs.dirpath }}/justc.js
+
       - name: Commit
         uses: cpina/github-action-push-to-another-repository@main
         env:
@@ -92,4 +95,4 @@ jobs:
           destination-repository-name: website
           user-email: "support@juststudio.is-a.dev"
           target-branch: main
-          target-directory: "justc/${{ steps.dirpath.outputs.dirpath }}"
+          target-directory: "justc"

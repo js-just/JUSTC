@@ -243,7 +243,7 @@ void Lexer::tokenize() {
         }
 
         if (ch == '-') {
-            addDollarBefore();0 
+            addDollarBefore();
             tokens.push_back(ParserToken{"minus", "-", position});
             position++;
             continue;

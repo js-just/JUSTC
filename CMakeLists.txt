@@ -11,19 +11,18 @@ elseif(APPLE)
     find_library(CURL_LIBRARIES curl)
     find_path(CURL_INCLUDE_DIRS curl/curl.h)
 elseif(WIN32)
-    # Для Windows используем WinHTTP (встроено в Windows)
     set(WINHTTP_LIBRARIES "winhttp.lib")
 endif()
 
 add_library(justc_core
-    lexer.cpp
-    parser.cpp
-    keywords.cpp
-    json_serializer.cpp
-    interpreter.cpp
+    core/lexer.cpp
+    core/parser.cpp
+    core/keywords.cpp
+    core/json_serializer.cpp
+    core/interpreter.cpp
 )
 
-add_executable(justc main.cpp)
+add_executable(justc core/main.cpp)
 
 if(UNIX AND NOT APPLE)
     target_include_directories(justc PRIVATE ${CURL_INCLUDE_DIRS})

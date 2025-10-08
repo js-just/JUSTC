@@ -57,8 +57,6 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    env:
-      OUTPUT_DIR: ${{ steps.dirpath.outputs.dirpath }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -67,6 +65,8 @@ jobs:
         with:
           version: latest
       - name: Compile C++ to WASM
+        env:
+          OUTPUT_DIR: ${{ steps.dirpath.outputs.dirpath }}
         run: |
           mkdir "browsers/$OUTPUT_DIR"
 

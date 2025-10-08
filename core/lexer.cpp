@@ -144,7 +144,7 @@ ParserToken Lexer::readIdentifier() {
         position++;
     }
     
-    std::string id = (dollarBefore ? '$' : '') + input.substr(start, position - start);
+    std::string id = (dollarBefore ? "$" : "") + input.substr(start, position - start);
     
     if (std::find(keywords.begin(), keywords.end(), id) != keywords.end()) {
         return ParserToken{"keyword", id, start};
@@ -172,7 +172,7 @@ ParserToken Lexer::readIdentifier() {
     }
 }
 
-void addDollarBefore() {
+void Lexer::addDollarBefore() {
     if (dollarBefore) {
         dollarBefore = false;
         tokens.push_back(ParserToken{"$", "$", position - 1});

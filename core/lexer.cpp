@@ -151,12 +151,17 @@ ParserToken Lexer::readIdentifier() {
     
     std::string id = input.substr(start, position - start);
     
-    if (std::find(keywords.begin(), keywords.end(), id) != keywords.end()) {
+    std::string idWithoutDollar = id;
+    if (!id.empty() && id[0] == '$') {
+        idWithoutDollar = id.substr(1);
+    }
+    
+    if (std::find(keywords.begin(), keywords.end(), idWithoutDollar) != keywords.end()) {
         return ParserToken{"keyword", id, start};
-    } else if (smallkeywords.find(id) != smallkeywords.end()) {
-        return ParserToken{"keyword", smallkeywords.at(id), start};
-    } else if (bigkeywords.find(id) != bigkeywords.end()) {
-        return ParserToken{"keyword", bigkeywords.at(id), start};
+    } else if (smallkeywords.find(idWithoutDollar) != smallkeywords.end()) {
+        return ParserToken{"keyword", id, start};
+    } else if (bigkeywords.find(idWithoutDollar) != bigkeywords.end()) {
+        return ParserToken{"keyword", id, start};
     }
     
     std::regex keyword_regex("^is$|^isn't$|^isif$|^then$|^elseif$|^else$|^isifn't$|^elseifn't$|^then't$|^elsen't$|^or$|^orn't$");
@@ -164,13 +169,13 @@ ParserToken Lexer::readIdentifier() {
     std::regex null_regex("^null$|^Null$|^NULL$|^nil$|^Nil$|^NIL$");
     std::regex undefined_regex("^undefined$");
     
-    if (std::regex_match(id, keyword_regex)) {
+    if (std::regex_match(idWithoutDollar, keyword_regex)) {
         return ParserToken{"keyword", id, start};
-    } else if (std::regex_match(id, boolean_regex)) {
+    } else if (std::regex_match(idWithoutDollar, boolean_regex)) {
         return ParserToken{"boolean", id, start};
-    } else if (std::regex_match(id, null_regex)) {
+    } else if (std::regex_match(idWithoutDollar, null_regex)) {
         return ParserToken{"null", id, start};
-    } else if (std::regex_match(id, undefined_regex)) {
+    } else if (std::regex_match(idWithoutDollar, undefined_regex)) {
         return ParserToken{"undefined", id, start};
     } else {
         return ParserToken{"identifier", id, start};
@@ -180,7 +185,7 @@ ParserToken Lexer::readIdentifier() {
 void Lexer::addDollarBefore() {
     if (dollarBefore) {
         dollarBefore = false;
-        tokens.push_back(ParserToken{"$", "$", position - 1});
+        position--;
     }
 }
 
@@ -238,14 +243,14 @@ void Lexer::tokenize() {
         }
 
         if (ch == '-') {
-            addDollarBefore();
+            addDollarBefore();0 
             tokens.push_back(ParserToken{"minus", "-", position});
             position++;
             continue;
         }
 
         if (ch == '$') {
-            tokens.push_back(ParserToken{"$", "$", position});
+            dollarBefore = true;
             position++;
             continue;
         }

@@ -1,4 +1,4 @@
-name: Test website
+name: CI
 
 on:
   push:
@@ -66,4 +66,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: CMAKE
-        run: 
+        run: bash test/linuc/justc.sh

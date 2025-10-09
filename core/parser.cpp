@@ -860,8 +860,8 @@ ASTNode Parser::parseCommand() {
                 addLog("ECHO", message, node.startPos);
                 std::cout << message << std::endl;
             } else {
-                addLog("ECHO", (varval.string_value || varval.number_value || varval.boolean_value), node.startPos);
-                std::cout << (varval.string_value || varval.number_value || varval.boolean_value) << std::endl;
+                addLog("ECHO", varval.toString(), node.startPos);
+                std::cout << varval.toString() << std::endl;
             }
         }
     }
@@ -879,7 +879,7 @@ ASTNode Parser::parseCommand() {
             if (varval.type == DataType::UNKNOWN) {
                 addLog("LOG", message, node.startPos);
             } else {
-                addLog("LOG", (varval.string_value || varval.number_value || varval.boolean_value), node.startPos);
+                addLog("LOG", varval.toString(), node.startPos);
             }
         }
     }

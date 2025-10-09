@@ -261,7 +261,7 @@ ParseResult Parser::parse() {
                     ast.push_back(parseTypeCommand());
                 } else if (keyword == "OUTPUT") {
                     ast.push_back(parseOutputCommand());
-                } else if (keyword == "RETURN") {
+                } else if (keyword == "RETURN" || keyword == "RT") {
                     ast.push_back(parseReturnCommand());
                 } else if (keyword == "ALLOW" || keyword == "DISALLOW") {
                     ast.push_back(parseAllowCommand());
@@ -1173,7 +1173,14 @@ Value Parser::functionECHO(const std::vector<Value>& args) {
 
 Value Parser::functionJSON(const std::vector<Value>& args) { return Value(); }
 Value Parser::functionHTTPJSON(const std::vector<Value>& args) { return Value(); }
-Value Parser::functionHTTPTEXT(const std::vector<Value>& args) { return Value(); }
+
+Value Parser::functionHTTPTEXT(const std::vector<Value>& args) {
+    Value result;
+    result.type = DataType::UNKNOWN;
+    result.string_value = "HTTPTEXT:"+args[0].toString();
+    return result;
+}
+
 Value Parser::functionJUSTC(const std::vector<Value>& args) { return Value(); }
 Value Parser::functionHTTPJUSTC(const std::vector<Value>& args) { return Value(); }
 Value Parser::functionPARSEJUSTC(const std::vector<Value>& args) { return Value(); }

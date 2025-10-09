@@ -22,3 +22,4 @@ emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp c
 mv browsers/$SAFE_DIR/justc.core.wasm browsers/$SAFE_DIR/justc.wasm
 sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/$SAFE_DIR/justc.core.js
 mv browsers/$SAFE_DIR/core.js browsers/$SAFE_DIR/justc.js
+rm browsers/compile.sh

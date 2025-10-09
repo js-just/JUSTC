@@ -15,12 +15,20 @@ async function checkWASM() {
     }
 }
 
+const logElemDcmt = document.createElement("pre");
+const logElemId = "logs";
+logElemDcmt.id = logElemId;
+document.body.appendChild(logElemDcmt);
+const logElemBody = document.getElementById(logElemId);
+
 function displayLogs(result) {
     if (result.logs && Array.isArray(result.logs)) {
         result.logs.forEach(log => {
             if (log.type === 'ECHO' || log.type === 'LOG') {
+                logElemBody.innerText += log.message + '\n';
                 console.log(`[${log.type}] ${log.message}`);
             } else if (log.type === 'ERROR') {
+                logElemBody.innerText += log.message + '\n';
                 console.error(`[${log.type}] ${log.message}`);
             }
         });

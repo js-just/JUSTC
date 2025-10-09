@@ -855,8 +855,14 @@ ASTNode Parser::parseCommand() {
     if (command == "ECHO") {
         for (const auto& arg : args) {
             std::string message = arg.toString();
-            addLog("ECHO", message, node.startPos);
-            std::cout << message << std::endl;
+            auto varval = resolveVariableValue(message);
+            if (varval.type == DataType::UNKNOWN) {
+                addLog("ECHO", message, node.startPos);
+                std::cout << message << std::endl;
+            } else {
+                addLog("ECHO", varval, node.startPos);
+                std::cout << varval << std::endl;
+            }
         }
     }
     else if (command == "LOGFILE") {
@@ -869,7 +875,12 @@ ASTNode Parser::parseCommand() {
     else if (command == "LOG") {
         for (const auto& arg : args) {
             std::string message = arg.toString();
-            addLog("LOG", message, node.startPos);
+            auto varval = resolveVariableValue(message);
+            if (varval.type == DataType::UNKNOWN) {
+                addLog("LOG", message, node.startPos);
+            } else {
+                addLog("LOG", varval, node.startPos);
+            }
         }
     }
     

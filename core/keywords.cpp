@@ -33,6 +33,7 @@ const std::unordered_map<std::string, std::string> smallKeywords = {
     {"PH", "PARSEHOCON"}, {"S32", "STRINGB32"}, {"B32", "BASE32"},
     {"AB", "ABSOLUTE"}, {"CE", "CEIL"}, {"FL", "FLOOR"}, {"AL", "ALLOW"},
     {"DL", "DISALLOW"}, {"J", "JAVASCRIPT"},
+    
     {"HJC", "HTTPJUSTC"}, {"CF", "CONFIG"}, {"SZ", "STAT"}, 
     {"S10", "STRINGNUM"}, {"SNUM", "STRINGNUM"}, {"TID", "TYPEID"},
     {"TO", "TYPEOF"}, {"PUT", "RETURN"}, {"PJC", "PARSEJUSTC"},

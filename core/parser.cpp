@@ -702,7 +702,7 @@ Value Parser::parsePrimary() {
         advance();
         return result;
     }
-    else if (match("keyword") && peekToken().type == '(') {
+    else if (match("keyword") && peekToken().type == "(") {
         return parseFunctionCall();
     }
     else if (match("(")) {

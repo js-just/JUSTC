@@ -702,6 +702,9 @@ Value Parser::parsePrimary() {
         advance();
         return result;
     }
+    else if (match("keyword") && peekToken().type == '(') {
+        return parseFunctionCall();
+    }
     else if (match("(")) {
         advance();
         Value result = parseExpression();

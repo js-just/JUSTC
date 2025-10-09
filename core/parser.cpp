@@ -803,7 +803,13 @@ Value Parser::parsePrimary() {
         advance();
         return result;
     }
-    
+    else if (match(".") || match(",")) {
+        Value result;
+        result.type = DataType::NULL_TYPE;
+        result.string_value = "null";
+        return result;
+    }
+
     throw std::runtime_error("Unexpected token in expression: " + currentToken().value);
 }
 

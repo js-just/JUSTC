@@ -87,6 +87,7 @@ jobs:
           mv browsers/$OUTPUT_DIR/justc.core.wasm browsers/$OUTPUT_DIR/justc.wasm
           sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/$OUTPUT_DIR/justc.core.js
           mv browsers/$OUTPUT_DIR/core.js browsers/$OUTPUT_DIR/justc.js
+          sed -i 's/"justc\.core\.js";/$(cat browsers/$OUTPUT_DIR/justc.core.js)/g' browsers/$OUTPUT_DIR/justc.js
 
       - name: Commit
         uses: cpina/github-action-push-to-another-repository@main

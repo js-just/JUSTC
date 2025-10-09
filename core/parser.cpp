@@ -42,10 +42,24 @@ std::string Value::toString() const {
         case DataType::VARIABLE:
             return string_value;
         case DataType::NUMBER:
-        case DataType::HEXADECIMAL:
-        case DataType::BINARY:
-        case DataType::OCTAL:
             return std::to_string(number_value);
+        case DataType::HEXADECIMAL:
+            return "x" + std::to_string(static_cast<int>(number_value));
+        case DataType::BINARY: {
+            int num = static_cast<int>(number_value);
+            std::string binary;
+            if (num == 0) return "b0";
+            while (num > 0) {
+                binary = (num % 2 == 0 ? "0" : "1") + binary;
+                num /= 2;
+            }
+            return "b" + binary;
+        }
+        case DataType::OCTAL: {
+            std::stringstream ss;
+            ss << "o" << std::oct << static_cast<int>(number_value);
+            return ss.str();
+        }
         case DataType::BOOLEAN:
             return boolean_value ? "true" : "false";
         case DataType::NULL_TYPE:
@@ -148,6 +162,27 @@ Value Value::createVariable(const std::string& varName) {
     return result;
 }
 
+Value Value::createHexadecimal(double num) {
+    Value result;
+    result.type = DataType::HEXADECIMAL;
+    result.number_value = num;
+    return result;
+}
+
+Value Value::createBinary(double num) {
+    Value result;
+    result.type = DataType::BINARY;
+    result.number_value = num;
+    return result;
+}
+
+Value Value::createOctal(double num) {
+    Value result;
+    result.type = DataType::OCTAL;
+    result.number_value = num;
+    return result;
+}
+
 namespace {
 
 std::string toLower(const std::string& str) {
@@ -198,7 +233,7 @@ long getCurrentTime() {
 } // namespace
 
 Parser::Parser(const std::vector<ParserToken>& tokens) 
-    : tokens(tokens), position(0), outputMode("SPECIFIED"), allowJavaScript(true), 
+    : tokens(tokens), position(0), outputMode("EVERYTHING"), allowJavaScript(true), 
       globalScope(false), strictMode(false), hasLogFile(false) {}
 
 std::string Parser::getCurrentTimestamp() const {
@@ -317,17 +352,33 @@ ParseResult Parser::parse() {
         
         evaluateAllVariables();
         
-        if (outputMode == "SPECIFIED" && !outputVariables.empty()) {
+        if (outputMode == "SPECIFIED") {
+            if (outputVariables.empty()) {
+                throw std::runtime_error("OUTPUT SPECIFIED requires RETURN command with variables");
+            }
             for (const auto& varName : outputVariables) {
                 auto it = variables.find(varName);
                 if (it != variables.end()) {
                     size_t index = &varName - &outputVariables[0];
                     std::string outputName = (index < outputNames.size()) ? outputNames[index] : varName;
-                    result.returnValues[outputName] = it->second;
+                    if (outputName != "_") {
+                        result.returnValues[outputName] = convertToDecimal(it->second);
+                    } else {
+                        result.returnValues[varName] = convertToDecimal(it->second);
+                    }
                 }
             }
         } else if (outputMode == "EVERYTHING") {
-            result.returnValues = variables;
+            if (!outputVariables.empty()) {
+                throw std::runtime_error("RETURN command not allowed with OUTPUT EVERYTHING");
+            }
+            for (const auto& pair : variables) {
+                result.returnValues[pair.first] = convertToDecimal(pair.second);
+            }
+        } else if (outputMode == "DISABLED") {
+            if (!outputVariables.empty()) {
+                throw std::runtime_error("RETURN command not allowed with OUTPUT DISABLED");
+            }
         }
         
         result.logs = logs;
@@ -340,6 +391,18 @@ ParseResult Parser::parse() {
     }
     
     return result;
+}
+
+Value Parser::convertToDecimal(const Value& value) {
+    if (value.type == DataType::HEXADECIMAL || 
+        value.type == DataType::BINARY || 
+        value.type == DataType::OCTAL) {
+        Value result;
+        result.type = DataType::NUMBER;
+        result.number_value = value.number_value;
+        return result;
+    }
+    return value;
 }
 
 ASTNode Parser::parseTypeCommand() {
@@ -367,9 +430,14 @@ ASTNode Parser::parseOutputCommand() {
     advance();
     
     if (match("keyword")) {
-        outputMode = currentToken().value;
-        node.value = stringToValue(outputMode);
-        advance();
+        std::string mode = currentToken().value;
+        if (mode == "SPECIFIED" || mode == "EVERYTHING" || mode == "DISABLED") {
+            outputMode = mode;
+            node.value = stringToValue(outputMode);
+            advance();
+        } else {
+            throw std::runtime_error("Invalid OUTPUT mode: " + mode);
+        }
     }
     
     return node;
@@ -669,6 +737,16 @@ Value Parser::parsePrimary() {
         advance();
         return numberToValue(num);
     }
+    else if (match("hex")) {
+        std::string hexStr = currentToken().value;
+        advance();
+        return hexToValue(hexStr);
+    }
+    else if (match("binary")) {
+        std::string binStr = currentToken().value;
+        advance();
+        return binaryToValue(binStr);
+    }
     else if (match("string")) {
         std::string str = currentToken().value;
         advance();
@@ -691,21 +769,6 @@ Value Parser::parsePrimary() {
         result.type = DataType::NULL_TYPE;
         advance();
         return result;
-    }
-    else if (match("hex")) {
-        std::string hexStr = currentToken().value;
-        advance();
-        return hexToValue(hexStr);
-    }
-    else if (match("binary")) {
-        std::string binStr = currentToken().value;
-        advance();
-        return binaryToValue(binStr);
-    }
-    else if (match("octal")) {
-        std::string octStr = currentToken().value;
-        advance();
-        return octalToValue(octStr);
     }
     else if (match("identifier")) {
         std::string varName = currentToken().value;

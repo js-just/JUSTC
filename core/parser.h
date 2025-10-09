@@ -78,6 +78,9 @@ struct Value {
     static Value createLink(const std::string& link);
     static Value createPath(const std::string& path);
     static Value createVariable(const std::string& varName);
+    static Value createHexadecimal(double num);
+    static Value createBinary(double num);
+    static Value createOctal(double num);
 };
 
 struct LogEntry {
@@ -218,6 +221,8 @@ private:
     Value hexToValue(const std::string& hexStr);
     Value binaryToValue(const std::string& binStr);
     Value octalToValue(const std::string& octStr);
+    
+    Value convertToDecimal(const Value& value);
     
     // built-in
     Value functionVALUE(const std::vector<Value>& args);

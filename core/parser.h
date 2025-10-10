@@ -81,6 +81,19 @@ struct Value {
     static Value createHexadecimal(double num);
     static Value createBinary(double num);
     static Value createOctal(double num);
+
+    Value(const ASTNode& node) {
+        type = DataType::UNKNOWN;
+        number_value = 0;
+        
+        if (node.value.type != DataType::UNKNOWN) {
+            type = node.value.type;
+            number_value = node.value.number_value;
+            boolean_value = node.value.boolean_value;
+            string_value = node.value.string_value;
+            complex_value = node.value.complex_value;
+        }
+    }
 };
 
 struct LogEntry {

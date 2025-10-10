@@ -809,6 +809,9 @@ Value Parser::parsePrimary() {
         result.string_value = "null";
         return result;
     }
+    else if (match("keyword") || match("?") || match("!=") || match("=")) {
+        ast.push_back(parseStatement());
+    }
 
     throw std::runtime_error("Unexpected token in expression: " + currentToken().value);
 }

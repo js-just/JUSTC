@@ -315,7 +315,14 @@ ParseResult Parser::parse() {
             skipCommas();
             if (isEnd()) break;
             
-            if (match("keyword")) {
+            if (
+                (peekToken(-1).type == "keyword"
+                || peekToken(-1).type == "?" ) &&
+                peekToken(-2).type == "identifier"
+            ) {
+                position -= 2;
+                ast.push_back(parseVariableDeclaration());
+            } else if (match("keyword")) {
                 std::string keyword = currentToken().value;
                 
                 if (keyword == "TYPE") {

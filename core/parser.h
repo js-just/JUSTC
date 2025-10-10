@@ -54,8 +54,6 @@ enum class DataType {
     UNKNOWN = -1
 };
 
-struct ASTNode;
-
 struct Value {
     DataType type;
     
@@ -83,19 +81,6 @@ struct Value {
     static Value createHexadecimal(double num);
     static Value createBinary(double num);
     static Value createOctal(double num);
-
-    Value(const ASTNode& node) {
-        type = DataType::UNKNOWN;
-        number_value = 0;
-        
-        if (node.value.type != DataType::UNKNOWN) {
-            type = node.value.type;
-            number_value = node.value.number_value;
-            boolean_value = node.value.boolean_value;
-            string_value = node.value.string_value;
-            complex_value = node.value.complex_value;
-        }
-    }
 };
 
 struct LogEntry {
@@ -187,6 +172,8 @@ private:
     void addLog(const std::string& type, const std::string& message, size_t position = 0);
     void setLogFile(const std::string& path);
     void appendToLogFile(const std::string& content);
+
+    Value astNodeToValue(const ASTNode& node);
     
     Value parseExpression();
     Value parsePrimary();

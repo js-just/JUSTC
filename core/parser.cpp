@@ -731,6 +731,18 @@ Value Parser::parseUnary() {
     return parsePrimary();
 }
 
+Value Parser::astNodeToValue(const ASTNode& node) {
+    if (node.type == "VARIABLE_DECLARATION") {
+        return evaluateASTNode(node);
+    }
+    else if (node.type == "COMMAND") {
+        return stringToValue("COMMAND: " + node.identifier);
+    }
+    else {
+        return node.value;
+    }
+}
+
 Value Parser::parsePrimary() {
     if (match("number")) {
         double num = parseNumber(currentToken().value);
@@ -810,7 +822,7 @@ Value Parser::parsePrimary() {
         return result;
     }
     else if (match("keyword") || match("?") || match("!=") || match("=")) {
-        return parseStatement();
+        return astNodeToValue(parseStatement());
     }
 
     throw std::runtime_error("Unexpected token in expression: " + currentToken().value);

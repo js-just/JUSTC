@@ -756,7 +756,7 @@ Value Parser::astNodeToValue(const ASTNode& node) {
         return evaluateASTNode(node);
     }
     else if (node.type == "COMMAND") {
-        return stringToValue("COMMAND: " + node.identifier);
+        return stringToValue(node.identifier);
     }
     else {
         return node.value;

@@ -181,6 +181,17 @@ ParserToken Lexer::readIdentifier() {
     if (!id.empty() && id[0] == '$') {
         idWithoutDollar = id.substr(1);
     }
+
+    auto smallIt = smallkeywords.find(idWithoutDollar);
+    if (smallIt != smallkeywords.end()) {
+        std::string fullKeyword = id[0] == '$' ? "$" + smallIt->second : smallIt->second;
+        return ParserToken{"keyword", fullKeyword, start};
+    }
+    auto bigIt = bigkeywords.find(idWithoutDollar);
+    if (bigIt != bigkeywords.end()) {
+        std::string fullKeyword = id[0] == '$' ? "$" + bigIt->second : bigIt->second;
+        return ParserToken{"keyword", fullKeyword, start};
+    }
     
     if (std::find(keywords.begin(), keywords.end(), idWithoutDollar) != keywords.end()) {
         return ParserToken{"keyword", id, start};

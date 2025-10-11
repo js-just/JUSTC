@@ -110,6 +110,12 @@ bool Value::toBoolean() const {
             return number_value != 0.0;
         case DataType::STRING:
             if (string_value.empty()) return false;
+            auto toLower = [](const std::string& str) {
+                std::string result = str;
+                std::transform(result.begin(), result.end(), result.begin(),
+                              [](unsigned char c) { return std::tolower(c); });
+                return result;
+            };
             std::string lower = toLower(string_value);
             if (lower == "false" || lower == "no" || lower == "n" || 
                 lower == "null" || lower == "nil") {
@@ -783,9 +789,17 @@ Value Parser::parsePrimary() {
         return linkToValue(link);
     }
     else if (match("boolean")) {
-        bool b = (toLower(currentToken().value) == "true" || 
-                  toLower(currentToken().value) == "yes" ||
-                  toLower(currentToken().value) == "y");
+        auto toLower = [](const std::string& str) {
+            std::string result = str;
+            std::transform(result.begin(), result.end(), result.begin(),
+                          [](unsigned char c) { return std::tolower(c); });
+            return result;
+        };
+        
+        std::string tokenValue = currentToken().value;
+        bool b = (toLower(tokenValue) == "true" || 
+                  toLower(tokenValue) == "yes" ||
+                  toLower(tokenValue) == "y");
         advance();
         return booleanToValue(b);
     }

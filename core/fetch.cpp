@@ -256,6 +256,12 @@ Value Fetch::fetchHttpContent(const std::string& url, const std::string& expecte
     
     try {
         std::string content = executeHttpRequest(url);
+
+        if (content.empty()) {
+            result.type = DataType::ERROR;
+            result.string_value = "Empty response from: " + url;
+            return result;
+        }
         
         if (expectedType == "JSON" || expectedType == "HTTPJSON") {
             result.type = DataType::JSON_OBJECT;

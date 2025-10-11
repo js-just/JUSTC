@@ -72,7 +72,7 @@ wasm2wat browsers/$SAFE_DIR/justc.wasm > browsers/$SAFE_DIR/justc.wat
     echo "  (@custom \"justc.copyright\" \"Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>\")"
     tail -n +2 "browsers/$SAFE_DIR/justc.wat"
 } > browsers/$SAFE_DIR/justc.tmp
-wat2wasm browsers/$SAFE_DIR/justc.tmp -o browsers/$SAFE_DIR/justc.wasm
+wat2wasm browsers/$SAFE_DIR/justc.tmp --enable-annotations -o browsers/$SAFE_DIR/justc.wasm
 rm browsers/$SAFE_DIR/justc.wat browsers/$SAFE_DIR/justc.tmp
 
 ls -la browsers/$SAFE_DIR/

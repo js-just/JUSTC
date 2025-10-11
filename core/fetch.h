@@ -33,7 +33,6 @@ SOFTWARE.
 
 class Fetch {
 public:
-    static ParseResult interpret(const std::string& code, bool allowHttpRequests = true);
     static Value httpGet(const std::string& url, const std::string& format = "TEXT");
     
 private:

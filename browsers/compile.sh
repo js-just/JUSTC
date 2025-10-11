@@ -47,3 +47,8 @@ mv browsers/$SAFE_DIR/core.js browsers/$SAFE_DIR/justc.js
 rm browsers/compile.sh
 
 printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - browsers/$SAFE_DIR/justc.core.js > temp.js && mv temp.js browsers/$SAFE_DIR/justc.core.js
+{
+    echo "(;\n\n$(cat LICENSE)\n\n;)\n\n;; Just an Ultimate Site Tool Configuration language\n\n"
+    cat browsers/$SAFE_DIR/justc.wasm
+} > browsers/$SAFE_DIR/justc.wasm.tmp
+mv browsers/$SAFE_DIR/justc.wasm.tmp browsers/$SAFE_DIR/justc.wasm

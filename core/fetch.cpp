@@ -292,5 +292,15 @@ Value Fetch::httpGet(const std::string& url, const std::string& format) {
         result.string_value = "Just an Ultimate Site Tool Configuration language";
         return result;
     }
-    return fetchHttpContent(url, format);
+
+    Value result = fetchHttpContent(url, format);
+
+    #ifdef __EMSCRIPTEN__
+    std::cout << "[Fetch Debug] httpGet - URL: " << url 
+              << ", Format: " << format 
+              << ", Result type: " << (int)result.type
+              << ", Result value: " << result.toString() << std::endl;
+    #endif
+
+    return result;
 }

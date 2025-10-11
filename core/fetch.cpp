@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-#include "interpreter.h"
+#include "fetch.h"
 #include "lexer.h"
 #include "parser.h"
 #include <iostream>
@@ -35,51 +35,41 @@ SOFTWARE.
 
 void downloadSucceeded(emscripten_fetch_t *fetch) {
     std::cout << "HTTP request succeeded: " << fetch->url << std::endl;
+    emscripten_fetch_close(fetch);
 }
 
 void downloadFailed(emscripten_fetch_t *fetch) {
     std::cout << "HTTP request failed: " << fetch->url << std::endl;
+    emscripten_fetch_close(fetch);
 }
 
-#elif _WIN32
-    #include <windows.h>
-    #include <winhttp.h>
-    #pragma comment(lib, "winhttp.lib")
-#else
-    #include <curl/curl.h>
-#endif
-
-ParseResult Interpreter::interpret(const std::string& code) {
-    auto lexerResult = Lexer::parse(code);
-    auto parseResult = Parser::parseTokens(lexerResult.second);
+std::string Fetch::executeHttpRequest(const std::string& url) {
+    emscripten_fetch_attr_t attr;
+    emscripten_fetch_attr_init(&attr);
+    strcpy(attr.requestMethod, "GET");
+    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY | EMSCRIPTEN_FETCH_SYNCHRONOUS;
     
-    processHttpRequests(parseResult);
+    emscripten_fetch_t *fetch = emscripten_fetch(&attr, url.c_str());
     
-    return parseResult;
-}
-
-void Interpreter::processHttpRequests(const ParseResult& result) {
-    for (auto& pair : result.returnValues) {
-        if (pair.second.type == DataType::VARIABLE) {
-            std::string varName = pair.second.string_value;
-        }
-        else if (pair.second.type == DataType::LINK) {
-            std::string url = pair.second.string_value;
-        }
+    std::string result;
+    if (fetch->status == 200) {
+        result = std::string(fetch->data, fetch->numBytes);
+    } else {
+        result = "HTTP Error: " + std::to_string(fetch->status);
     }
-}
-
-#ifdef __EMSCRIPTEN__
-// Browsers
-
-std::string Interpreter::executeHttpRequest(const std::string& url) {
-    return "";
+    
+    emscripten_fetch_close(fetch);
+    return result;
 }
 
 #elif _WIN32
 // Windows (WinHTTP)
 
-std::string Interpreter::executeHttpRequest(const std::string& url) {
+#include <windows.h>
+#include <winhttp.h>
+#pragma comment(lib, "winhttp.lib")
+
+std::string Fetch::executeHttpRequest(const std::string& url) {
     HINTERNET hSession = NULL;
     HINTERNET hConnect = NULL;
     HINTERNET hRequest = NULL;
@@ -180,12 +170,14 @@ std::string Interpreter::executeHttpRequest(const std::string& url) {
 #else
 // Linux/macOS (libcurl)
 
+#include <curl/curl.h>
+
 static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
 
-std::string Interpreter::executeHttpRequest(const std::string& url) {
+std::string Fetch::executeHttpRequest(const std::string& url) {
     CURL* curl;
     CURLcode res;
     std::string readBuffer;
@@ -215,23 +207,35 @@ std::string Interpreter::executeHttpRequest(const std::string& url) {
 
 #endif
 
-Value Interpreter::fetchHttpContent(const std::string& url, const std::string& expectedType) {
+void Fetch::processHttpRequests(const ParseResult& result) {
+    for (auto& pair : result.returnValues) {
+        if (pair.second.type == DataType::VARIABLE) {
+            std::string varName = pair.second.string_value;
+        }
+        else if (pair.second.type == DataType::LINK) {
+            std::string url = pair.second.string_value;
+        }
+    }
+}
+
+Value Fetch::fetchHttpContent(const std::string& url, const std::string& expectedType) {
     Value result;
     
     try {
         std::string content = executeHttpRequest(url);
         
-        if (expectedType == "JSON") {
+        if (expectedType == "JSON" || expectedType == "HTTPJSON") {
             result.type = DataType::JSON_OBJECT;
             result.string_value = content;
-            // TODO: parse JSON
         } else if (expectedType == "TEXT" || expectedType == "HTTPTEXT") {
             result.type = DataType::STRING;
             result.string_value = content;
         } else if (expectedType == "JUSTC" || expectedType == "HTTPJUSTC") {
             result.type = DataType::JUSTC_OBJECT;
             result.string_value = content;
-            // TODO: parse JUSTC
+        } else if (expectedType == "HOCON" || expectedType == "HTTPHOCON") {
+            result.type = DataType::HOCON_OBJECT;
+            result.string_value = content;
         } else {
             result.type = DataType::STRING;
             result.string_value = content;
@@ -243,4 +247,8 @@ Value Interpreter::fetchHttpContent(const std::string& url, const std::string& e
     }
     
     return result;
+}
+
+Value Fetch::httpGet(const std::string& url, const std::string& format) {
+    return fetchHttpContent(url, format);
 }

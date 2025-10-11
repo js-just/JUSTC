@@ -24,20 +24,21 @@ SOFTWARE.
 
 */
 
-#ifndef INTERPRETER_H
-#define INTERPRETER_H
+#ifndef FETCH_H
+#define FETCH_H
 
 #include "parser.h"
 #include <string>
 
-class Interpreter {
+class Fetch {
 public:
-    static ParseResult interpret(const std::string& code);
+    static ParseResult interpret(const std::string& code, bool allowHttpRequests = true);
+    static Value httpGet(const std::string& url, const std::string& format = "TEXT");
     
 private:
     static Value fetchHttpContent(const std::string& url, const std::string& expectedType);
     static std::string executeHttpRequest(const std::string& url);
-    static void processHttpRequests(const ParseResult& result);  // Добавлено static
+    static void processHttpRequests(const ParseResult& result);
 };
 
 #endif // INTERPRETER_H

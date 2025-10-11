@@ -33,6 +33,7 @@ SOFTWARE.
 #include <iostream>
 #include <chrono>
 #include <ctime>
+#include "fetch.h"
 
 std::string Value::toString() const {
     switch (type) {
@@ -256,9 +257,10 @@ long getCurrentTime() {
 
 } // namespace
 
-Parser::Parser(const std::vector<ParserToken>& tokens) 
+Parser::Parser(const std::vector<ParserToken>& tokens, bool allowHttpRequests) 
     : tokens(tokens), position(0), outputMode("EVERYTHING"), allowJavaScript(true), 
-      globalScope(false), strictMode(false), hasLogFile(false) {}
+      globalScope(false), strictMode(false), hasLogFile(false), 
+      allowHttpRequests(allowHttpRequests) {}
 
 std::string Parser::getCurrentTimestamp() const {
     auto now = std::chrono::system_clock::now();
@@ -954,14 +956,38 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "TYPEOF") return functionTYPEOF(args);
     if (funcName == "ECHO") return functionECHO(args);
     if (funcName == "JSON") return functionJSON(args);
-    if (funcName == "HTTPJSON") return functionHTTPJSON(args);
-    if (funcName == "HTTPTEXT") return functionHTTPTEXT(args);
+    if (funcName == "HTTPJSON") {
+        if (!allowHttpRequests) {
+            Value result;
+            result.type = DataType::ERROR;
+            result.string_value = "HTTP requests are disabled";
+            return result;
+        }
+        return functionHTTPJSON(args);
+    }
+    if (funcName == "HTTPTEXT") {
+        if (!allowHttpRequests) {
+            Value result;
+            result.type = DataType::ERROR;
+            result.string_value = "HTTP requests are disabled";
+            return result;
+        }
+        return functionHTTPTEXT(args);
+    }
     if (funcName == "JUSTC") return functionJUSTC(args);
-    if (funcName == "HTTPJUSTC") return functionHTTPJUSTC(args);
+    if (funcName == "HTTPJUSTC") {
+        if (!allowHttpRequests) {
+            Value result;
+            result.type = DataType::ERROR;
+            result.string_value = "HTTP requests are disabled";
+            return result;
+        }
+        return functionHTTPJUSTC(args);
+    }
     if (funcName == "PARSEJUSTC") return functionPARSEJUSTC(args);
     if (funcName == "PARSEJSON") return functionPARSEJSON(args);
     if (funcName == "FILE") return functionFILE(args);
-    if (funcName == "STAT") return functionSTAT(args);
+    if (funcName == "SIZE") return functionSTAT(args);
     if (funcName == "ENV") return functionENV(args);
     if (funcName == "CONFIG") return functionCONFIG(args);
     
@@ -1324,10 +1350,14 @@ Value Parser::functionJSON(const std::vector<Value>& args) { return Value(); }
 Value Parser::functionHTTPJSON(const std::vector<Value>& args) { return Value(); }
 
 Value Parser::functionHTTPTEXT(const std::vector<Value>& args) {
-    Value result;
-    result.type = DataType::UNKNOWN;
-    result.string_value = "HTTPTEXT:"+args[0].toString();
-    return result;
+    if (args.empty()) {
+        throw std::runtime_error("HTTPTEXT requires URL argument");
+    }
+    
+    std::string url = args[0].toString();
+    addLog("HTTP", "HTTPTEXT request to: " + url, currentToken().start);
+    
+    return Fetch::httpGet(url, 'TEXT');
 }
 
 Value Parser::functionJUSTC(const std::vector<Value>& args) { return Value(); }
@@ -1501,7 +1531,7 @@ Value Parser::octalToValue(const std::string& octStr) {
     return result;
 }
 
-ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens) {
-    Parser parser(tokens);
+ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool allowHttpRequests) {
+    Parser parser(tokens, allowHttpRequests);
     return parser.parse();
 }

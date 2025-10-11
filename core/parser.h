@@ -31,6 +31,8 @@ SOFTWARE.
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include "lexer.h"
+#include "fetch.h"
 
 enum class DataType {
     JUSTC_OBJECT = 0,
@@ -140,6 +142,7 @@ struct ParserToken {
 
 class Parser {
 private:
+    bool allowHttpRequests;
     std::vector<ParserToken> tokens;
     std::vector<ASTNode> ast;
     size_t position;
@@ -272,11 +275,11 @@ private:
     Value functionFLOOR(const std::vector<Value>& args);
     
 public:
-    Parser(const std::vector<ParserToken>& tokens);
+    Parser(const std::vector<ParserToken>& tokens, bool allowHttpRequests = true);
     
     ParseResult parse();
     
-    static ParseResult parseTokens(const std::vector<ParserToken>& tokens);
+    static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool allowHttpRequests = true);
 };
 
 #endif // PARSER_H

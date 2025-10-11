@@ -50,6 +50,7 @@ printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - browsers/$SAFE_DIR/justc.co
 sudo apt-get install wabt
 wasm2wat browsers/$SAFE_DIR/justc.wasm > browsers/$SAFE_DIR/justc.wat
 {
+    head -n1 "browsers/$SAFE_DIR/justc.wat"
     echo "(;"
     echo ""
     cat LICENSE
@@ -58,7 +59,7 @@ wasm2wat browsers/$SAFE_DIR/justc.wasm > browsers/$SAFE_DIR/justc.wat
     echo ""
     echo ";; Just an Ultimate Site Tool Configuration language"
     echo ""
-    cat browsers/$SAFE_DIR/justc.wat
+    tail -n +2 "browsers/$SAFE_DIR/justc.wat"
 } > browsers/$SAFE_DIR/justc.tmp
 wat2wasm browsers/$SAFE_DIR/justc.tmp > browsers/$SAFE_DIR/justc.wasm
 rm browsers/$SAFE_DIR/justc.wat browsers/$SAFE_DIR/justc.tmp

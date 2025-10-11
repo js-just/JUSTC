@@ -233,9 +233,6 @@ Value Fetch::fetchHttpContent(const std::string& url, const std::string& expecte
         } else if (expectedType == "JUSTC" || expectedType == "HTTPJUSTC") {
             result.type = DataType::JUSTC_OBJECT;
             result.string_value = content;
-        } else if (expectedType == "HOCON" || expectedType == "HTTPHOCON") {
-            result.type = DataType::HOCON_OBJECT;
-            result.string_value = content;
         } else {
             result.type = DataType::STRING;
             result.string_value = content;

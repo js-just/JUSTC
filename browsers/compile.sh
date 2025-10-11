@@ -21,11 +21,10 @@
 # SOFTWARE.
 
 #!/bin/bash
-
 set -e
 
 OUTPUT_DIR="${1:-development}"
-SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g')
+SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
 mkdir -p "browsers/$SAFE_DIR"
 
 echo $OUTPUT_DIR
@@ -34,6 +33,7 @@ echo $SAFE_DIR
 sudo apt-get update
 sudo apt-get install -y wabt
 
+set +e
 emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp core/keywords.cpp \
     -o browsers/$SAFE_DIR/justc.core.js \
     -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free"]' \
@@ -46,6 +46,7 @@ emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp c
     -s EXPORT_NAME='__justc__' \
     -s ASSERTIONS=0 \
     -Os
+set -e
 
 mv browsers/$SAFE_DIR/justc.core.wasm browsers/$SAFE_DIR/justc.wasm
 sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/$SAFE_DIR/justc.core.js

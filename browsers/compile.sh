@@ -64,14 +64,10 @@ printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - browsers/$SAFE_DIR/justc.co
 wasm2wat browsers/$SAFE_DIR/justc.wasm > browsers/$SAFE_DIR/justc.wat
 {
     head -n1 "browsers/$SAFE_DIR/justc.wat"
-    echo "(;"
-    echo ""
-    cat LICENSE
-    echo ""
-    echo ";)"
-    echo ""
-    echo ";; Just an Ultimate Site Tool Configuration language"
-    echo ""
+    echo "  (@custom \"justc\" \"Just an Ultimate Site Tool Configuration language\")"
+    echo "  (@custom \"justc.website\" \"https://just.js.org/justc\")"
+    echo "  (@custom \"justc.license\" \"MIT License. https://just.js.org/justc/license.txt\")"
+    echo "  (@custom \"justc.copyright\" \"Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>\")"
     tail -n +2 "browsers/$SAFE_DIR/justc.wat"
 } > browsers/$SAFE_DIR/justc.tmp
 wat2wasm browsers/$SAFE_DIR/justc.tmp -o browsers/$SAFE_DIR/justc.wasm

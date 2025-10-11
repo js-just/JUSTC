@@ -65,6 +65,10 @@ jobs:
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: latest
+      - name: Compress core.js with Just an Ultimate Site Tool
+        uses: js-just/latest@main
+        with:
+          path: browsers
       - name: Compile C++ to WASM
         env:
           OUTPUT_DIR: ${{ needs.determine-dirpath.outputs.dirpath }}

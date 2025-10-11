@@ -322,7 +322,16 @@ SOFTWARE.
         }
     };
     JUSTC.HiddenOutput = {
-        requestPermissions: JUSTC.Private
+        requestPermissions: function(what) {
+            if (Array.isArray(what)) {
+                const output = [];
+                for (const item of what) {
+                    output.push(JUSTC.Private(item));
+                }
+                return output
+            }
+            return JUSTC.Private(what);
+        }
     };
     for (const [name, value] of OBJECT.entries(JUSTC.HiddenOutput)) {
         OBJECT.defineProperty(JUSTC.Public, name, {

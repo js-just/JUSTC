@@ -28,9 +28,8 @@ SOFTWARE.
 #define FETCH_H
 
 #include <string>
-
-struct Value;
-struct ParseResult;
+#include "lexer.h"
+#include "parser.h"
 
 class Fetch {
 public:

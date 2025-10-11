@@ -56,7 +56,7 @@ fi
 
 mv browsers/$SAFE_DIR/justc.core.wasm browsers/$SAFE_DIR/justc.wasm
 sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/$SAFE_DIR/justc.core.js
-mv browsers/$SAFE_DIR/core.js browsers/$SAFE_DIR/justc.js
+mv browsers/core.js browsers/$SAFE_DIR/justc.js
 rm browsers/compile.sh
 
 printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - browsers/$SAFE_DIR/justc.core.js > temp.js && mv temp.js browsers/$SAFE_DIR/justc.core.js

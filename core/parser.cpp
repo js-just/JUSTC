@@ -1357,7 +1357,7 @@ Value Parser::functionHTTPTEXT(const std::vector<Value>& args) {
     std::string url = args[0].toString();
     addLog("HTTP", "HTTPTEXT request to: " + url, currentToken().start);
     
-    return Fetch::httpGet(url, 'TEXT');
+    return Fetch::httpGet(url, "TEXT");
 }
 
 Value Parser::functionJUSTC(const std::vector<Value>& args) { return Value(); }

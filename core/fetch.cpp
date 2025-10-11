@@ -287,7 +287,10 @@ Value Fetch::fetchHttpContent(const std::string& url, const std::string& expecte
 
 Value Fetch::httpGet(const std::string& url, const std::string& format) {
     if (url == "test") {
-        return Parser::stringToValue("test");
+        Value result;
+        result.type = DataType::STRING;
+        result.string_value = "Just an Ultimate Site Tool Configuration language";
+        return result;
     }
     return fetchHttpContent(url, format);
 }

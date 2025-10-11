@@ -214,6 +214,7 @@ private:
     Value evaluateASTNode(const ASTNode& node);
     void extractReferences(const Value& value, std::vector<std::string>& references);
     
+    Value stringToValue(const std::string& str);
     Value numberToValue(double num);
     Value booleanToValue(bool b);
     Value linkToValue(const std::string& link);
@@ -263,7 +264,6 @@ private:
     Value functionFLOOR(const std::vector<Value>& args);
     
 public:
-    Value stringToValue(const std::string& str);
 
     Parser(const std::vector<ParserToken>& tokens, bool allowHttpRequests = true);
     ParseResult parse();

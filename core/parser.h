@@ -129,16 +129,6 @@ struct ASTNode {
         : type(t), identifier(id), startPos(start) {}
 };
 
-struct ParserToken {
-    std::string type;
-    std::string value;
-    size_t start;
-
-    ParserToken() : type(""), value(""), start(0) {}
-    ParserToken(const std::string& t, const std::string& v, size_t s) 
-        : type(t), value(v), start(s) {}
-};
-
 class Parser {
 private:
     bool allowHttpRequests;

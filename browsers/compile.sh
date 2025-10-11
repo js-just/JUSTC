@@ -24,7 +24,8 @@
 
 set -e
 
-SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
+OUTPUT_DIR="${1:-development}"
+SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g')
 mkdir -p "browsers/$SAFE_DIR"
 
 echo $OUTPUT_DIR

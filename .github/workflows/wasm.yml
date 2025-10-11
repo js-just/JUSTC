@@ -68,7 +68,7 @@ jobs:
       - name: Compile C++ to WASM
         env:
           OUTPUT_DIR: ${{ needs.determine-dirpath.outputs.dirpath }}
-        run: bash browsers/compile.sh
+        run: bash browsers/compile.sh "${{ needs.determine-dirpath.outputs.dirpath }}"
       - name: Commit
         uses: cpina/github-action-push-to-another-repository@main
         env:

@@ -80,3 +80,5 @@ rm browsers/$SAFE_DIR/justc.wat browsers/$SAFE_DIR/justc.tmp
 ls -la browsers/$SAFE_DIR/
 file browsers/$SAFE_DIR/justc.core.wasm
 hexdump -C browsers/$SAFE_DIR/justc.core.wasm | head -20
+
+mv browsers/test.html browsers/$SAFE_DIR/test.html

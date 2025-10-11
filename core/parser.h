@@ -32,7 +32,6 @@ SOFTWARE.
 #include <memory>
 #include <unordered_map>
 #include "lexer.h"
-#include "fetch.h"
 
 enum class DataType {
     JUSTC_OBJECT = 0,

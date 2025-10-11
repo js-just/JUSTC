@@ -29,6 +29,7 @@ mkdir -p "browsers/$SAFE_DIR"
 
 echo $OUTPUT_DIR
 echo $SAFE_DIR
+echo "dirpath=$SAFE_DIR" >> $GITHUB_OUTPUT
 
 sudo apt-get update
 sudo apt-get install -y wabt

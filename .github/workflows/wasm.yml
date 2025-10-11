@@ -69,14 +69,15 @@ jobs:
         env:
           OUTPUT_DIR: ${{ needs.determine-dirpath.outputs.dirpath }}
         run: bash browsers/compile.sh "${{ needs.determine-dirpath.outputs.dirpath }}"
+        id: compile
       - name: Commit
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-directory: "browsers"
+          source-directory: "browsers/${{ steps.compile.outputs.dirpath }}"
           destination-github-username: js-just
           destination-repository-name: website
           user-email: "support@juststudio.is-a.dev"
           target-branch: main
-          target-directory: "justc"
+          target-directory: "justc/${{ steps.compile.outputs.dirpath }}"

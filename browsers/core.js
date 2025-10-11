@@ -210,6 +210,15 @@ SOFTWARE.
         "Help": function() { console.info("https://just.js.org/justc") },
     };
 
+    JUSTC.TryCatchLog = function(func, log) {
+        try {
+            return func()
+        } catch (error) {
+            console.log(log);
+            throw error
+        }
+    }
+
     JUSTC.Parse = function(code) {
         try {
             const resultPtr = JUSTC.WASM.ccall(
@@ -222,7 +231,7 @@ SOFTWARE.
             const resultJson = JUSTC.WASM.UTF8ToString(resultPtr);
             JUSTC.WASM.ccall('free_string', null, ['number'], [resultPtr]);
             
-            const result = json_.parse(resultJson);
+            const result = JUSTC.TryCatchLog(()=>json_.parse(resultJson), resultJson);
             
             return result;
         } catch (error) {

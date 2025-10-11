@@ -47,8 +47,11 @@ mv browsers/$SAFE_DIR/core.js browsers/$SAFE_DIR/justc.js
 rm browsers/compile.sh
 
 printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - browsers/$SAFE_DIR/justc.core.js > temp.js && mv temp.js browsers/$SAFE_DIR/justc.core.js
+sudo apt-get install wabt && \
+wasm2wat browsers/$SAFE_DIR/justc.wasm > browsers/$SAFE_DIR/justc.wat && \
 {
     echo "(;\n\n$(cat LICENSE)\n\n;)\n\n;; Just an Ultimate Site Tool Configuration language\n\n"
-    cat browsers/$SAFE_DIR/justc.wasm
-} > browsers/$SAFE_DIR/justc.wasm.tmp
-mv browsers/$SAFE_DIR/justc.wasm.tmp browsers/$SAFE_DIR/justc.wasm
+    cat browsers/$SAFE_DIR/justc.wat
+} > browsers/$SAFE_DIR/justc.tmp && \
+wat2wasm browsers/$SAFE_DIR/justc.tmp > browsers/$SAFE_DIR/justc.wasm && \
+rm browsers/$SAFE_DIR/justc.wat browsers/$SAFE_DIR/justc.tmp

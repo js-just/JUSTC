@@ -62,7 +62,9 @@ sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/$SAFE_DIR/justc.core.js
 mv browsers/core.js browsers/$SAFE_DIR/justc.js
 rm browsers/compile.sh
 
-printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - browsers/$SAFE_DIR/justc.core.js > temp.js && mv temp.js browsers/$SAFE_DIR/justc.core.js
+for file in browsers/$SAFE_DIR/justc.core.js browsers/$SAFE_DIR/justc.js; do
+    printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
+done
 wasm2wat browsers/$SAFE_DIR/justc.wasm > browsers/$SAFE_DIR/justc.wat
 {
     head -n1 "browsers/$SAFE_DIR/justc.wat"

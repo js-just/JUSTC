@@ -30,7 +30,8 @@ SOFTWARE.
 
 std::string JsonSerializer::escapeJsonString(const std::string& str) {
     std::stringstream ss;
-    for (char c : str) {
+    for (size_t i = 0; i < str.length(); i++) {
+        char c = str[i];
         switch (c) {
             case '"': ss << "\\\""; break;
             case '\\': ss << "\\\\"; break;
@@ -41,12 +42,18 @@ std::string JsonSerializer::escapeJsonString(const std::string& str) {
             case '\t': ss << "\\t"; break;
             default: 
                 if (static_cast<unsigned char>(c) < 0x20 || static_cast<unsigned char>(c) == 0x7F) {
-                    // Escape control characters
-                    ss << "\\u00" << std::hex << static_cast<int>(c);
+                    char buf[7];
+                    snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
+                    ss << buf;
                 } else {
                     ss << c;
                 }
                 break;
+        }
+        
+        if (i > 100000) {
+            ss << "...(truncated)";
+            break;
         }
     }
     return ss.str();

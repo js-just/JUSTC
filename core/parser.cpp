@@ -108,7 +108,7 @@ bool Value::toBoolean() const {
         case DataType::BINARY:
         case DataType::OCTAL:
             return number_value != 0.0;
-        case DataType::STRING:
+        case DataType::STRING: {
             if (string_value.empty()) return false;
             auto toLower = [](const std::string& str) {
                 std::string result = str;
@@ -122,6 +122,7 @@ bool Value::toBoolean() const {
                 return false;
             }
             return true;
+        }
         case DataType::LINK:
         case DataType::PATH:
         case DataType::VARIABLE:

@@ -32,6 +32,7 @@ SOFTWARE.
 #include "lexer.h"
 #include "parser.h"
 #include "json_serializer.h"
+#include "fetch.h"
 
 extern "C" {
 

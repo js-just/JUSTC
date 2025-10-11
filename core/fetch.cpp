@@ -31,35 +31,69 @@ SOFTWARE.
 #include <sstream>
 
 #ifdef __EMSCRIPTEN__
+#include <emscripten.h>
 #include <emscripten/fetch.h>
 
-void downloadSucceeded(emscripten_fetch_t *fetch) {
-    std::cout << "HTTP request succeeded: " << fetch->url << std::endl;
-    emscripten_fetch_close(fetch);
+struct FetchResult {
+    std::string data;
+    bool completed = false;
+    int status = 0;
+};
+
+void fetchSucceeded(emscripten_fetch_t *fetch) {
+    FetchResult* result = (FetchResult*)fetch->userData;
+    result->data = std::string(fetch->data, fetch->numBytes);
+    result->status = fetch->status;
+    result->completed = true;
 }
 
-void downloadFailed(emscripten_fetch_t *fetch) {
-    std::cout << "HTTP request failed: " << fetch->url << std::endl;
-    emscripten_fetch_close(fetch);
+void fetchFailed(emscripten_fetch_t *fetch) {
+    FetchResult* result = (FetchResult*)fetch->userData;
+    result->data = "HTTP Error: " + std::to_string(fetch->status);
+    result->status = fetch->status;
+    result->completed = true;
+    std::runtime_error(result->data);
 }
 
 std::string Fetch::executeHttpRequest(const std::string& url) {
+    FetchResult result;
+    
     emscripten_fetch_attr_t attr;
     emscripten_fetch_attr_init(&attr);
     strcpy(attr.requestMethod, "GET");
-    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY | EMSCRIPTEN_FETCH_SYNCHRONOUS;
+    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+    attr.onsuccess = fetchSucceeded;
+    attr.onerror = fetchFailed;
+    attr.userData = &result;
+    
+    const char* headers[] = {
+        "User-Agent", "JUSTC/1.0",
+        "Accept", "*/*",
+        nullptr
+    };
+    attr.requestHeaders = headers;
     
     emscripten_fetch_t *fetch = emscripten_fetch(&attr, url.c_str());
     
-    std::string result;
-    if (fetch->status == 200) {
-        result = std::string(fetch->data, fetch->numBytes);
-    } else {
-        result = "HTTP Error: " + std::to_string(fetch->status);
+    int maxWait = 100000; // 100s
+    int waited = 0;
+    while (!result.completed && waited < maxWait) {
+        emscripten_sleep(100);
+        waited += 100;
+    }
+    
+    if (!result.completed) {
+        emscripten_fetch_close(fetch);
+        return "HTTP Error: Timeout";
     }
     
     emscripten_fetch_close(fetch);
-    return result;
+    
+    if (result.status == 200) {
+        return result.data;
+    } else {
+        return "HTTP Error: " + std::to_string(result.status) + " - " + result.data;
+    }
 }
 
 #elif _WIN32

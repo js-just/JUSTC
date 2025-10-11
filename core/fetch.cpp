@@ -287,7 +287,7 @@ Value Fetch::fetchHttpContent(const std::string& url, const std::string& expecte
 
 Value Fetch::httpGet(const std::string& url, const std::string& format) {
     if (url == "test") {
-        return stringToValue("test");
+        return Parser::stringToValue("test");
     }
     return fetchHttpContent(url, format);
 }

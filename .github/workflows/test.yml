@@ -42,6 +42,7 @@ jobs:
             -s ASSERTIONS=0 \
             -s ASYNCIFY=1 \
             -s FETCH=1 \
+            -s ASYNCIFY_IMPORTS=['emscripten_fetch','emscripten_fetch_close'] \
             -Os
             # -s MINIMAL_RUNTIME=2 \
 

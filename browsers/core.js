@@ -217,7 +217,7 @@ SOFTWARE.
             console.log(log);
             throw error
         }
-    }
+    };
 
     JUSTC.Parse = function(code) {
         try {

@@ -49,6 +49,7 @@ emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp c
     -s EXPORT_NAME='__justc__' \
     -s ASSERTIONS=0 \
     -s ASYNCIFY=1 \
+    -s FETCH=1 \
     -Os
 COMPILE_EXIT_CODE=$?
 set -e

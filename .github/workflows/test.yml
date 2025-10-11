@@ -26,6 +26,7 @@ jobs:
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: latest
+          actions-cache-folder: 'emsdk-cache'
       - name: Compile C++ to WASM
         run: |
           emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp core/keywords.cpp core/fetch.cpp \
@@ -40,6 +41,7 @@ jobs:
             -s EXPORT_NAME='__justc__' \
             -s ASSERTIONS=0 \
             -s ASYNCIFY=1 \
+            -s FETCH=1 \
             -Os
             # -s MINIMAL_RUNTIME=2 \
 

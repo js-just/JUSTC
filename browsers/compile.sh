@@ -31,8 +31,10 @@ echo $OUTPUT_DIR
 echo $SAFE_DIR
 echo "dirpath=$SAFE_DIR" >> $GITHUB_OUTPUT
 
-sudo apt-get update
-sudo apt-get install -y wabt
+wget -q https://github.com/WebAssembly/wabt/releases/download/1.0.34/wabt-1.0.34-ubuntu.tar.gz
+tar -xzf wabt-1.0.34-ubuntu.tar.gz
+sudo cp wabt-1.0.34/bin/* /usr/local/bin/
+rm -rf wabt-1.0.34 wabt-1.0.34-ubuntu.tar.gz
 
 set +e
 emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp core/keywords.cpp \

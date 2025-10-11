@@ -190,7 +190,7 @@ ParserToken Lexer::readIdentifier() {
         return ParserToken{"keyword", id, start};
     }
     
-    std::regex keyword_regex("^is$|^isn't$|^isif$|^then$|^elseif$|^else$|^isifn't$|^elseifn't$|^then't$|^elsen't$|^or$|^orn't$");
+    std::regex keyword_regex("^is$|^isn't$|^isif$|^then$|^elseif$|^else$|^isifn't$|^elseifn't$|^then't$|^elsen't$|^or$|^orn't$|^and$|^andn't$");
     std::regex boolean_regex("^true$|^True$|^TRUE$|^yes$|^Yes$|^YES$|^false$|^False$|^FALSE$|^no$|^No$|^NO$|^Y$|^y$|^N$|^n$");
     std::regex null_regex("^null$|^Null$|^NULL$|^nil$|^Nil$|^NIL$");
     std::regex undefined_regex("^undefined$");
@@ -243,9 +243,106 @@ void Lexer::tokenize() {
             continue;
         }
 
+        if (ch == '=' && peek() == '=') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"==", "==", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '?' && peek() == '=') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"?=", "?=", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '?' && peek() == '?') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"??", "??", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '=' && peek() == '!') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"=!", "=!", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '?' && peek() == '!') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"?!", "?!", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '!' && peek() == '?') {
+            if (peek(1) == '?') {
+                addDollarBefore();
+                tokens.push_back(ParserToken{"!??", "!??", position});
+                position += 3;
+            } else {
+                addDollarBefore();
+                tokens.push_back(ParserToken{"!?", "!?", position});
+                position += 2;
+            }
+            continue;
+        }
+
         if (ch == '.' && peek() == '.') {
             addDollarBefore();
             tokens.push_back(ParserToken{"..", "..", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '<' && peek() == '=') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"<=", "<=", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '>' && peek() == '=') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{">=", ">=", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '!' && peek() == '=') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"!=", "!=", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '|' && peek() == '|') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"||", "||", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '!' && peek() == '|') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"!|", "!|", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '&' && peek() == '&') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"&&", "&&", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '!' && peek() == '&') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"!&", "!&", position});
             position += 2;
             continue;
         }
@@ -256,7 +353,8 @@ void Lexer::tokenize() {
             continue;
         }            
 
-        if (ch == ',' || ch == '.' || ch == '[' || ch == ']') {
+        if (ch == ',' || ch == '.' || ch == '[' || ch == ']' || 
+            ch == '(' || ch == ')' || ch == '{' || ch == '}') {
             addDollarBefore();
             tokens.push_back(ParserToken{std::string(1, ch), std::string(1, ch), position});
             position++;
@@ -277,6 +375,15 @@ void Lexer::tokenize() {
 
         if (ch == '$') {
             dollarBefore = true;
+            position++;
+            continue;
+        }
+
+        if (ch == '=' || ch == '?' || ch == '!' || ch == '<' || 
+            ch == '>' || ch == '|' || ch == '&' || ch == '+' || 
+            ch == '*' || ch == '/' || ch == '%' || ch == '^') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{std::string(1, ch), std::string(1, ch), position});
             position++;
             continue;
         }

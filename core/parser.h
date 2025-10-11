@@ -167,6 +167,12 @@ private:
     void skipCommas();
 
     std::string getCurrentTimestamp() const;
+
+    std::string toLower(const std::string& str) const {
+        std::string result = str;
+        std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+        return result;
+    }
     
     // logs
     void addLog(const std::string& type, const std::string& message, size_t position = 0);

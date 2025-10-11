@@ -104,11 +104,27 @@ bool Value::toBoolean() const {
         case DataType::BOOLEAN:
             return boolean_value;
         case DataType::NUMBER:
+        case DataType::HEXADECIMAL:
+        case DataType::BINARY:
+        case DataType::OCTAL:
             return number_value != 0.0;
         case DataType::STRING:
-            return !string_value.empty();
+            if (string_value.empty()) return false;
+            std::string lower = toLower(string_value);
+            if (lower == "false" || lower == "no" || lower == "n" || 
+                lower == "null" || lower == "nil") {
+                return false;
+            }
+            return true;
+        case DataType::LINK:
+        case DataType::PATH:
+        case DataType::VARIABLE:
+            return true;
         case DataType::NULL_TYPE:
+        case DataType::NOT_A_NUMBER:
             return false;
+        case DataType::INFINITE:
+            return true;
         default:
             return false;
     }
@@ -315,14 +331,7 @@ ParseResult Parser::parse() {
             skipCommas();
             if (isEnd()) break;
             
-            if (
-                (peekToken(-1).type == "keyword"
-                || peekToken(-1).type == "?" ) &&
-                peekToken(-2).type == "identifier"
-            ) {
-                position -= 2;
-                ast.push_back(parseVariableDeclaration());
-            } else if (match("keyword")) {
+            if (match("keyword")) {
                 std::string keyword = currentToken().value;
                 
                 if (keyword == "TYPE") {
@@ -536,27 +545,29 @@ ASTNode Parser::parseVariableDeclaration() {
     if (match("keyword", "is") || match("=")) {
         assignOp = currentToken().value;
         advance();
-    } else if (match("keyword", "isn't") || match("!=")) {
+        
+        Value exprValue = parseExpression();
+        node.value = exprValue;
+        extractReferences(exprValue, node.references);
+    } 
+    else if (match("keyword", "isn't") || match("!=")) {
         assignOp = currentToken().value;
         advance();
-    } else if (match("keyword", "isif") || match("?")) {
-        node.value = parseConditional();
-        extractReferences(node.value, node.references);
-        return node;
-    } else {
+        
+        Value exprValue = parseExpression();
+        exprValue = handleInequality(exprValue);
+        node.value = exprValue;
+        extractReferences(exprValue, node.references);
+    }
+    else if (match("keyword", "isif") || match("?")) {
+        advance();
+        Value conditionalValue = parseConditional();
+        node.value = conditionalValue;
+        extractReferences(conditionalValue, node.references);
+    }
+    else {
         throw std::runtime_error("Expected assignment operator, got: " + currentToken().value);
     }
-    
-    Value exprValue;
-    if (assignOp == "is" || assignOp == "=") {
-        exprValue = parseExpression();
-    } else if (assignOp == "isn't" || assignOp == "!=") {
-        exprValue = parseExpression();
-        exprValue = handleInequality(exprValue);
-    }
-    
-    node.value = exprValue;
-    extractReferences(exprValue, node.references);
     
     variables[identifier] = Value();
     
@@ -570,17 +581,13 @@ Value Parser::parseExpression() {
 Value Parser::parseConditional() {
     Value condition = parseLogicalOR();
     
-    if (match("keyword", "then") || match("==") || 
-        match("keyword", "then't") || match("=!")) {
-        
+    if (match("keyword", "then") || match("==")) {
         std::string thenOp = currentToken().value;
         advance();
         
         Value thenValue = parseExpression();
         
-        if (match("keyword", "else") || match("?=") ||
-            match("keyword", "elsen't") || match("?!")) {
-            
+        if (match("keyword", "else") || match("?=")) {
             std::string elseOp = currentToken().value;
             advance();
             
@@ -592,25 +599,19 @@ Value Parser::parseConditional() {
         }
     }
     
-    if (match("keyword", "elseif") || match("??") ||
-        match("keyword", "elseifn't") || match("!??")) {
-        
+    if (match("keyword", "elseif") || match("??")) {
         std::string elseifOp = currentToken().value;
         advance();
         
         Value elseifCondition = parseExpression();
         
-        if (match("keyword", "then") || match("==") ||
-            match("keyword", "then't") || match("=!")) {
-            
+        if (match("keyword", "then") || match("==")) {
             std::string thenOp = currentToken().value;
             advance();
             
             Value thenValue = parseExpression();
             
-            if (match("keyword", "else") || match("?=") ||
-                match("keyword", "elsen't") || match("?!")) {
-                
+            if (match("keyword", "else") || match("?=")) {
                 std::string elseOp = currentToken().value;
                 advance();
                 
@@ -618,7 +619,11 @@ Value Parser::parseConditional() {
                 
                 Value nestedConditional = handleConditional(elseifCondition, thenValue, elseValue, thenOp, elseOp);
                 return handleConditional(condition, thenValue, nestedConditional, thenOp, elseOp);
+            } else {
+                throw std::runtime_error("Expected 'else' after 'then' in elseif");
             }
+        } else {
+            throw std::runtime_error("Expected 'then' after 'elseif'");
         }
     }
     

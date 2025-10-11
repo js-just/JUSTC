@@ -67,7 +67,6 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
     attr.userData = &result;
     
     const char* headers[] = {
-        "User-Agent", "JUSTC/1.0",
         "Accept", "*/*",
         nullptr
     };

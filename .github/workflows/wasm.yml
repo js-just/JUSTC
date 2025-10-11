@@ -67,6 +67,25 @@ jobs:
         uses: js-just/latest@main
         with:
           path: browsers
+      - name: Cache Emscripten SDK
+        uses: actions/cache@v4
+        id: emsdk-cache
+        with:
+          path: |
+            ~/emsdk
+          key: ${{ runner.os }}-emsdk-${{ hashFiles('**/emsdk/emsdk.py') }}
+          restore-keys: |
+            ${{ runner.os }}-emsdk-
+      - name: Cache Emscripten sysroot and cache
+        uses: actions/cache@v4
+        id: emscripten-cache
+        with:
+          path: |
+            ~/.cache/emsdk
+            /tmp/emscripten_cache
+          key: ${{ runner.os }}-emscripten-cache-${{ hashFiles('browsers/compile.sh', 'core/*.cpp', 'core/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-emscripten-cache-
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
         with:

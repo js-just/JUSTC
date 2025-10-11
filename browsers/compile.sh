@@ -46,7 +46,13 @@ emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp c
     -s EXPORT_NAME='__justc__' \
     -s ASSERTIONS=0 \
     -Os
+COMPILE_EXIT_CODE=$?
 set -e
+
+if [ $COMPILE_EXIT_CODE -ne 0 ]; then
+    echo "Failed to compile."
+    exit 1
+fi
 
 mv browsers/$SAFE_DIR/justc.core.wasm browsers/$SAFE_DIR/justc.wasm
 sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/$SAFE_DIR/justc.core.js

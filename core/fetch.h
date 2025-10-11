@@ -28,6 +28,7 @@ SOFTWARE.
 #define FETCH_H
 
 #include "parser.h"
+#include "lexer.h"
 #include <string>
 
 class Fetch {

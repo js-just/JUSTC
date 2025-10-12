@@ -89,7 +89,10 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
     emscripten_fetch_close(fetch);
     
     if (result.status == 200) {
-        return result.data || std::string(fetch->data, fetch->numBytes);
+        if (result.data.empty()) {
+            return std::string(fetch->data, fetch->numBytes);
+        }
+        return result.data
     } else if (result.status == 201) {
         return "";
     } else {

@@ -61,7 +61,15 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
                         if ((length - 1) < 1) {
                             throw new Error("HTTP Request failed with status " + xhr.status + ".");
                         } else {
-                            console.warn('[JUSTC] (' + std::to_string(getCurrentTime()) + ') HTTP Request succeeded, but with status', xhr.status);
+                            console.warn('[JUSTC] (' + (new Date()).toLocaleString('sv-SE', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: false
+                            }); + ') HTTP Request succeeded, but with status', xhr.status);
                         }
                     }
                     stringToUTF8(response, result, length);

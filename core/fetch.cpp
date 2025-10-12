@@ -69,7 +69,7 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
                                 minute: '2-digit',
                                 second: '2-digit',
                                 hour12: false
-                            }); + ') HTTP Request succeeded, but with status', xhr.status);
+                            }) + ') HTTP Request succeeded, but with status', xhr.status);
                         }
                     }
                     stringToUTF8(response, result, length);

@@ -1353,7 +1353,7 @@ Value Parser::functionHTTPTEXT(size_t startPos, const std::vector<Value>& args) 
     if (args.empty()) {
         throw std::runtime_error("Expected one argument at function HTTPTEXT at position " + std::to_string(startPos) + ".");
     } else if (args[0].type != DataType::LINK) {
-        throw std::runtime_error("Expected TYPEOF( argument 0 )=\"Link\" at function HTTPTEXT at position " + std::to_string(startPos) + ", got \"" + args[0].type + "\".")
+        throw std::runtime_error("Expected TYPEOF( argument 0 )=\"Link\" at function HTTPTEXT at position " + std::to_string(startPos) + ", got \"" + dataTypeToString(args[0].type) + "\".");
     }
     
     std::string url = args[0].toString();

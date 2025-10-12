@@ -55,6 +55,31 @@ enum class DataType {
     UNKNOWN = -1
 };
 
+inline std::string dataTypeToString(DataType type) {
+    switch (type) {
+        case DataType::JUSTC_OBJECT: return "Object";
+        case DataType::NUMBER: return "Number";
+        case DataType::STRING: return "String";
+        case DataType::LINK: return "Link";
+        case DataType::BOOLEAN: return "Boolean";
+        case DataType::JSON_OBJECT: return "JSON Object";
+        case DataType::JSON_ARRAY: return "JSON Array";
+        case DataType::NULL_TYPE: return "null";
+        case DataType::HEXADECIMAL: return "Hexadecimal number";
+        case DataType::BINARY: return "Binary number";
+        case DataType::PATH: return "Path";
+        case DataType::ERROR: return "Error";
+        case DataType::VARIABLE: return "Variable";
+        case DataType::FUNCTION: return "Function";
+        case DataType::NOT_A_NUMBER: return "NaN";
+        case DataType::INFINITE: return "Infinity";
+        case DataType::SYNTAX_ERROR: return "Syntax Error";
+        case DataType::OCTAL: return "Octal number";
+        case DataType::UNKNOWN: return "unknown";
+        default: return "unknown";
+    }
+};
+
 struct Value {
     DataType type;
     

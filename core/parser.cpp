@@ -35,6 +35,7 @@ SOFTWARE.
 #include <ctime>
 #include <cstring>
 #include "fetch.h"
+#include "version.h"
 
 std::string Value::toString() const {
     switch (type) {
@@ -819,9 +820,9 @@ Value Parser::parsePrimary() {
         if (varName == "$TIME" || varName == "$VERSION" || varName == "$LATEST" || 
             varName == "$DBID" || varName == "$SHA" || varName == "$NAV" || 
             varName == "$PAGES" || varName == "$CSS" || varName == "$PI" || 
-            varName == "$BACKSLASH") {
+            varName == "$BACKSLASH" || varName == "$JUSTC") {
             advance();
-            return executeFunction(varName.substr(1), {}, currentToken().start);
+            return executeFunction(varName.substr(1), {}, currentToken().start), true;
         }
         
         if (peekToken().type == "(") {
@@ -880,7 +881,7 @@ Value Parser::parseFunctionCall() {
     }
     advance();
     
-    return executeFunction(funcName, args, startPos);
+    return executeFunction(funcName, args, startPos, false);
 }
 
 ASTNode Parser::parseCommand() {
@@ -932,7 +933,7 @@ ASTNode Parser::parseCommand() {
     return node;
 }
 
-Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos) {
+Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos, bool hasDollarBefore) {
     if (funcName == "TIME") {
         long timestamp = getCurrentTime();
         return hexToValue(std::to_string(timestamp));
@@ -942,6 +943,9 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     }
     else if (funcName == "BACKSLASH") {
         return stringToValue("\\");
+    }
+    else if (funcName == "JUSTC" && hasDollarBefore) {
+        return stringToValue(JUSTC_VERSION);
     }
     
     // built-in

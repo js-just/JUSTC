@@ -134,12 +134,12 @@ char* parser(const char* tokensJson) {
     }
 }
 
-char* parse(const char* input) {
+char* parse(const char* input, const bool execute) {
     if (input == nullptr) return nullptr;
     
     try {
         auto lexerResult = Lexer::parse(input);
-        ParseResult result = Parser::parseTokens(lexerResult.second);
+        ParseResult result = Parser::parseTokens(lexerResult.second, execute);
         std::string json = JsonSerializer::serialize(result);
         return strdup(json.c_str());
         

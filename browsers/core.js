@@ -219,13 +219,13 @@ SOFTWARE.
         }
     };
 
-    JUSTC.Parse = function(code) {
+    JUSTC.Parse = function(code, execute = false) {
         try {
             const resultPtr = JUSTC.WASM.ccall(
                 'parse',
                 'number',
-                ['string'],
-                [code]
+                ['string', 'boolean'],
+                [code, execute]
             );
             
             const resultJson = JUSTC.WASM.UTF8ToString(resultPtr);
@@ -293,7 +293,7 @@ SOFTWARE.
             JUSTC.CheckInput(code);
             JUSTC.CheckWASM();
 
-            const result = JUSTC.Parse(code);
+            const result = JUSTC.Parse(code, true);
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {

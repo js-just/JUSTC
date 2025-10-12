@@ -221,7 +221,7 @@ private:
     ASTNode parseAllowCommand();
     ASTNode parseImportCommand();
     
-    Value executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos);
+    Value executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos, bool hasDollarBefore);
     Value evaluateExpression(const Value& left, const std::string& op, const Value& right);
     Value handleInequality(const Value& value);
     Value handleConditional(const Value& condition, const Value& thenVal, const Value& elseVal, 

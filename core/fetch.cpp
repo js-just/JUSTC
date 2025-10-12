@@ -32,72 +32,57 @@ SOFTWARE.
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
-#include <emscripten/fetch.h>
-
-struct FetchResult {
-    std::string data;
-    bool completed = false;
-    int status = 0;
-};
-
-void fetchSucceeded(emscripten_fetch_t *fetch) {
-    FetchResult* result = (FetchResult*)fetch->userData;
-    result->data = std::string(fetch->data, fetch->numBytes);
-    result->status = fetch->status;
-    result->completed = true;
-}
-
-void fetchFailed(emscripten_fetch_t *fetch) {
-    FetchResult* result = (FetchResult*)fetch->userData;
-    result->data = "HTTP Error: " + std::to_string(fetch->status);
-    result->status = fetch->status;
-    result->completed = true;
-    std::runtime_error(result->data);
-}
 
 std::string Fetch::executeHttpRequest(const std::string& url) {
-    FetchResult result;
+    char* result = (char*)EM_ASM_INT({
+        return Asyncify.handleSleep(function(wakeUp) {
+            try {
+                var url = UTF8ToString($0);
+                console.log('Fetching URL:', url);
+                
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, false);
+                xhr.setRequestHeader('Accept', '*/*');
+                xhr.setRequestHeader('User-Agent', 'JUSTC/1.0');
+                
+                xhr.onload = function() {
+                    console.log('XHR completed, status:', xhr.status);
+                    var response = xhr.responseText;
+                    var length = lengthBytesUTF8(response) + 1;
+                    var result = _malloc(length);
+                    stringToUTF8(response, result, length);
+                    wakeUp(result);
+                };
+                
+                xhr.onerror = function() {
+                    console.log('XHR failed');
+                    var error = 'HTTP Error: ' + xhr.status;
+                    var length = lengthBytesUTF8(error) + 1;
+                    var result = _malloc(length);
+                    stringToUTF8(error, result, length);
+                    wakeUp(result);
+                };
+                
+                xhr.send();
+            } catch (e) {
+                console.log('XHR exception:', e);
+                var error = 'HTTP Exception: ' + e.toString();
+                var length = lengthBytesUTF8(error) + 1;
+                var result = _malloc(length);
+                stringToUTF8(error, result, length);
+                wakeUp(result);
+            }
+        });
+    }, url.c_str());
     
-    emscripten_fetch_attr_t attr;
-    emscripten_fetch_attr_init(&attr);
-    strcpy(attr.requestMethod, "GET");
-    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
-    attr.onsuccess = fetchSucceeded;
-    attr.onerror = fetchFailed;
-    attr.userData = &result;
+    std::string resultStr(result);
+    free(result);
     
-    const char* headers[] = {
-        "Accept", "*/*",
-        nullptr
-    };
-    attr.requestHeaders = headers;
-    
-    emscripten_fetch_t *fetch = emscripten_fetch(&attr, url.c_str());
-    
-    int maxWait = 100000; // 100s
-    int waited = 0;
-    while (!result.completed && waited < maxWait) {
-        emscripten_sleep(100);
-        waited += 100;
+    if (resultStr.empty()) {
+        resultStr = "empty_response";
     }
     
-    if (!result.completed) {
-        emscripten_fetch_close(fetch);
-        std::runtime_error("HTTP Error: Timeout");
-    }
-    
-    emscripten_fetch_close(fetch);
-    
-    if (result.status == 200) {
-        if (result.data.empty()) {
-            return std::string(fetch->data, fetch->numBytes);
-        }
-        return result.data;
-    } else if (result.status == 201) {
-        return "";
-    } else {
-        std::runtime_error("HTTP Error " + std::to_string(result.status) + ": " + result.data);
-    }
+    return resultStr;
 }
 
 #elif _WIN32

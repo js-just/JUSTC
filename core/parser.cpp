@@ -1358,17 +1358,7 @@ Value Parser::functionHTTPTEXT(const std::vector<Value>& args) {
     std::string url = args[0].toString();
     addLog("HTTP", "HTTPTEXT request to: " + url, currentToken().start);
     
-    Value result = Fetch::httpGet(url, "TEXT");
-
-    std::string resultStr = result.toString();
-    if (resultStr.empty()) {
-        throw std::runtime_error("HTTP request failed: empty response");
-    }
-    if (resultStr.find("HTTP Error") != std::string::npos || 
-        resultStr.find("empty_response") != std::string::npos) {
-        throw std::runtime_error("HTTP request failed: " + resultStr);
-    }
-    
+    Value result = Fetch::httpGet(url, "TEXT");    
     if (result.type == DataType::STRING) {
         return result;
     } else {

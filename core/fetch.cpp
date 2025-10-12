@@ -33,54 +33,54 @@ SOFTWARE.
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 
+long getCurrentTime() {
+    auto now = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+}
+
 std::string Fetch::executeHttpRequest(const std::string& url) {
     char* result = (char*)EM_ASM_INT({
         return Asyncify.handleSleep(function(wakeUp) {
             try {
                 var url = UTF8ToString($0);
-                console.log('Fetching URL:', url);
+                var isBrowser = (typeof window !== 'undefined') && (typeof navigator !== 'undefined');
                 
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', url, false);
                 xhr.setRequestHeader('Accept', '*/*');
-                xhr.setRequestHeader('User-Agent', 'JUSTC/1.0');
+                if (!isBrowser) {
+                    xhr.setRequestHeader('User-Agent', 'JUSTC/1.0');
+                }
+                xhr.setRequestHeader('X-JUSTC', 'JUSTC/1.0');
                 
                 xhr.onload = function() {
-                    console.log('XHR completed, status:', xhr.status);
                     var response = xhr.responseText;
                     var length = lengthBytesUTF8(response) + 1;
                     var result = _malloc(length);
+                    if (xhr.status >= 400 && xhr.status < 600) {
+                        if ((length - 1) < 1) {
+                            throw std::runtime_error("HTTP Request failed with status " + xhr.status + ".");
+                        } else {
+                            console.warn('[JUSTC] (' + std::to_string(getCurrentTime()) + ') HTTP Request succeeded, but with status', xhr.status);
+                        }
+                    }
                     stringToUTF8(response, result, length);
                     wakeUp(result);
                 };
                 
                 xhr.onerror = function() {
-                    console.log('XHR failed');
-                    var error = 'HTTP Error: ' + xhr.status;
-                    var length = lengthBytesUTF8(error) + 1;
-                    var result = _malloc(length);
-                    stringToUTF8(error, result, length);
-                    wakeUp(result);
+                    throw std::runtime_error("HTTP Request failed with status " + xhr.status);
                 };
                 
                 xhr.send();
             } catch (e) {
-                console.log('XHR exception:', e);
-                var error = 'HTTP Exception: ' + e.toString();
-                var length = lengthBytesUTF8(error) + 1;
-                var result = _malloc(length);
-                stringToUTF8(error, result, length);
-                wakeUp(result);
+                throw std::runtime_error("HTTP Request failed: " + e);
             }
         });
     }, url.c_str());
     
     std::string resultStr(result);
     free(result);
-    
-    if (resultStr.empty()) {
-        resultStr = "empty_response";
-    }
     
     return resultStr;
 }
@@ -246,10 +246,6 @@ Value Fetch::fetchHttpContent(const std::string& url, const std::string& expecte
     
     try {
         std::string content = executeHttpRequest(url);
-
-        if (content.empty()) {
-            std::runtime_error("HTTP request failed: Empty response from: " + url);
-        }
         
         if (expectedType == "JSON" || expectedType == "HTTPJSON") {
             result.type = DataType::JSON_OBJECT;
@@ -281,13 +277,5 @@ Value Fetch::httpGet(const std::string& url, const std::string& format) {
     }
 
     Value result = fetchHttpContent(url, format);
-
-    #ifdef __EMSCRIPTEN__
-    std::cout << "[Fetch Debug] httpGet - URL: " << url 
-              << ", Format: " << format 
-              << ", Result type: " << (int)result.type
-              << ", Result value: " << result.toString() << std::endl;
-    #endif
-
     return result;
 }

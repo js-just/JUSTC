@@ -9,6 +9,12 @@ cmake ..
 make
 sudo make install
 
+hash -r
+if ! command -v justc &> /dev/null; then
+    sudo ln -sf /usr/local/bin/justc /usr/bin/justc
+    hash -r
+fi
+
 FILE=../test/linux/test
 
 echo "running JUSTC"

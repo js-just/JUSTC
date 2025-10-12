@@ -3,6 +3,10 @@ project(JUSTC)
 
 set(CMAKE_CXX_STANDARD 11)
 
+if(UNIX AND NOT APPLE)
+    set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
+endif()
+
 find_package(CURL)
 
 if(CURL_FOUND)

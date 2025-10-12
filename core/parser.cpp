@@ -972,8 +972,8 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "HTTPTEXT") {
         if (!allowHttpRequests) {
             Value result;
-            result.type = DataType::ERROR;
-            result.string_value = "HTTP requests are disabled";
+            result.type = DataType::STRING;
+            result.string_value = args[0];
             return result;
         }
         return functionHTTPTEXT(startPos, args);

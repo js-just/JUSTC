@@ -83,15 +83,17 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
     
     if (!result.completed) {
         emscripten_fetch_close(fetch);
-        return "HTTP Error: Timeout";
+        std::runtime_error("HTTP Error: Timeout");
     }
     
     emscripten_fetch_close(fetch);
     
     if (result.status == 200) {
-        return result.data;
+        return result.data || std::string(fetch->data, fetch->numBytes);
+    } else if (result.status == 201) {
+        return "";
     } else {
-        return "HTTP Error: " + std::to_string(result.status) + " - " + result.data;
+        std::runtime_error("HTTP Error " + std::to_string(result.status) + ": " + result.data);
     }
 }
 
@@ -258,9 +260,7 @@ Value Fetch::fetchHttpContent(const std::string& url, const std::string& expecte
         std::string content = executeHttpRequest(url);
 
         if (content.empty()) {
-            result.type = DataType::ERROR;
-            result.string_value = "Empty response from: " + url;
-            return result;
+            std::runtime_error("HTTP request failed: Empty response from: " + url);
         }
         
         if (expectedType == "JSON" || expectedType == "HTTPJSON") {
@@ -278,8 +278,7 @@ Value Fetch::fetchHttpContent(const std::string& url, const std::string& expecte
         }
         
     } catch (const std::exception& e) {
-        result.type = DataType::ERROR;
-        result.string_value = "HTTP request failed: " + std::string(e.what());
+        std::runtime_error("HTTP request failed: " + std::string(e.what()));
     }
     
     return result;

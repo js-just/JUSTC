@@ -822,7 +822,7 @@ Value Parser::parsePrimary() {
             varName == "$PAGES" || varName == "$CSS" || varName == "$PI" || 
             varName == "$BACKSLASH" || varName == "$JUSTC") {
             advance();
-            return executeFunction(varName.substr(1), {}, currentToken().start), true;
+            return executeFunction(varName.substr(1), {}, currentToken().start, true);
         }
         
         if (peekToken().type == "(") {

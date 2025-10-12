@@ -92,7 +92,7 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
         if (result.data.empty()) {
             return std::string(fetch->data, fetch->numBytes);
         }
-        return result.data
+        return result.data;
     } else if (result.status == 201) {
         return "";
     } else {

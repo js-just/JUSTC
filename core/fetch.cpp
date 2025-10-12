@@ -59,7 +59,7 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
                     var result = _malloc(length);
                     if (xhr.status >= 400 && xhr.status < 600) {
                         if ((length - 1) < 1) {
-                            throw std::runtime_error("HTTP Request failed with status " + xhr.status + ".");
+                            throw new Error("HTTP Request failed with status " + xhr.status + ".");
                         } else {
                             console.warn('[JUSTC] (' + std::to_string(getCurrentTime()) + ') HTTP Request succeeded, but with status', xhr.status);
                         }
@@ -69,12 +69,12 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
                 };
                 
                 xhr.onerror = function() {
-                    throw std::runtime_error("HTTP Request failed with status " + xhr.status);
+                    throw new Error("HTTP Request failed with status " + xhr.status + ".");
                 };
                 
                 xhr.send();
             } catch (e) {
-                throw std::runtime_error("HTTP Request failed: " + e);
+                throw new Error("HTTP Request failed: " + e);
             }
         });
     }, url.c_str());

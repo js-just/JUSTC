@@ -821,7 +821,7 @@ Value Parser::parsePrimary() {
             varName == "$PAGES" || varName == "$CSS" || varName == "$PI" || 
             varName == "$BACKSLASH") {
             advance();
-            return executeFunction(varName.substr(1), {});
+            return executeFunction(varName.substr(1), {}, currentToken().start);
         }
         
         if (peekToken().type == "(") {
@@ -880,7 +880,7 @@ Value Parser::parseFunctionCall() {
     }
     advance();
     
-    return executeFunction(funcName, args);
+    return executeFunction(funcName, args, startPos);
 }
 
 ASTNode Parser::parseCommand() {
@@ -915,7 +915,6 @@ ASTNode Parser::parseCommand() {
         if (!args.empty()) {
             std::string path = args[0].toString();
             setLogFile(path);
-            addLog("SYSTEM", "Log file set to: " + path, node.startPos);
         }
     }
     else if (command == "LOG") {
@@ -933,7 +932,7 @@ ASTNode Parser::parseCommand() {
     return node;
 }
 
-Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args) {
+Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos) {
     if (funcName == "TIME") {
         long timestamp = getCurrentTime();
         return hexToValue(std::to_string(timestamp));
@@ -973,7 +972,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
             result.string_value = "HTTP requests are disabled";
             return result;
         }
-        return functionHTTPTEXT(args);
+        return functionHTTPTEXT(startPos, args);
     }
     if (funcName == "JUSTC") return functionJUSTC(args);
     if (funcName == "HTTPJUSTC") {
@@ -1350,13 +1349,14 @@ Value Parser::functionECHO(const std::vector<Value>& args) {
 Value Parser::functionJSON(const std::vector<Value>& args) { return Value(); }
 Value Parser::functionHTTPJSON(const std::vector<Value>& args) { return Value(); }
 
-Value Parser::functionHTTPTEXT(const std::vector<Value>& args) {
+Value Parser::functionHTTPTEXT(size_t startPos, const std::vector<Value>& args) {
     if (args.empty()) {
-        throw std::runtime_error("HTTPTEXT requires URL argument");
+        throw std::runtime_error("Expected one argument at function HTTPTEXT at position " + std::to_string(startPos) + ".");
+    } else if (args[0].type != DataType::LINK) {
+        throw std::runtime_error("Expected TYPEOF( argument 0 )=\"Link\" at function HTTPTEXT at position " + std::to_string(startPos) + ", got \"" + args[0].type + "\".")
     }
     
     std::string url = args[0].toString();
-    addLog("HTTP", "HTTPTEXT request to: " + url, currentToken().start);
     
     Value result = Fetch::httpGet(url, "TEXT");    
     if (result.type == DataType::STRING) {

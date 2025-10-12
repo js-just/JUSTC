@@ -33,6 +33,7 @@ SOFTWARE.
 #include <iostream>
 #include <chrono>
 #include <ctime>
+#include <cstring>
 #include "fetch.h"
 
 std::string Value::toString() const {
@@ -1359,7 +1360,9 @@ Value Parser::functionHTTPTEXT(const std::vector<Value>& args) {
     
     Value result = Fetch::httpGet(url, "TEXT");
 
-    if (result.type == DataType::STRING) {
+    if (!result.toString() || strlen(result.toString()) < 1) {
+        throw std::runtime_error("HTTP request failed.");
+    } else if (result.type == DataType::STRING) {
         return result;
     } else {
         return stringToValue(result.toString());

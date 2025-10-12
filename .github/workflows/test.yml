@@ -88,5 +88,5 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: CMAKE
+      - name: CMake
         run: bash test/linux/justc.sh

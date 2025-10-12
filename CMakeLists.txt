@@ -28,11 +28,12 @@ if(WIN32)
 endif()
 
 add_library(justc_core
-    core/lexer.cpp
-    core/parser.cpp
-    core/keywords.cpp
-    core/json_serializer.cpp
-    core/interpreter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/lexer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/parser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/keywords.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/json_serializer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/fetch.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/version.cpp
 )
 
 add_executable(justc core/main.cpp)

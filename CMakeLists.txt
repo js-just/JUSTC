@@ -28,30 +28,34 @@ if(WIN32)
 endif()
 
 add_library(justc_core
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/lexer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/parser.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/keywords.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/json_serializer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/fetch.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/version.cpp
+    core/lexer.cpp
+    core/parser.cpp
+    core/keywords.cpp
+    core/json_serializer.cpp
+    core/fetch.cpp
+    core/version.cpp
 )
 
 add_executable(justc core/main.cpp)
 
+target_include_directories(justc_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core)
+
 if(CURL_FOUND)
-    target_include_directories(justc PRIVATE ${CURL_INCLUDE_DIRS})
-    target_link_libraries(justc justc_core ${CURL_LIBRARIES})
+    target_include_directories(justc_core PRIVATE ${CURL_INCLUDE_DIRS})
+    target_link_libraries(justc_core ${CURL_LIBRARIES})
 elseif(UNIX AND NOT APPLE AND CURL_INCLUDE_DIRS)
-    target_include_directories(justc PRIVATE ${CURL_INCLUDE_DIRS})
-    target_link_libraries(justc justc_core ${CURL_LIBRARIES})
+    target_include_directories(justc_core PRIVATE ${CURL_INCLUDE_DIRS})
+    target_link_libraries(justc_core ${CURL_LIBRARIES})
 elseif(APPLE AND CURL_LIBRARIES)
-    target_include_directories(justc PRIVATE ${CURL_INCLUDE_DIRS})
-    target_link_libraries(justc justc_core ${CURL_LIBRARIES})
+    target_include_directories(justc_core PRIVATE ${CURL_INCLUDE_DIRS})
+    target_link_libraries(justc_core ${CURL_LIBRARIES})
 elseif(WIN32)
-    target_link_libraries(justc justc_core ${WINHTTP_LIBRARIES})
+    target_link_libraries(justc_core ${WINHTTP_LIBRARIES})
 else()
-    message(FATAL_ERROR "CURL library not found")
+    message(WARNING "CURL library not found - HTTP functionality will be limited")
 endif()
+
+target_link_libraries(justc justc_core)
 
 install(TARGETS justc DESTINATION bin)
 if(WIN32)

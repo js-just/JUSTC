@@ -24,4 +24,6 @@ SOFTWARE.
 
 */
 
+#include "version.h"
+
 const std::string JUSTC_VERSION = "0.1.0";

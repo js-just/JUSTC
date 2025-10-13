@@ -154,10 +154,10 @@ int main(int argc, char* argv[]) {
             else if (arg == "--sha") {
                 waitingForCommitSHA = true;
             }
-            else if (arg == "--version" || "--v") {
+            else if (arg == "--version" || arg == "-v") {
                 std::count << JUSTC_VERSION << std::endl;
             }
-            else if (arg == "--parse" || "--p") {
+            else if (arg == "--parse" || arg == "-p") {
                 executeJUSTC = false;
             }
 

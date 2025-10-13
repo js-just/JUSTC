@@ -905,46 +905,39 @@ ASTNode Parser::parseCommand(bool doExecute) {
     advance();
     std::vector<Value> args;
 
-    void cmdECHO() {
-        for (const auto& arg : args) {
-            std::string message = arg.toString();
-            auto varval = resolveVariableValue(message);
-            if (varval.type == DataType::UNKNOWN) {
-                addLog("ECHO", message, node.startPos);
-                std::cout << message << std::endl;
-            } else {
-                addLog("ECHO", varval.toString(), node.startPos);
-                std::cout << varval.toString() << std::endl;
-            }
-        }
-    }
-    void cmdLOGFILE() {
-        if (!args.empty()) {
-            std::string path = args[0].toString();
-            setLogFile(path);
-        }
-    }
-    void cmdLOG() {
-        for (const auto& arg : args) {
-            std::string message = arg.toString();
-            auto varval = resolveVariableValue(message);
-            if (varval.type == DataType::UNKNOWN) {
-                addLog("LOG", message, node.startPos);
-            } else {
-                addLog("LOG", varval.toString(), node.startPos);
-            }
-        }
-    }
-
     if (doExecute && (command == "ECHO" || command == "LOGFILE" || command == "LOG") && !match("(")) {
-        while (!match(",") || !match(".") || !isEnd()) {
+        while (!match(",") && !match(".") && !isEnd()) {
             args.push_back(parseExpression(doExecute));
         }
         if (match(",")) advance();
-        switch (command) {
-            case "ECHO": cmdECHO(); break;
-            case "LOGFILE": cmdLOGFILE(); break;
-            case "LOG": cmdLOG(); break;
+        
+        if (command == "ECHO") {
+            for (const auto& arg : args) {
+                std::string message = arg.toString();
+                auto varval = resolveVariableValue(message);
+                if (varval.type == DataType::UNKNOWN) {
+                    addLog("ECHO", message, node.startPos);
+                    std::cout << message << std::endl;
+                } else {
+                    addLog("ECHO", varval.toString(), node.startPos);
+                    std::cout << varval.toString() << std::endl;
+                }
+            }
+        } else if (command == "LOGFILE") {
+            if (!args.empty()) {
+                std::string path = args[0].toString();
+                setLogFile(path);
+            }
+        } else if (command == "LOG") {
+            for (const auto& arg : args) {
+                std::string message = arg.toString();
+                auto varval = resolveVariableValue(message);
+                if (varval.type == DataType::UNKNOWN) {
+                    addLog("LOG", message, node.startPos);
+                } else {
+                    addLog("LOG", varval.toString(), node.startPos);
+                }
+            }
         }
         return node;
     }
@@ -959,10 +952,33 @@ ASTNode Parser::parseCommand(bool doExecute) {
     }
     
     if (doExecute) {
-        switch (command) {
-            case "ECHO": cmdECHO(); break;
-            case "LOGFILE": cmdLOGFILE(); break;
-            case "LOG": cmdLOG(); break;
+        if (command == "ECHO") {
+            for (const auto& arg : args) {
+                std::string message = arg.toString();
+                auto varval = resolveVariableValue(message);
+                if (varval.type == DataType::UNKNOWN) {
+                    addLog("ECHO", message, node.startPos);
+                    std::cout << message << std::endl;
+                } else {
+                    addLog("ECHO", varval.toString(), node.startPos);
+                    std::cout << varval.toString() << std::endl;
+                }
+            }
+        } else if (command == "LOGFILE") {
+            if (!args.empty()) {
+                std::string path = args[0].toString();
+                setLogFile(path);
+            }
+        } else if (command == "LOG") {
+            for (const auto& arg : args) {
+                std::string message = arg.toString();
+                auto varval = resolveVariableValue(message);
+                if (varval.type == DataType::UNKNOWN) {
+                    addLog("LOG", message, node.startPos);
+                } else {
+                    addLog("LOG", varval.toString(), node.startPos);
+                }
+            }
         }
     }
     

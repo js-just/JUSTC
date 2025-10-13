@@ -37,6 +37,10 @@ SOFTWARE.
 #include "fetch.h"
 #include "version.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 std::string Value::toString() const {
     switch (type) {
         case DataType::STRING:
@@ -547,7 +551,7 @@ ASTNode Parser::parseStatement(bool doExecute) {
     }
 }
 
-ASTNode Parser::parseVariableDeclaration(doExecute) {
+ASTNode Parser::parseVariableDeclaration(bool doExecute) {
     std::string identifier = currentToken().value;
     size_t startPos = currentToken().start;
     ASTNode node("VARIABLE_DECLARATION", identifier, startPos);
@@ -938,8 +942,8 @@ ASTNode Parser::parseCommand(bool doExecute) {
 Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
     #ifdef __EMSCRIPTEN__
     EM_ASM({
-        console.warn('[JUSTC] (' + $2 + ') Running lexer and parser only - Cannot fetch', $1, 'at position', $0, '\nUse JUSTC.execute for HTTP requests.')
-    }, startPos, args0string_value, getCurrentTimestamp());
+        console.warn('[JUSTC] (' + UTF8ToString($2) + ') Running lexer and parser only - Cannot fetch', UTF8ToString($1), 'at position', $0, '\nUse JUSTC.execute for HTTP requests.');
+    }, startPos, args0string_value.c_str(), getCurrentTimestamp().c_str());
     #endif
 
     Value result;

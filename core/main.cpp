@@ -38,11 +38,11 @@ void printUsage() {
     std::cout << "Basic usage:" << std::endl;
     std::cout << "  justc <file.justc>                    - Execute JUSTC file" << std::endl;
     std::cout << "  justc <file.justc> <file.json>        - Execute JUSTC file and output to JSON file" << std::endl;
-    std::cout << "  justc -c \"code\"                   - Execute JUSTC code" << std::endl;
+    std::cout << "  justc -c \"code\"                     - Execute JUSTC code" << std::endl;
     std::cout << "  justc --lexer <file.justc>            - Run lexer only (file)" << std::endl;
-    std::cout << "  justc --lexer -c \"code\"           - Run lexer only" << std::endl;
-    std::cout << "  justc --parse <file.justc>            - Run parser only (file)" << std::endl;
-    std::cout << "  justc --parse -c \"code\"           - Run parser only" << std::endl;
+    std::cout << "  justc --lexer -c \"code\"             - Run lexer only" << std::endl;
+    std::cout << "  justc --parser <file.justc>           - Run parser only (file)" << std::endl;
+    std::cout << "  justc --parser -c \"code\"            - Run parser only" << std::endl;
     std::cout << "  justc --help                          - Show this command list" << std::endl;
     std::cout << "" << std::endl;
     std::cout << "Other flags:" << std::endl;
@@ -53,7 +53,7 @@ void printUsage() {
     std::cout << "Short flags:" << std::endl;
     std::cout << "  -h                                    - Same as --help" << std::endl;
     std::cout << "  -r                                    - Same as --result" << std::endl;
-    std::cout << "  -p                                    - Same as --parse" << std::endl;
+    std::cout << "  -p                                    - Same as --parser" << std::endl;
     std::cout << "  -l                                    - Same as --lexer" << std::endl;
     std::cout << "  -v                                    - Same as --version" << std::endl;
     std::cout << "" << std::endl;
@@ -81,7 +81,7 @@ void writeFile(const std::string& filename, const std::string& content) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
+    if (argc < 1) {
         printUsage();
         return 1;
     }
@@ -92,6 +92,7 @@ int main(int argc, char* argv[]) {
         std::string output;
         bool outputToConsole = false;
         bool executeJUSTC = true;
+        bool helpandorversionflag = false;
         
         // parse arguments
         bool gotFileOrCode = false;
@@ -130,8 +131,8 @@ int main(int argc, char* argv[]) {
             }
             
             else if (arg == "--help" || arg == "-h") {
+                helpandorversionflag = true;
                 printUsage();
-                return 0;
             }
             else if (arg == "--lexer" || arg == "-l") {
                 mode = "lexer";
@@ -155,9 +156,10 @@ int main(int argc, char* argv[]) {
                 waitingForCommitSHA = true;
             }
             else if (arg == "--version" || arg == "-v") {
+                helpandorversionflag = true;
                 std::cout << JUSTC_VERSION << std::endl;
             }
-            else if (arg == "--parse" || arg == "-p") {
+            else if (arg == "--parser" || arg == "-p") {
                 executeJUSTC = false;
             }
 
@@ -185,9 +187,8 @@ int main(int argc, char* argv[]) {
             }
         }
         
-        if (input.empty()) {
-            std::cerr << "Error: No input provided" << std::endl;
-            printUsage();
+        if (input.empty() && !helpandorversionflag) {
+            std::runtime_error("No input provided");
             return 1;
         }
         
@@ -210,7 +211,7 @@ int main(int argc, char* argv[]) {
         }
         
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::runtime_error(e.what());
         return 1;
     }
     

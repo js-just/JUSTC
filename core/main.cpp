@@ -155,7 +155,7 @@ int main(int argc, char* argv[]) {
                 waitingForCommitSHA = true;
             }
             else if (arg == "--version" || arg == "-v") {
-                std::count << JUSTC_VERSION << std::endl;
+                std::cout << JUSTC_VERSION << std::endl;
             }
             else if (arg == "--parse" || arg == "-p") {
                 executeJUSTC = false;

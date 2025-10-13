@@ -581,8 +581,19 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute) {
         node.value = conditionalValue;
         extractReferences(conditionalValue, node.references);
     }
+    else if (
+        tokens[position - 2].value == "ECHO" ||
+        tokens[position - 2].value == "LOG"  ||
+        tokens[position - 2].value == "LOGFILE"
+    ) {
+        position -= 2;
+        parseCommand(doExecute);
+    }
     else {
-        throw std::runtime_error("Expected assignment operator, got: " + currentToken().value);
+        if (isEnd()) {
+            throw std::runtime_error("Expected assignment operator at position " + std::to_string(position) + ", got EOF.");
+        }
+        throw std::runtime_error("Expected assignment operator at position " + std::to_string(position) + ", got \"" + currentToken().value +"\".");
     }
     
     variables[identifier] = Value();
@@ -892,8 +903,52 @@ ASTNode Parser::parseCommand(bool doExecute) {
     ASTNode node("COMMAND", currentToken().value, currentToken().start);
     std::string command = currentToken().value;
     advance();
-    
     std::vector<Value> args;
+
+    void cmdECHO() {
+        for (const auto& arg : args) {
+            std::string message = arg.toString();
+            auto varval = resolveVariableValue(message);
+            if (varval.type == DataType::UNKNOWN) {
+                addLog("ECHO", message, node.startPos);
+                std::cout << message << std::endl;
+            } else {
+                addLog("ECHO", varval.toString(), node.startPos);
+                std::cout << varval.toString() << std::endl;
+            }
+        }
+    }
+    void cmdLOGFILE() {
+        if (!args.empty()) {
+            std::string path = args[0].toString();
+            setLogFile(path);
+        }
+    }
+    void cmdLOG() {
+        for (const auto& arg : args) {
+            std::string message = arg.toString();
+            auto varval = resolveVariableValue(message);
+            if (varval.type == DataType::UNKNOWN) {
+                addLog("LOG", message, node.startPos);
+            } else {
+                addLog("LOG", varval.toString(), node.startPos);
+            }
+        }
+    }
+
+    if (doExecute && (command == "ECHO" || command == "LOGFILE" || command == "LOG") && !match("(")) {
+        while (!match(",") || !match(".") || !isEnd()) {
+            args.push_back(parseExpression(doExecute));
+        }
+        if (match(",")) advance();
+        switch (command) {
+            case "ECHO": cmdECHO(); break;
+            case "LOGFILE": cmdLOGFILE(); break;
+            case "LOG": cmdLOG(); break;
+        }
+        return node;
+    }
+    
     if (match("(")) {
         advance();
         while (!match(")") && !isEnd()) {
@@ -904,35 +959,10 @@ ASTNode Parser::parseCommand(bool doExecute) {
     }
     
     if (doExecute) {
-        if (command == "ECHO") {
-            for (const auto& arg : args) {
-                std::string message = arg.toString();
-                auto varval = resolveVariableValue(message);
-                if (varval.type == DataType::UNKNOWN) {
-                    addLog("ECHO", message, node.startPos);
-                    std::cout << message << std::endl;
-                } else {
-                    addLog("ECHO", varval.toString(), node.startPos);
-                    std::cout << varval.toString() << std::endl;
-                }
-            }
-        }
-        else if (command == "LOGFILE") {
-            if (!args.empty()) {
-                std::string path = args[0].toString();
-                setLogFile(path);
-            }
-        }
-        else if (command == "LOG") {
-            for (const auto& arg : args) {
-                std::string message = arg.toString();
-                auto varval = resolveVariableValue(message);
-                if (varval.type == DataType::UNKNOWN) {
-                    addLog("LOG", message, node.startPos);
-                } else {
-                    addLog("LOG", varval.toString(), node.startPos);
-                }
-            }
+        switch (command) {
+            case "ECHO": cmdECHO(); break;
+            case "LOGFILE": cmdLOGFILE(); break;
+            case "LOG": cmdLOG(); break;
         }
     }
     
@@ -942,7 +972,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
 Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
     #ifdef __EMSCRIPTEN__
     EM_ASM({
-        console.warn('[JUSTC] (' + UTF8ToString($2) + ') Running lexer and parser only - Cannot fetch', UTF8ToString($1), 'at position', $0, '\nUse JUSTC.execute for HTTP requests.');
+        console.warn('[JUSTC] (' + UTF8ToString($2) + ') Running lexer and parser only - Cannot fetch', '"' + UTF8ToString($1) + '"', 'at position', $0, '\nUse JUSTC.execute for HTTP requests.');
     }, startPos, args0string_value.c_str(), getCurrentTimestamp().c_str());
     #endif
 

@@ -32,6 +32,18 @@ SOFTWARE.
     const OBJECT = Object;
     const json_ = JSON;
     const ARRAY = Array;
+    const DOCUMENT = document;
+    const __URL__ = URL;
+    const FETCH = function customFetch(url) {
+        let done = false;
+        let output;
+        fetch(url).then(r => r.text()).then((t)=>{
+            done = true;
+            output = t;
+        });
+        while (!done) {};
+        return output;
+    }
 
     JUSTC.JUSTC = globalThis_.__justc__;
     globalThis_.__justc__ = undefined;
@@ -64,6 +76,7 @@ SOFTWARE.
         parseError: 'JUSTC/core/parser.cpp error:',
         jsonInput: 'Argument 0 should be an object.',
         lexerInput: 'Provided input is not valid core.lexer output.',
+        boolInput: 'Argument 1 should be a boolean.'
     };
 
     JUSTC.Core = {};
@@ -141,21 +154,35 @@ SOFTWARE.
             },
             Silent: {
                 NeedsWASM: false,
-                Name: "silent",
+                Name: "isSilent",
                 Return: ()=>{return(JUSTC.Silent)}
+            },
+            VFS: {
+                NeedsWASM: false,
+                Name: "vfs",
+                Return: JUSTC.PublicVFS
+            },
+            VFSget: {
+                NeedsWASM: false,
+                Name: "vfs.get",
+                Return: JUSTC.PublicVFSGet
             }
         },
         Available: [
             'errorsEnabled',
             'logsEnabled',
-            'silent',
+            'isSilent',
+            'vfs',
+            'vfs.get'
         ],
         WhatToName: {
             "core.lexer": "Lexer",
             "core.parser": "Parser",
             "errorsEnabled": "CoreErrors",
             "logsEnabled": "CoreLogs",
-            "silent": "Silent"
+            "isSilent": "Silent",
+            "vfs": "VFS",
+            'vfs.get': 'VFSget'
         }
     };
 
@@ -202,6 +229,38 @@ SOFTWARE.
             });
         }
     };
+    JUSTC.VFS = class VirtualFileSystem {
+        constructor() {
+            this.files = new Map();
+        }
+        createFile(filename, content, options = {}, usejustcid = 0) {
+            const { mimeType = usejustcid === 1 || usejustcid === 2 ? 'application/x-justc' : 'text/plain', language = usejustcid === 1 || usejustcid === 2 ? 'justc' : 'text' } = options;
+            this.files.set(filename, { content, mimeType, language });
+            this._createSourceMapReference(filename, content, usejustcid);
+            return filename;
+        }
+        _createSourceMapReference(filename, content, useJUSTC = 0) {
+            const script = DOCUMENT.createElement('script');
+            const scriptContent = `${useJUSTC === 0 ? `/*\n${content}\n*/` : `JUSTC.${JUSTC === 1 ? 'parse' : 'execute'}(\`${content}\`)`}\n//# sourceURL=${filename}`;
+            script.textContent = scriptContent;
+            DOCUMENT.head.appendChild(script);
+            DOCUMENT.head.removeChild(script);
+        }
+        getFile(filename) {
+            return this.files.get(filename);
+        }
+        listFiles() {
+            return ARRAY.from(this.files.keys());
+        }
+    }
+    JUSTC.CurrentVFS = new JUSTC.VFS();
+    JUSTC.PublicVFS = function() {
+        return JUSTC.CurrentVFS.listFiles();
+    }
+    JUSTC.PublicVFSGet = function(filename) {
+        if (!filename || typeof filename != 'string') throw new JUSTC.Error(JUSTC.Errors.wrongInputType);
+        return JUSTC.CurrentVFS.getFile(filename);
+    }
 
     JUSTC.Commands = {
         "EnableCoreLogs": function() { JUSTC.CoreLogsEnabled = true },
@@ -281,12 +340,14 @@ SOFTWARE.
         }
     };
 
+    JUSTC.bgvfid = 0;
     JUSTC.Output = {
         parse: function ParseJUSTC(code) {
             JUSTC.CheckInput(code);
             JUSTC.CheckWASM();
 
             const result = JUSTC.Parse(code);
+            JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+bgvfid++, code);
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
@@ -298,6 +359,7 @@ SOFTWARE.
             JUSTC.CheckWASM();
 
             const result = JUSTC.Parse(code, true);
+            JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+bgvfid++, code);
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
@@ -311,6 +373,16 @@ SOFTWARE.
         stringify: function JSONtoJUSTC(JavaScriptObjectNotation) {
             if (typeof JavaScriptObjectNotation != 'object') throw new JUSTC.Error(JUSTC.Errors.objectInput);
             return JUSTC.fromJSON(JavaScriptObjectNotation);
+        },
+        background: function ExecuteORParseJUSTC(urlORcode, doExecute = true) {
+            if (typeof doExecute != 'boolean') throw new JUSTC.Error(JUSTC.Errors.boolInput);
+            try {
+                __URL__.parse(urlORcode);
+                JUSTC.CurrentVFS.createFile(urlORcode, FETCH(urlORcode), {}, doExecute ? 2 : 1);
+            } catch(_) {
+                if (typeof urlORcode != 'string') throw new JUSTC.Error(JUSTC.Errors.wrongInputType);
+                JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+bgvfid++, urlORcode, {}, doExecute ? 2 : 1);
+            }
         }
     };
     JUSTC.Public = {

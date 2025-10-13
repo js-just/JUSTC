@@ -835,9 +835,12 @@ Value Parser::parsePrimary(bool doExecute) {
         if (varName == "$TIME" || varName == "$VERSION" || varName == "$LATEST" || 
             varName == "$DBID" || varName == "$SHA" || varName == "$NAV" || 
             varName == "$PAGES" || varName == "$CSS" || varName == "$PI" || 
-            varName == "$BACKSLASH" || varName == "$JUSTC") {
+            varName == "$BACKSLASH") {
             advance();
-            return executeFunction(varName.substr(1), {}, currentToken().start, true);
+            return executeFunction(varName.substr(1), {}, currentToken().start);
+        } else if (varName == "$JUSTC") {
+            advance();
+            return stringToValue(JUSTC_VERSION);
         }
         
         if (peekToken().type == "(") {
@@ -896,7 +899,7 @@ Value Parser::parseFunctionCall(bool doExecute) {
     }
     advance();
     
-    return executeFunction(funcName, args, startPos, false);
+    return executeFunction(funcName, args, startPos);
 }
 
 ASTNode Parser::parseCommand(bool doExecute) {
@@ -998,7 +1001,7 @@ Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
     return result;
 }
 
-Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos, bool hasDollarBefore) {
+Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos) {
     if (funcName == "TIME") {
         long timestamp = getCurrentTime();
         return hexToValue(std::to_string(timestamp));
@@ -1008,9 +1011,6 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     }
     else if (funcName == "BACKSLASH") {
         return stringToValue("\\");
-    }
-    else if (funcName == "JUSTC" && hasDollarBefore) {
-        return stringToValue(JUSTC_VERSION);
     }
     
     // built-in

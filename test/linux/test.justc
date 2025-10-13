@@ -1,4 +1,3 @@
 a is b,
 b is 10 + 2,
-ECHO(a),
-RETURN [a].
+ECHO(a).

@@ -33,16 +33,17 @@ SOFTWARE.
 #include "version.h"
 
 void printUsage() {
+    std::cout << "" << std::endl;
     std::cout << "JUSTC v" + JUSTC_VERSION << std::endl;
     std::cout << "" << std::endl;
     std::cout << "Basic usage:" << std::endl;
     std::cout << "  justc <file.justc>                    - Execute JUSTC file" << std::endl;
     std::cout << "  justc <file.justc> <file.json>        - Execute JUSTC file and output to JSON file" << std::endl;
-    std::cout << "  justc -c \"code\"                     - Execute JUSTC code" << std::endl;
+    std::cout << "  justc -c \"code\"                       - Execute JUSTC code" << std::endl;
     std::cout << "  justc --lexer <file.justc>            - Run lexer only (file)" << std::endl;
-    std::cout << "  justc --lexer -c \"code\"             - Run lexer only" << std::endl;
+    std::cout << "  justc --lexer -c \"code\"               - Run lexer only" << std::endl;
     std::cout << "  justc --parser <file.justc>           - Run parser only (file)" << std::endl;
-    std::cout << "  justc --parser -c \"code\"            - Run parser only" << std::endl;
+    std::cout << "  justc --parser -c \"code\"              - Run parser only" << std::endl;
     std::cout << "  justc --help                          - Show this command list" << std::endl;
     std::cout << "" << std::endl;
     std::cout << "Other flags:" << std::endl;
@@ -56,9 +57,11 @@ void printUsage() {
     std::cout << "  -p                                    - Same as --parser" << std::endl;
     std::cout << "  -l                                    - Same as --lexer" << std::endl;
     std::cout << "  -v                                    - Same as --version" << std::endl;
+    std::cout << "  -s <commit sha>                       - Same as --sha <commit sha>" << std::endl;
     std::cout << "" << std::endl;
     std::cout << "\"Run parser only\" means that JUSTC (will not be executed) will only be compiled to JSON - no logs and/or HTTP requests." << std::endl;
     std::cout << "\"Run lexer only\" means that JUSTC won't be executed and/or parsed, JUSTC will only be tokenized." << std::endl;
+    std::cout << "" << std::endl;
 }
 
 std::string readFile(const std::string& filename) {

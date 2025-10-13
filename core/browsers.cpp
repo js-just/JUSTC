@@ -97,7 +97,7 @@ bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTok
     
     return !parserTokens.empty();
 }
-} // namespace
+}
 
 char* lexer(const char* input) {
     if (input == nullptr) return nullptr;

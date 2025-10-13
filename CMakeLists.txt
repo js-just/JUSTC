@@ -33,7 +33,6 @@ add_library(justc_core
     core/keywords.cpp
     core/json_serializer.cpp
     core/fetch.cpp
-    core/version.cpp
 )
 
 add_executable(justc core/main.cpp)

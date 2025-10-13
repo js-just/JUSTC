@@ -261,7 +261,7 @@ long getCurrentTime() {
     return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
 }
 
-} // namespace
+}
 
 Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute) 
     : tokens(tokens), position(0), outputMode("EVERYTHING"), allowJavaScript(true), 

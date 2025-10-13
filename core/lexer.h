@@ -81,4 +81,4 @@ public:
     static std::pair<std::string, std::vector<ParserToken>> parse(const std::string& input);
 };
 
-#endif // LEXER_H
+#endif

@@ -299,4 +299,4 @@ public:
     static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true);
 };
 
-#endif // PARSER_H
+#endif

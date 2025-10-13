@@ -42,4 +42,4 @@ private:
     static std::string tokensToJson(const std::vector<ParserToken>& tokens);
 };
 
-#endif // JSON_SERIALIZER_H
+#endif

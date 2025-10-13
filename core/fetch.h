@@ -41,4 +41,4 @@ private:
     static void processHttpRequests(const ParseResult& result);
 };
 
-#endif // INTERPRETER_H
+#endif

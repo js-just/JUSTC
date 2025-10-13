@@ -973,7 +973,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         if (!allowHttpRequests) {
             Value result;
             result.type = DataType::STRING;
-            result.string_value = args[0];
+            result.string_value = args[0].string_value;
             return result;
         }
         return functionHTTPTEXT(startPos, args);

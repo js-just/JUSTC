@@ -85,3 +85,4 @@ file browsers/$SAFE_DIR/justc.core.wasm
 hexdump -C browsers/$SAFE_DIR/justc.core.wasm | head -20
 
 mv browsers/test.html browsers/$SAFE_DIR/test.html
+mv browsers/test.justc browsers/$SAFE_DIR/test.justc

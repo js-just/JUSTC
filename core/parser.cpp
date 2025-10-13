@@ -259,10 +259,10 @@ long getCurrentTime() {
 
 } // namespace
 
-Parser::Parser(const std::vector<ParserToken>& tokens, bool allowHttpRequests) 
+Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute) 
     : tokens(tokens), position(0), outputMode("EVERYTHING"), allowJavaScript(true), 
       globalScope(false), strictMode(false), hasLogFile(false), 
-      allowHttpRequests(allowHttpRequests) {}
+      doExecute(doExecute) {}
 
 std::string Parser::getCurrentTimestamp() const {
     auto now = std::chrono::system_clock::now();
@@ -335,7 +335,7 @@ void Parser::skipCommas() {
     while (match(",")) advance();
 }
 
-ParseResult Parser::parse() {
+ParseResult Parser::parse(bool doExecute) {
     ParseResult result;
     
     try {
@@ -357,12 +357,12 @@ ParseResult Parser::parse() {
                 } else if (keyword == "IMPORT") {
                     ast.push_back(parseImportCommand());
                 } else if (keyword == "ECHO" || keyword == "LOGFILE" || keyword == "LOG") {
-                    ast.push_back(parseCommand());
+                    ast.push_back(parseCommand(doExecute));
                 } else {
-                    ast.push_back(parseStatement());
+                    ast.push_back(parseStatement(doExecute));
                 }
             } else if (match("identifier")) {
-                ast.push_back(parseStatement());
+                ast.push_back(parseStatement(doExecute));
             } else if (match(".")) {
                 break;
             } else {
@@ -539,15 +539,15 @@ ASTNode Parser::parseImportCommand() {
     return node;
 }
 
-ASTNode Parser::parseStatement() {
+ASTNode Parser::parseStatement(bool doExecute) {
     if (match("identifier")) {
-        return parseVariableDeclaration();
+        return parseVariableDeclaration(doExecute);
     } else {
-        return parseCommand();
+        return parseCommand(doExecute);
     }
 }
 
-ASTNode Parser::parseVariableDeclaration() {
+ASTNode Parser::parseVariableDeclaration(doExecute) {
     std::string identifier = currentToken().value;
     size_t startPos = currentToken().start;
     ASTNode node("VARIABLE_DECLARATION", identifier, startPos);
@@ -558,7 +558,7 @@ ASTNode Parser::parseVariableDeclaration() {
         assignOp = currentToken().value;
         advance();
         
-        Value exprValue = parseExpression();
+        Value exprValue = parseExpression(doExecute);
         node.value = exprValue;
         extractReferences(exprValue, node.references);
     } 
@@ -566,14 +566,14 @@ ASTNode Parser::parseVariableDeclaration() {
         assignOp = currentToken().value;
         advance();
         
-        Value exprValue = parseExpression();
+        Value exprValue = parseExpression(doExecute);
         exprValue = handleInequality(exprValue);
         node.value = exprValue;
         extractReferences(exprValue, node.references);
     }
     else if (match("keyword", "isif") || match("?")) {
         advance();
-        Value conditionalValue = parseConditional();
+        Value conditionalValue = parseConditional(doExecute);
         node.value = conditionalValue;
         extractReferences(conditionalValue, node.references);
     }
@@ -586,24 +586,24 @@ ASTNode Parser::parseVariableDeclaration() {
     return node;
 }
 
-Value Parser::parseExpression() {
-    return parseConditional();
+Value Parser::parseExpression(bool doExecute) {
+    return parseConditional(doExecute);
 }
 
-Value Parser::parseConditional() {
-    Value condition = parseLogicalOR();
+Value Parser::parseConditional(bool doExecute) {
+    Value condition = parseLogicalOR(doExecute);
     
     if (match("keyword", "then") || match("==")) {
         std::string thenOp = currentToken().value;
         advance();
         
-        Value thenValue = parseExpression();
+        Value thenValue = parseExpression(doExecute);
         
         if (match("keyword", "else") || match("?=")) {
             std::string elseOp = currentToken().value;
             advance();
             
-            Value elseValue = parseExpression();
+            Value elseValue = parseExpression(doExecute);
             
             return handleConditional(condition, thenValue, elseValue, thenOp, elseOp);
         } else {
@@ -615,19 +615,19 @@ Value Parser::parseConditional() {
         std::string elseifOp = currentToken().value;
         advance();
         
-        Value elseifCondition = parseExpression();
+        Value elseifCondition = parseExpression(doExecute);
         
         if (match("keyword", "then") || match("==")) {
             std::string thenOp = currentToken().value;
             advance();
             
-            Value thenValue = parseExpression();
+            Value thenValue = parseExpression(doExecute);
             
             if (match("keyword", "else") || match("?=")) {
                 std::string elseOp = currentToken().value;
                 advance();
                 
-                Value elseValue = parseExpression();
+                Value elseValue = parseExpression(doExecute);
                 
                 Value nestedConditional = handleConditional(elseifCondition, thenValue, elseValue, thenOp, elseOp);
                 return handleConditional(condition, thenValue, nestedConditional, thenOp, elseOp);
@@ -642,117 +642,117 @@ Value Parser::parseConditional() {
     return condition;
 }
 
-Value Parser::parseLogicalOR() {
-    Value left = parseLogicalAND();
+Value Parser::parseLogicalOR(bool doExecute) {
+    Value left = parseLogicalAND(doExecute);
     
     while (match("keyword", "or") || match("||") ||
            match("keyword", "orn't") || match("!|")) {
         std::string op = currentToken().value;
         advance();
         
-        Value right = parseLogicalAND();
+        Value right = parseLogicalAND(doExecute);
         left = evaluateExpression(left, op, right);
     }
     
     return left;
 }
 
-Value Parser::parseLogicalAND() {
-    Value left = parseEquality();
+Value Parser::parseLogicalAND(bool doExecute) {
+    Value left = parseEquality(doExecute);
     
     while (match("keyword", "and") || match("&") ||
            match("keyword", "andn't") || match("!&")) {
         std::string op = currentToken().value;
         advance();
         
-        Value right = parseEquality();
+        Value right = parseEquality(doExecute);
         left = evaluateExpression(left, op, right);
     }
     
     return left;
 }
 
-Value Parser::parseEquality() {
-    Value left = parseComparison();
+Value Parser::parseEquality(bool doExecute) {
+    Value left = parseComparison(doExecute);
     
     while (match("keyword", "is") || match("=") ||
            match("keyword", "isn't") || match("!=")) {
         std::string op = currentToken().value;
         advance();
         
-        Value right = parseComparison();
+        Value right = parseComparison(doExecute);
         left = evaluateExpression(left, op, right);
     }
     
     return left;
 }
 
-Value Parser::parseComparison() {
-    Value left = parseTerm();
+Value Parser::parseComparison(bool doExecute) {
+    Value left = parseTerm(doExecute);
     
     while (match("<") || match(">") || match("<=") || match(">=")) {
         std::string op = currentToken().value;
         advance();
         
-        Value right = parseTerm();
+        Value right = parseTerm(doExecute);
         left = evaluateExpression(left, op, right);
     }
     
     return left;
 }
 
-Value Parser::parseTerm() {
-    Value left = parseFactor();
+Value Parser::parseTerm(bool doExecute) {
+    Value left = parseFactor(doExecute);
     
     while (match("+") || match("minus") || match("..")) {
         std::string op = currentToken().value;
         advance();
         
-        Value right = parseFactor();
+        Value right = parseFactor(doExecute);
         left = evaluateExpression(left, op, right);
     }
     
     return left;
 }
 
-Value Parser::parseFactor() {
-    Value left = parsePower();
+Value Parser::parseFactor(bool doExecute) {
+    Value left = parsePower(doExecute);
     
     while (match("*") || match("/") || match("%")) {
         std::string op = currentToken().value;
         advance();
         
-        Value right = parsePower();
+        Value right = parsePower(doExecute);
         left = evaluateExpression(left, op, right);
     }
     
     return left;
 }
 
-Value Parser::parsePower() {
-    Value left = parseUnary();
+Value Parser::parsePower(bool doExecute) {
+    Value left = parseUnary(doExecute);
     
     while (match("^")) {
         std::string op = currentToken().value;
         advance();
         
-        Value right = parseUnary();
+        Value right = parseUnary(doExecute);
         left = evaluateExpression(left, op, right);
     }
     
     return left;
 }
 
-Value Parser::parseUnary() {
+Value Parser::parseUnary(bool doExecute) {
     if (match("minus") || match("+") || match("!")) {
         std::string op = currentToken().value;
         advance();
         
-        Value right = parseUnary();
+        Value right = parseUnary(doExecute);
         return evaluateExpression(Value(), op, right);
     }
     
-    return parsePrimary();
+    return parsePrimary(doExecute);
 }
 
 Value Parser::astNodeToValue(const ASTNode& node) {
@@ -767,7 +767,7 @@ Value Parser::astNodeToValue(const ASTNode& node) {
     }
 }
 
-Value Parser::parsePrimary() {
+Value Parser::parsePrimary(bool doExecute) {
     if (match("number")) {
         double num = parseNumber(currentToken().value);
         advance();
@@ -826,7 +826,7 @@ Value Parser::parsePrimary() {
         }
         
         if (peekToken().type == "(") {
-            return parseFunctionCall();
+            return parseFunctionCall(doExecute);
         }
         
         Value result;
@@ -836,11 +836,11 @@ Value Parser::parsePrimary() {
         return result;
     }
     else if (match("keyword") && peekToken().type == "(") {
-        return parseFunctionCall();
+        return parseFunctionCall(doExecute);
     }
     else if (match("(")) {
         advance();
-        Value result = parseExpression();
+        Value result = parseExpression(doExecute);
         if (!match(")")) {
             throw std::runtime_error("Expected ')'");
         }
@@ -854,13 +854,13 @@ Value Parser::parsePrimary() {
         return result;
     }
     else if (match("keyword") || match("?") || match("!=") || match("=")) {
-        return astNodeToValue(parseStatement());
+        return astNodeToValue(parseStatement(doExecute));
     }
 
     throw std::runtime_error("Unexpected token in expression: " + currentToken().value);
 }
 
-Value Parser::parseFunctionCall() {
+Value Parser::parseFunctionCall(bool doExecute) {
     std::string funcName = currentToken().value;
     size_t startPos = currentToken().start;
     advance();
@@ -872,7 +872,7 @@ Value Parser::parseFunctionCall() {
     
     std::vector<Value> args;
     while (!match(")") && !isEnd()) {
-        args.push_back(parseExpression());
+        args.push_back(parseExpression(doExecute));
         if (match(",")) advance();
     }
     
@@ -884,7 +884,7 @@ Value Parser::parseFunctionCall() {
     return executeFunction(funcName, args, startPos, false);
 }
 
-ASTNode Parser::parseCommand() {
+ASTNode Parser::parseCommand(bool doExecute) {
     ASTNode node("COMMAND", currentToken().value, currentToken().start);
     std::string command = currentToken().value;
     advance();
@@ -893,44 +893,59 @@ ASTNode Parser::parseCommand() {
     if (match("(")) {
         advance();
         while (!match(")") && !isEnd()) {
-            args.push_back(parseExpression());
+            args.push_back(parseExpression(doExecute));
             if (match(",")) advance();
         }
         if (match(")")) advance();
     }
     
-    if (command == "ECHO") {
-        for (const auto& arg : args) {
-            std::string message = arg.toString();
-            auto varval = resolveVariableValue(message);
-            if (varval.type == DataType::UNKNOWN) {
-                addLog("ECHO", message, node.startPos);
-                std::cout << message << std::endl;
-            } else {
-                addLog("ECHO", varval.toString(), node.startPos);
-                std::cout << varval.toString() << std::endl;
+    if (doExecute) {
+        if (command == "ECHO") {
+            for (const auto& arg : args) {
+                std::string message = arg.toString();
+                auto varval = resolveVariableValue(message);
+                if (varval.type == DataType::UNKNOWN) {
+                    addLog("ECHO", message, node.startPos);
+                    std::cout << message << std::endl;
+                } else {
+                    addLog("ECHO", varval.toString(), node.startPos);
+                    std::cout << varval.toString() << std::endl;
+                }
             }
         }
-    }
-    else if (command == "LOGFILE") {
-        if (!args.empty()) {
-            std::string path = args[0].toString();
-            setLogFile(path);
+        else if (command == "LOGFILE") {
+            if (!args.empty()) {
+                std::string path = args[0].toString();
+                setLogFile(path);
+            }
         }
-    }
-    else if (command == "LOG") {
-        for (const auto& arg : args) {
-            std::string message = arg.toString();
-            auto varval = resolveVariableValue(message);
-            if (varval.type == DataType::UNKNOWN) {
-                addLog("LOG", message, node.startPos);
-            } else {
-                addLog("LOG", varval.toString(), node.startPos);
+        else if (command == "LOG") {
+            for (const auto& arg : args) {
+                std::string message = arg.toString();
+                auto varval = resolveVariableValue(message);
+                if (varval.type == DataType::UNKNOWN) {
+                    addLog("LOG", message, node.startPos);
+                } else {
+                    addLog("LOG", varval.toString(), node.startPos);
+                }
             }
         }
     }
     
     return node;
+}
+
+Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
+    #ifdef __EMSCRIPTEN__
+    EM_ASM({
+        console.warn('[JUSTC] (' + $2 + ') Running lexer and parser only - Cannot fetch', $1, 'at position', $0, '\nUse JUSTC.execute for HTTP requests.')
+    }, startPos, args0string_value, getCurrentTimestamp());
+    #endif
+
+    Value result;
+    result.type = DataType::ERROR;
+    result.string_value = "HTTP requests are disabled";
+    return result;
 }
 
 Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos, bool hasDollarBefore) {
@@ -961,30 +976,21 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "ECHO") return functionECHO(args);
     if (funcName == "JSON") return functionJSON(args);
     if (funcName == "HTTPJSON") {
-        if (!allowHttpRequests) {
-            Value result;
-            result.type = DataType::ERROR;
-            result.string_value = "HTTP requests are disabled";
-            return result;
+        if (!doExecute) {
+            return onHTTPDisabled(startPos, args[0].string_value);
         }
         return functionHTTPJSON(args);
     }
     if (funcName == "HTTPTEXT") {
-        if (!allowHttpRequests) {
-            Value result;
-            result.type = DataType::STRING;
-            result.string_value = args[0].string_value;
-            return result;
+        if (!doExecute) {
+            return onHTTPDisabled(startPos, args[0].string_value);
         }
         return functionHTTPTEXT(startPos, args);
     }
     if (funcName == "JUSTC") return functionJUSTC(args);
     if (funcName == "HTTPJUSTC") {
-        if (!allowHttpRequests) {
-            Value result;
-            result.type = DataType::ERROR;
-            result.string_value = "HTTP requests are disabled";
-            return result;
+        if (!doExecute) {
+            return onHTTPDisabled(startPos, args[0].string_value);
         }
         return functionHTTPJUSTC(args);
     }
@@ -1541,7 +1547,7 @@ Value Parser::octalToValue(const std::string& octStr) {
     return result;
 }
 
-ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool allowHttpRequests) {
-    Parser parser(tokens, allowHttpRequests);
-    return parser.parse();
+ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute) {
+    Parser parser(tokens, doExecute);
+    return parser.parse(doExecute);
 }

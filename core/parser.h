@@ -157,7 +157,7 @@ struct ASTNode {
 
 class Parser {
 private:
-    bool allowHttpRequests;
+    bool doExecute;
     std::vector<ParserToken> tokens;
     std::vector<ASTNode> ast;
     size_t position;
@@ -200,22 +200,22 @@ private:
 
     Value astNodeToValue(const ASTNode& node);
     
-    Value parseExpression();
-    Value parsePrimary();
-    Value parseConditional();
-    Value parseLogicalOR();
-    Value parseLogicalAND();
-    Value parseEquality();
-    Value parseComparison();
-    Value parseTerm();
-    Value parseFactor();
-    Value parsePower();
-    Value parseUnary();
-    Value parseFunctionCall();
+    Value parseExpression(bool doExecute);
+    Value parsePrimary(bool doExecute);
+    Value parseConditional(bool doExecute);
+    Value parseLogicalOR(bool doExecute);
+    Value parseLogicalAND(bool doExecute);
+    Value parseEquality(bool doExecute);
+    Value parseComparison(bool doExecute);
+    Value parseTerm(bool doExecute);
+    Value parseFactor(bool doExecute);
+    Value parsePower(bool doExecute);
+    Value parseUnary(bool doExecute);
+    Value parseFunctionCall(bool doExecute);
     
-    ASTNode parseStatement();
-    ASTNode parseVariableDeclaration();
-    ASTNode parseCommand();
+    ASTNode parseStatement(bool doExecute);
+    ASTNode parseVariableDeclaration(bool doExecute);
+    ASTNode parseCommand(bool doExecute);
     ASTNode parseTypeCommand();
     ASTNode parseOutputCommand();
     ASTNode parseReturnCommand();
@@ -288,12 +288,14 @@ private:
     Value functionABSOLUTE(const std::vector<Value>& args);
     Value functionCEIL(const std::vector<Value>& args);
     Value functionFLOOR(const std::vector<Value>& args);
+
+    Value onHTTPDisabled(size_t startPos, std::string args0string_value);
     
 public:
 
-    Parser(const std::vector<ParserToken>& tokens, bool allowHttpRequests = true);
-    ParseResult parse();
-    static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool allowHttpRequests = true);
+    Parser(const std::vector<ParserToken>& tokens, bool doExecute = true);
+    ParseResult parse(bool doExecute = true);
+    static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true);
 };
 
 #endif // PARSER_H

@@ -132,20 +132,24 @@ SOFTWARE.
             CoreErrors: {
                 NeedsWASM: false,
                 Name: "errorsEnabled",
-                Return: JUSTC.ErrorEnabled
+                Return: ()=>{return(JUSTC.ErrorEnabled)}
             },
             CoreLogs: {
                 NeedsWASM: false,
                 Name: "logsEnabled",
-                Return: JUSTC.CoreLogsEnabled
+                Return: ()=>{return(JUSTC.CoreLogsEnabled)}
             },
             Silent: {
                 NeedsWASM: false,
                 Name: "silent",
-                Return: JUSTC.Silent
+                Return: ()=>{return(JUSTC.Silent)}
             }
         },
-        Available: [],
+        Available: [
+            'errorsEnabled',
+            'logsEnabled',
+            'silent',
+        ],
         WhatToName: {
             "core.lexer": "Lexer",
             "core.parser": "Parser",

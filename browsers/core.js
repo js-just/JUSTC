@@ -252,15 +252,15 @@ SOFTWARE.
         listFiles() {
             return ARRAY.from(this.files.keys());
         }
-    }
+    };
     JUSTC.CurrentVFS = new JUSTC.VFS();
     JUSTC.PublicVFS = function() {
         return JUSTC.CurrentVFS.listFiles();
-    }
+    };
     JUSTC.PublicVFSGet = function(filename) {
         if (!filename || typeof filename != 'string') throw new JUSTC.Error(JUSTC.Errors.wrongInputType);
         return JUSTC.CurrentVFS.getFile(filename);
-    }
+    };
 
     JUSTC.Commands = {
         "EnableCoreLogs": function() { JUSTC.CoreLogsEnabled = true },

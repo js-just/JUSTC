@@ -43,7 +43,7 @@ SOFTWARE.
         });
         while (!done) {};
         return output;
-    }
+    };
 
     JUSTC.JUSTC = globalThis_.__justc__;
     globalThis_.__justc__ = undefined;

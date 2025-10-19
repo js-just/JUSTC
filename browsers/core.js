@@ -485,16 +485,20 @@ SOFTWARE.
     });
     OBJECT.defineProperty(globalThis_.window, '$JUSTC', {
         get: function() {
+            "use strict";
             const output = JUSTC.Output.execute;
-            OBJECT.defineProperty(output.__proto__, 'BG', {
-                get: function() {
-                    return JUSTC.Output.background;
-                },
-                set: function() {
-                    JUSTC.ErrorIfEnabled('$JUSTC.BG cannot be redefined.');
-                },
-                configurable: false
-            });
+            if (!output.BG) {
+                OBJECT.defineProperty(output.__proto__, 'BG', {
+                    get: function(...args) {
+                        console.log(...args);
+                        return JUSTC.Output.background;
+                    },
+                    set: function() {
+                        JUSTC.ErrorIfEnabled('$JUSTC.BG cannot be redefined.');
+                    },
+                    configurable: false
+                });
+            }
             return output;
         },
         set: function() {

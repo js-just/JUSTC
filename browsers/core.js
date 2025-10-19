@@ -347,7 +347,7 @@ SOFTWARE.
             JUSTC.CheckWASM();
 
             const result = JUSTC.Parse(code);
-            JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+bgvfid++, code);
+            JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+JUSTC.bgvfid++, code);
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
@@ -359,7 +359,7 @@ SOFTWARE.
             JUSTC.CheckWASM();
 
             const result = JUSTC.Parse(code, true);
-            JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+bgvfid++, code);
+            JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+JUSTC.bgvfid++, code);
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
@@ -381,7 +381,7 @@ SOFTWARE.
                 JUSTC.CurrentVFS.createFile(urlORcode, FETCH(urlORcode), {}, doExecute ? 2 : 1);
             } catch(_) {
                 if (typeof urlORcode != 'string') throw new JUSTC.Error(JUSTC.Errors.wrongInputType);
-                JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+bgvfid++, urlORcode, {}, doExecute ? 2 : 1);
+                JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+JUSTC.bgvfid++, urlORcode, {}, doExecute ? 2 : 1);
             }
         }
     };

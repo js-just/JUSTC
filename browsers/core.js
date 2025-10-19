@@ -27,7 +27,23 @@ SOFTWARE.
 (async()=>{
     "use strict";
 
-    const JUSTC = {};
+    const JUSTC = {
+        Checks: {
+            funcRegex: /^function\s*\w*\s*\(\)\s*\{\s*\[native code\]\s*\}$/,
+            objRegex: /^\[object\s*\w*\]$/,
+            sysFunc: (...functions) => {
+                for (const func of functions) {
+                    if (typeof func != 'function' || !JUSTC.Checks.funcRegex.test(func+'')) throw new JUSTC.Error(JUSTC.Errors.environment);
+                }
+            },
+            sysObj: (...objects) => {
+                for (const obj of objects) {
+                    if (typeof obj != 'object' || !JUSTC.Checks.objRegex.test(obj+'')) throw new JUSTC.Error(JUSTC.Errors.environment);
+                }
+            }
+        }
+    };
+
     const globalThis_ = globalThis;
     const OBJECT = Object;
     const json_ = JSON;
@@ -37,24 +53,47 @@ SOFTWARE.
     const FETCH = function customFetch(url) {
         let done = false;
         let output;
-        fetch(url).then(r => r.text()).then((t)=>{
+        const fetch_ = fetch;
+        JUSTC.Checks.sysFunc(fetch_);
+        fetch_(url).then(r => r.text()).then((t)=>{
             done = true;
             output = t;
         });
         while (!done) {};
         return output;
     };
+    const STRING = String;
+    const ERR = Error;
+    const CONSOLE = console;
+
+    JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR);
+    JUSTC.Checks.sysObj(globalThis_, json_, DOCUMENT, CONSOLE);
+    JUSTC.Checks.sysFunc(
+        OBJECT.entries, OBJECT.defineProperty, OBJECT.freeze,
+        json_.parse, json_.stringify,
+        ARRAY.isArray, ARRAY.from,
+        DOCUMENT.createElement,
+        __URL__.parse,
+        CONSOLE.log, CONSOLE.info, CONSOLE.error, CONSOLE.warn, CONSOLE.group, CONSOLE.groupEnd
+    );
+    JUSTC.Checks.sysObj(
+        DOCUMENT.head,
+        globalThis_.window
+    );
+    JUSTC.Checks.sysFunc(
+        DOCUMENT.head.appendChild, DOCUMENT.head.removeChild
+    );
 
     JUSTC.JUSTC = globalThis_.__justc__;
     globalThis_.__justc__ = undefined;
-    JUSTC.Error = class extends Error {};
+    JUSTC.Error = class extends ERR {};
     JUSTC.ErrorEnabled = true;
     JUSTC.CoreLogsEnabled = false;
     JUSTC.Silent = false;
 
     JUSTC.Console = function(type, ...args) {
         if (!JUSTC.Silent) {
-            console[type](...args);
+            CONSOLE[type](...args);
         }
     };
     JUSTC.ErrorIfEnabled = function(...args) {
@@ -76,7 +115,8 @@ SOFTWARE.
         parseError: 'JUSTC/core/parser.cpp error:',
         jsonInput: 'Argument 0 should be an object.',
         lexerInput: 'Provided input is not valid core.lexer output.',
-        boolInput: 'Argument 1 should be a boolean.'
+        boolInput: 'Argument 1 should be a boolean.',
+        environment: 'Invalid or compromised environment.'
     };
 
     JUSTC.Core = {};
@@ -270,14 +310,14 @@ SOFTWARE.
         "HideCoreErrors": function() { JUSTC.ErrorEnabled = false },
         "SwitchCoreErrors": function() { JUSTC.ErrorEnabled = !JUSTC.ErrorEnabled },
         "Silent": function() { JUSTC.Silent = true },
-        "Help": function() { console.info("https://just.js.org/justc") },
+        "Help": function() { CONSOLE.info("https://just.js.org/justc") },
     };
 
     JUSTC.TryCatchLog = function(func, log) {
         try {
             return func()
         } catch (error) {
-            console.log(log);
+            CONSOLE.log(log);
             throw error
         }
     };
@@ -298,7 +338,7 @@ SOFTWARE.
             
             return result;
         } catch (error) {
-            console.error(JUSTC.Errors.executionError, error);
+            CONSOLE.error(JUSTC.Errors.executionError, error);
             throw error;
         }
     };
@@ -310,7 +350,7 @@ SOFTWARE.
     };
     JUSTC.CheckInput = function(input) {
         if (!input || typeof input != 'string') {
-            JUSTC.ErrorIfEnabled(String(input).length < 32 ? `"${String(input)}" is not valid JUSTC.` : ()=>{
+            JUSTC.ErrorIfEnabled(STRING(input).length < 32 ? `"${STRING(input)}" is not valid JUSTC.` : ()=>{
                 try {
                     if (!input.name) throw new JUSTC.Error('');
                     return `Provided ["${input.name}"] is not valid JUSTC.`;
@@ -423,7 +463,7 @@ SOFTWARE.
             value,
             writable: false,
             configurable: false,
-            enumerable: false,
+            enumerable: false
         })
     };
     
@@ -435,12 +475,31 @@ SOFTWARE.
         set: function(command) {
             if (typeof command === 'string' && typeof JUSTC.Commands[command] === 'function') {
                 JUSTC.Commands[command]();
-            } else if (String(command).toLowerCase().includes('help')) {
+            } else if (STRING(command).toLowerCase().includes('help')) {
                 JUSTC.Commands.Help();
             } else {
                 JUSTC.ErrorIfEnabled('JUSTC cannot be redefined.');
             }
         },
-        configurable: false,
+        configurable: false
+    });
+    OBJECT.defineProperty(globalThis_.window, '$JUSTC', {
+        get: function() {
+            const output = JUSTC.Output.execute;
+            OBJECT.defineProperty(output.__proto__, 'BG', {
+                get: function() {
+                    return JUSTC.Output.background;
+                },
+                set: function() {
+                    JUSTC.ErrorIfEnabled('$JUSTC.BG cannot be redefined.');
+                },
+                configurable: false
+            });
+            return output;
+        },
+        set: function() {
+            JUSTC.ErrorIfEnabled('$JUSTC cannot be redefined.');
+        },
+        configurable: false
     })
 })()

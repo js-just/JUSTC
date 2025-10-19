@@ -488,7 +488,7 @@ SOFTWARE.
             "use strict";
             const output = JUSTC.Output.execute;
             if (!output.BG) {
-                OBJECT.defineProperty(output.__proto__, 'BG', {
+                OBJECT.defineProperty(output, 'BG', {
                     get: function(...args) {
                         console.log(...args);
                         return JUSTC.Output.background;

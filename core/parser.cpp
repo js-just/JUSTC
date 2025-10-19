@@ -759,7 +759,7 @@ Value Parser::parsePower(bool doExecute) {
 }
 
 Value Parser::parseUnary(bool doExecute) {
-    if (match("minus") || match("+") || match("!")) {
+    if (match("minus") || match("+") || match("!") || match("-")) {
         std::string op = currentToken().value;
         advance();
         
@@ -1079,11 +1079,15 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             result = stringToValue(left.toString() + right.toString());
         }
     }
-    else if (op == "minus") {
-        if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
-            result = numberToValue(left.toNumber() - right.toNumber());
-        } else if (left.type == DataType::UNKNOWN) {
+    else if (op == "minus" || op == "-") {
+        if (left.type == DataType::UNKNOWN) {
             result = numberToValue(-right.toNumber());
+        } else {
+            if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
+                result = numberToValue(left.toNumber() - right.toNumber());
+            } else {
+                result = numberToValue(left.toNumber() - right.toNumber());
+            }
         }
     }
     else if (op == "*") {

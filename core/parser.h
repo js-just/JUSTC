@@ -187,11 +187,11 @@ private:
 
     std::string getCurrentTimestamp() const;
 
-    std::string toLower(const std::string& str) const {
-        std::string result = str;
-        std::transform(result.begin(), result.end(), result.begin(), 
+    std::string_view toLower(std::string& buffer, const std::string& str) const {
+        buffer.resize(str.size());
+        std::transform(str.begin(), str.end(), buffer.begin(), 
                       [](unsigned char c) { return std::tolower(c); });
-        return result;
+        return buffer;
     }
     
     // logs

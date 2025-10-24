@@ -215,11 +215,11 @@ Value Value::createOctal(double num) {
 
 namespace {
 
-std::string toLower(const std::string& str) {
-    std::string result = str;
-    std::transform(result.begin(), result.end(), result.begin(), 
+std::string_view toLower(std::string& buffer, const std::string& str) {
+    buffer.resize(str.size());
+    std::transform(str.begin(), str.end(), buffer.begin(), 
                   [](unsigned char c) { return std::tolower(c); });
-    return result;
+    return buffer;
 }
 
 bool isWhitespace(char c) {

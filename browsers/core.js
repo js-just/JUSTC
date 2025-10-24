@@ -417,7 +417,6 @@ SOFTWARE.
             JUSTC.CheckWASM();
 
             const result = JUSTC.Parse(code);
-            JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+JUSTC.bgvfid++, code);
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
@@ -429,7 +428,6 @@ SOFTWARE.
             JUSTC.CheckWASM();
 
             const result = JUSTC.Parse(code, true);
-            JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+JUSTC.bgvfid++, code);
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
@@ -443,6 +441,17 @@ SOFTWARE.
         stringify: function JSONtoJUSTC(JavaScriptObjectNotation) {
             if (typeof JavaScriptObjectNotation != 'object') throw new JUSTC.Error(JUSTC.Errors.objectInput);
             return JUSTC.fromJSON(JavaScriptObjectNotation);
+        },
+        parseAsync: async function ParseJUSTC(code) {
+            JUSTC.CheckInput(code);
+            JUSTC.CheckWASM();
+
+            const result = JUSTC.Parse(code);
+            if (result.error) {
+                throw new JUSTC.Error(result.error);
+            } else {
+                return result.return || {};
+            }
         },
         background: function ExecuteORParseJUSTC(urlORcode, doExecute = true) {
             if (typeof doExecute != 'boolean') throw new JUSTC.Error(JUSTC.Errors.boolInput);

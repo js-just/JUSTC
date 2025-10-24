@@ -274,14 +274,14 @@ SOFTWARE.
             this.files = new Map();
         }
         createFile(filename, content, options = {}, usejustcid = 0) {
-            const { mimeType = usejustcid === 1 || usejustcid === 2 ? 'application/x-justc' : 'text/plain', language = usejustcid === 1 || usejustcid === 2 ? 'justc' : 'text' } = options;
+            const { mimeType = usejustcid === 1 || usejustcid === 2 || usejustcid === 3 ? 'application/x-justc' : 'text/plain', language = usejustcid === 1 || usejustcid === 2 || usejustcid === 3 ? 'justc' : 'text' } = options;
             this.files.set(filename, { content, mimeType, language });
-            this._createSourceMapReference(filename, content, usejustcid);
+            this._createSourceMapReference(filename, content, usejustcid === 3 ? 0 : usejustcid);
             return filename;
         }
         _createSourceMapReference(filename, content, useJUSTC = 0) {
             const script = DOCUMENT.createElement('script');
-            const scriptContent = `${useJUSTC === 0 ? `/*\n${content}\n*/` : `JUSTC.${JUSTC === 1 ? 'parse' : 'execute'}(\`${content}\`)`}\n//# sourceURL=${filename}`;
+            const scriptContent = `${useJUSTC === 0 ? `/*\n\n${content}\n\n*/` : `JUSTC.${JUSTC === 1 ? 'parse' : 'execute'}(\`${content}\`)`}\n//# sourceURL=${filename}`;
             script.textContent = scriptContent;
             DOCUMENT.head.appendChild(script);
             DOCUMENT.head.removeChild(script);
@@ -336,11 +336,39 @@ SOFTWARE.
             
             const result = JUSTC.TryCatchLog(()=>json_.parse(resultJson), resultJson);
             
-            return result;
+            return result
         } catch (error) {
             CONSOLE.error(JUSTC.Errors.executionError, error);
             throw error;
         }
+    };
+    JUSTC.AsyncParse = async function(code, execute = false) {
+        return new Promise((resolve, reject) => {
+            try {
+                setTimeout(() => {
+                    try {
+                        const resultPtr = JUSTC.WASM.ccall(
+                            'parse',
+                            'number',
+                            ['string', 'boolean'],
+                            [code, execute]
+                        );
+
+                        const resultJson = JUSTC.WASM.UTF8ToString(resultPtr);
+                        JUSTC.WASM.ccall('free_string', null, ['number'], resultPtr);
+
+                        const result = JUSTC.TryCatchLog(()=>json_.parse(resultJson), resultJson);
+
+                        resolve(result)
+                    } catch (error) {
+                        console.error(JUSTC.Errors.executionError, error);
+                        reject(new JUSTC.Error(JUSTC.Errors.executionError, error))
+                    }
+                }, 0)
+            } catch (error) {
+                reject(error)
+            }
+        })
     };
 
     JUSTC.CheckWASM = function() {
@@ -348,6 +376,7 @@ SOFTWARE.
             throw new JUSTC.Error(JUSTC.Errors.initWasm);
         }
     };
+    JUSTC.FileID = 0;
     JUSTC.CheckInput = function(input) {
         if (!input || typeof input != 'string') {
             JUSTC.ErrorIfEnabled(STRING(input).length < 32 ? `"${STRING(input)}" is not valid JUSTC.` : ()=>{
@@ -358,6 +387,7 @@ SOFTWARE.
                     return "Provided code is not valid JUSTC.";
                 }
             });
+            JUSTC.VFS.createFile('/_justc/'+FileID++, input, {}, 3);
             return true;
         } else return false;
     };

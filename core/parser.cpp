@@ -263,10 +263,10 @@ long getCurrentTime() {
 
 }
 
-Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute) 
+Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync) 
     : tokens(tokens), position(0), outputMode("EVERYTHING"), allowJavaScript(true), 
       globalScope(false), strictMode(false), hasLogFile(false), 
-      doExecute(doExecute) {}
+      doExecute(doExecute), runAsync(runAsync) {}
 
 std::string Parser::getCurrentTimestamp() const {
     auto now = std::chrono::system_clock::now();
@@ -1029,11 +1029,19 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         if (!doExecute) {
             return onHTTPDisabled(startPos, args[0].string_value);
         }
+        if (runAsync) {
+            auto future = functionHTTPJSONAsync(args);
+            return future.get();
+        }
         return functionHTTPJSON(args);
     }
     if (funcName == "HTTPTEXT") {
         if (!doExecute) {
             return onHTTPDisabled(startPos, args[0].string_value);
+        }
+        if (runAsync) {
+            auto future = functionHTTPTEXTAsync(startPos, args);
+            return future.get();
         }
         return functionHTTPTEXT(startPos, args);
     }
@@ -1042,11 +1050,21 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         if (!doExecute) {
             return onHTTPDisabled(startPos, args[0].string_value);
         }
+        if (runAsync) {
+            auto future = functionHTTPJUSTCAsync(args);
+            return future.get();
+        }
         return functionHTTPJUSTC(args);
     }
     if (funcName == "PARSEJUSTC") return functionPARSEJUSTC(args);
     if (funcName == "PARSEJSON") return functionPARSEJSON(args);
-    if (funcName == "FILE") return functionFILE(args);
+    if (funcName == "FILE") {
+        if (runAsync) {
+            auto future = functionFILEAsync(args);
+            return future.get();
+        }
+        return functionFILE(args);
+    }
     if (funcName == "SIZE") return functionSTAT(args);
     if (funcName == "ENV") return functionENV(args);
     if (funcName == "CONFIG") return functionCONFIG(args);
@@ -1253,33 +1271,10 @@ Value Parser::resolveVariableValue(const std::string& varName) {
 }
 
 void Parser::evaluateAllVariables() {
-    bool changed;
-    int passes = 0;
-    const int MAX_PASSES = 100;
-    
-    do {
-        changed = false;
-        passes++;
-        
-        for (auto& node : ast) {
-            if (node.type == "VARIABLE_DECLARATION") {
-                std::string varName = node.identifier;
-                Value oldValue = variables[varName];
-                Value newValue = evaluateASTNode(node);
-                
-                if (newValue.type != DataType::UNKNOWN && 
-                    (oldValue.type == DataType::UNKNOWN || 
-                     oldValue.toString() != newValue.toString())) {
-                    variables[varName] = newValue;
-                    changed = true;
-                }
-            }
-        }
-        
-    } while (changed && passes < MAX_PASSES);
-    
-    if (passes >= MAX_PASSES) {
-        throw std::runtime_error("Cannot resolve variable dependencies - possible circular reference");
+    if (runAsync && !dependencies.empty()) {
+        evaluateAllVariablesAsync();
+    } else {
+        evaluateAllVariablesSync();
     }
 }
 
@@ -1306,6 +1301,30 @@ void Parser::extractReferences(const Value& value, std::vector<std::string>& ref
         references.push_back(value.string_value);
     }
     // TODO: get links from complex things
+}
+
+std::future<Value> Parser::functionHTTPJSONAsync(const std::vector<Value>& args) {
+    return executeAsyncIfEnabled([this, args]() {
+        return functionHTTPJSON(args);
+    });
+}
+
+std::future<Value> Parser::functionHTTPTEXTAsync(size_t startPos, const std::vector<Value>& args) {
+    return executeAsyncIfEnabled([this, startPos, args]() {
+        return functionHTTPTEXT(startPos, args);
+    });
+}
+
+std::future<Value> Parser::functionHTTPJUSTCAsync(const std::vector<Value>& args) {
+    return executeAsyncIfEnabled([this, args]() {
+        return functionHTTPJUSTC(args);
+    });
+}
+
+std::future<Value> Parser::functionFILEAsync(const std::vector<Value>& args) {
+    return executeAsyncIfEnabled([this, args]() {
+        return functionFILE(args);
+    });
 }
 
 Value Parser::functionVALUE(const std::vector<Value>& args) {
@@ -1601,7 +1620,64 @@ Value Parser::octalToValue(const std::string& octStr) {
     return result;
 }
 
-ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute) {
-    Parser parser(tokens, doExecute);
+void Parser::evaluateAllVariablesSync() {
+    bool changed;
+    int passes = 0;
+    const int MAX_PASSES = 100;
+    
+    do {
+        changed = false;
+        passes++;
+        
+        for (auto& node : ast) {
+            if (node.type == "VARIABLE_DECLARATION") {
+                std::string varName = node.identifier;
+                Value oldValue = variables[varName];
+                Value newValue = evaluateASTNode(node);
+                
+                if (newValue.type != DataType::UNKNOWN && 
+                    (oldValue.type == DataType::UNKNOWN || 
+                     oldValue.toString() != newValue.toString())) {
+                    variables[varName] = newValue;
+                    changed = true;
+                }
+            }
+        }
+        
+    } while (changed && passes < MAX_PASSES);
+    
+    if (passes >= MAX_PASSES) {
+        throw std::runtime_error("Cannot resolve variable dependencies - possible circular reference");
+    }
+}
+
+void Parser::evaluateAllVariablesAsync() {
+#ifndef __EMSCRIPTEN__
+    std::vector<std::string> evaluationOrder;
+    std::unordered_map<std::string, std::future<Value>> futures;
+    
+    for (auto& node : ast) {
+        if (node.type == "VARIABLE_DECLARATION") {
+            std::string varName = node.identifier;
+            if (dependencies[varName].empty()) {
+                futures[varName] = executeAsyncIfEnabled([this, node]() {
+                    return evaluateASTNode(node);
+                });
+            }
+        }
+    }
+    
+    for (auto& [varName, future] : futures) {
+        variables[varName] = future.get();
+    }
+    
+    evaluateAllVariablesSync();
+#else
+    evaluateAllVariablesSync();
+#endif
+}
+
+ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync) {
+    Parser parser(tokens, doExecute, runAsync);
     return parser.parse(doExecute);
 }

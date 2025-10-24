@@ -32,6 +32,7 @@ SOFTWARE.
 #include <memory>
 #include <unordered_map>
 #include <algorithm>
+#include <future>
 #include "lexer.h"
 #include "version.h"
 
@@ -159,6 +160,7 @@ struct ASTNode {
 class Parser {
 private:
     bool doExecute;
+    bool runAsync;
     std::vector<ParserToken> tokens;
     std::vector<ASTNode> ast;
     size_t position;
@@ -252,7 +254,29 @@ private:
     
     Value convertToDecimal(const Value& value);
     
+    template<typename Func, typename... Args>
+    auto executeAsyncIfEnabled(Func&& func, Args&&... args) {
+        if (runAsync) {
+#ifdef __EMSCRIPTEN__
+            return std::async(std::launch::deferred, 
+                            std::forward<Func>(func), 
+                            std::forward<Args>(args)...);
+#else
+            return std::async(std::launch::async, 
+                            std::forward<Func>(func), 
+                            std::forward<Args>(args)...);
+#endif
+        } else {
+            auto result = func(std::forward<Args>(args)...);
+            return std::async(std::launch::deferred, [result]() { return result; });
+        }
+    }
+    
     // built-in
+    std::future<Value> functionHTTPJSONAsync(const std::vector<Value>& args);
+    std::future<Value> functionHTTPTEXTAsync(size_t startPos, const std::vector<Value>& args);
+    std::future<Value> functionHTTPJUSTCAsync(const std::vector<Value>& args);
+    std::future<Value> functionFILEAsync(const std::vector<Value>& args);
     Value functionVALUE(const std::vector<Value>& args);
     Value functionSTRING(const std::vector<Value>& args);
     Value functionLINK(const std::vector<Value>& args);
@@ -293,10 +317,9 @@ private:
     Value onHTTPDisabled(size_t startPos, std::string args0string_value);
     
 public:
-
-    Parser(const std::vector<ParserToken>& tokens, bool doExecute = true);
+    Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = true);
     ParseResult parse(bool doExecute = true);
-    static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true);
+    static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = true);
 };
 
 #endif

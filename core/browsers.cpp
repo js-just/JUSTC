@@ -121,7 +121,7 @@ char* parser(const char* tokensJson) {
         std::vector<ParserToken> parserTokens;
         
         if (parseJsonTokens(tokensJson, parserTokens)) {
-            ParseResult result = Parser::parseTokens(parserTokens);
+            ParseResult result = Parser::parseTokens(parserTokens, false, false);
             std::string json = JsonSerializer::serialize(result);
             return strdup(json.c_str());
         } else {
@@ -135,12 +135,12 @@ char* parser(const char* tokensJson) {
     }
 }
 
-char* parse(const char* input, const bool execute) {
+char* parse(const char* input, const bool execute, const bool runAsync) {
     if (input == nullptr) return nullptr;
     
     try {
         auto lexerResult = Lexer::parse(input);
-        ParseResult result = Parser::parseTokens(lexerResult.second, execute);
+        ParseResult result = Parser::parseTokens(lexerResult.second, execute, runAsync);
         std::string json = JsonSerializer::serialize(result);
         return strdup(json.c_str());
         

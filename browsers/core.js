@@ -152,8 +152,8 @@ SOFTWARE.
     };
     JUSTC.Core.Parser = function Parser(code) {
         if (!JUSTC.WASM) throw new JUSTC.Error(JUSTC.Errors.initWasm);
-        if (!code || typeof code != 'string' || code.length < 1) throw new JUSTC.Error(JUSTC.Errors.lexerInput);
-        const result = JUSTC.CoreScript(code, 'parse');
+        if (!code || typeof code != 'object') throw new JUSTC.Error(JUSTC.Errors.lexerInput);
+        const result = JUSTC.CoreScript(JSON.stringify(code), 'parser');
         if (result.error) {
             throw new JUSTC.Error(result.error);
         } else {
@@ -174,12 +174,10 @@ SOFTWARE.
                 Return: function Parser(JavaScriptObjectNotation) {
                     if (!JavaScriptObjectNotation || typeof JavaScriptObjectNotation != 'object') throw new JUSTC.Error(JUSTC.Errors.jsonInput);
                     if (!ARRAY.isArray(JavaScriptObjectNotation)) throw new JUSTC.Error(JUSTC.Errors.lexerInput);
-                    let stringInput = '';
                     for (const token of JavaScriptObjectNotation) {
                         if (typeof token != 'object' || token.type === undefined || token.start === undefined || typeof token.start != 'number' || token.value === undefined) throw new JUSTC.Error(JUSTC.Errors.lexerInput);
-                        stringInput += token.value + ' ';
                     }
-                    return JUSTC.Core.Parser(stringInput);
+                    return JUSTC.Core.Parser(JavaScriptObjectNotation);
                 }
             },
             CoreErrors: {
@@ -327,8 +325,8 @@ SOFTWARE.
             const resultPtr = JUSTC.WASM.ccall(
                 'parse',
                 'number',
-                ['string', 'boolean'],
-                [code, execute]
+                ['string', 'boolean', 'boolean'],
+                [code, execute, false]
             );
             
             const resultJson = JUSTC.WASM.UTF8ToString(resultPtr);
@@ -350,8 +348,8 @@ SOFTWARE.
                         const resultPtr = JUSTC.WASM.ccall(
                             'parse',
                             'number',
-                            ['string', 'boolean'],
-                            [code, execute]
+                            ['string', 'boolean', 'boolean'],
+                            [code, execute, true]
                         );
 
                         const resultJson = JUSTC.WASM.UTF8ToString(resultPtr);

@@ -41,7 +41,7 @@ SOFTWARE.
                 if (typeof obj != 'object' || !JUSTC.Checks.objRegex.test(obj+'')) throw new JUSTC.Error(JUSTC.Errors.environment);
             }
         }
-    }
+    };
 
     const globalThis_ = globalThis;
     const OBJECT = Object;

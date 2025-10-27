@@ -189,11 +189,11 @@ private:
 
     std::string getCurrentTimestamp() const;
 
-    std::string_view toLower(std::string& buffer, const std::string& str) const {
-        buffer.resize(str.size());
-        std::transform(str.begin(), str.end(), buffer.begin(), 
+    std::string toLower(const std::string& str) const {
+        std::string result = str;
+        std::transform(result.begin(), result.end(), result.begin(), 
                       [](unsigned char c) { return std::tolower(c); });
-        return buffer;
+        return result;
     }
     
     // logs
@@ -240,6 +240,8 @@ private:
     
     Value resolveVariableValue(const std::string& varName);
     void evaluateAllVariables();
+    void evaluateAllVariablesSync();
+    void evaluateAllVariablesAsync();
     Value evaluateASTNode(const ASTNode& node);
     void extractReferences(const Value& value, std::vector<std::string>& references);
     
@@ -255,7 +257,10 @@ private:
     Value convertToDecimal(const Value& value);
     
     template<typename Func, typename... Args>
-    auto executeAsyncIfEnabled(Func&& func, Args&&... args) {
+    std::future<typename std::result_of<Func(Args...)>::type> 
+    executeAsyncIfEnabled(Func&& func, Args&&... args) {
+        typedef typename std::result_of<Func(Args...)>::type ResultType;
+        
         if (runAsync) {
 #ifdef __EMSCRIPTEN__
             return std::async(std::launch::deferred, 
@@ -267,7 +272,7 @@ private:
                             std::forward<Args>(args)...);
 #endif
         } else {
-            auto result = func(std::forward<Args>(args)...);
+            ResultType result = func(std::forward<Args>(args)...);
             return std::async(std::launch::deferred, [result]() { return result; });
         }
     }
@@ -317,9 +322,9 @@ private:
     Value onHTTPDisabled(size_t startPos, std::string args0string_value);
     
 public:
-    Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = true);
+    Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false);
     ParseResult parse(bool doExecute = true);
-    static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = true);
+    static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false);
 };
 
 #endif

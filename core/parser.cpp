@@ -215,11 +215,11 @@ Value Value::createOctal(double num) {
 
 namespace {
 
-std::string_view toLower(std::string& buffer, const std::string& str) {
-    buffer.resize(str.size());
-    std::transform(str.begin(), str.end(), buffer.begin(), 
+std::string toLower(const std::string& str) {
+    std::string result = str;
+    std::transform(result.begin(), result.end(), result.begin(),
                   [](unsigned char c) { return std::tolower(c); });
-    return buffer;
+    return result;
 }
 
 bool isWhitespace(char c) {
@@ -1653,7 +1653,6 @@ void Parser::evaluateAllVariablesSync() {
 
 void Parser::evaluateAllVariablesAsync() {
 #ifndef __EMSCRIPTEN__
-    std::vector<std::string> evaluationOrder;
     std::unordered_map<std::string, std::future<Value>> futures;
     
     for (auto& node : ast) {
@@ -1667,8 +1666,8 @@ void Parser::evaluateAllVariablesAsync() {
         }
     }
     
-    for (auto& [varName, future] : futures) {
-        variables[varName] = future.get();
+    for (auto it = futures.begin(); it != futures.end(); ++it) {
+        variables[it->first] = it->second.get();
     }
     
     evaluateAllVariablesSync();

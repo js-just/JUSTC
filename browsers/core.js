@@ -26,23 +26,22 @@ SOFTWARE.
 
 (async()=>{
     "use strict";
-
-    const JUSTC = {
-        Checks: {
-            funcRegex: /^function\s*\w*\s*\(\)\s*\{\s*\[native code\]\s*\}$/,
-            objRegex: /^\[object\s*\w*\]$/,
-            sysFunc: (...functions) => {
-                for (const func of functions) {
-                    if (typeof func != 'function' || !JUSTC.Checks.funcRegex.test(func+'')) throw new JUSTC.Error(JUSTC.Errors.environment);
-                }
-            },
-            sysObj: (...objects) => {
-                for (const obj of objects) {
-                    if (typeof obj != 'object' || !JUSTC.Checks.objRegex.test(obj+'')) throw new JUSTC.Error(JUSTC.Errors.environment);
-                }
+ 
+    const JUSTC = {};
+    JUSTC.Checks = {
+        funcRegex: /^function\s*\w*\s*\(\)\s*\{\s*\[native code\]\s*\}$/,
+        objRegex: /^\[object\s*\w*\]$/,
+        sysFunc: (...functions) => {
+            for (const func of functions) {
+                if (typeof func != 'function' || !JUSTC.Checks.funcRegex.test(func+'')) throw new JUSTC.Error(JUSTC.Errors.environment);
+            }
+        },
+        sysObj: (...objects) => {
+            for (const obj of objects) {
+                if (typeof obj != 'object' || !JUSTC.Checks.objRegex.test(obj+'')) throw new JUSTC.Error(JUSTC.Errors.environment);
             }
         }
-    };
+    }
 
     const globalThis_ = globalThis;
     const OBJECT = Object;
@@ -340,7 +339,7 @@ SOFTWARE.
             throw error;
         }
     };
-    JUSTC.AsyncParse = async function(code, execute = false) {
+    JUSTC.AsyncParse = async function(code, execute) {
         return new Promise((resolve, reject) => {
             try {
                 setTimeout(() => {
@@ -409,10 +408,32 @@ SOFTWARE.
     };
 
     JUSTC.bgvfid = 0;
+    JUSTC.Check = (code) => {
+        JUSTC.CheckInput(code);
+        JUSTC.CheckWASM();
+    };
+    JUSTC.RunAsync = async (code, doExecute) => {
+        JUSTC.Check(code);
+        const result = await JUSTC.AsyncParse(code, doExecute);
+        if (result.error) {
+            throw new JUSTC.Error(result.error);
+        } else {
+            if (doExecute) JUSTC.DisplayLogs(result);
+            return result.return || {};
+        }
+    };
+    JUSTC.Taskify = (doExecute = false, ...code) => {
+        const tasks = [];
+        for (const code_ of code) {
+            tasks.push(async()=>{
+                return await JUSTC.RunAsync(code_, doExecute);
+            });
+        }
+        return tasks
+    };
     JUSTC.Output = {
         parse: function ParseJUSTC(code) {
-            JUSTC.CheckInput(code);
-            JUSTC.CheckWASM();
+            JUSTC.Check(code);
 
             const result = JUSTC.Parse(code);
             if (result.error) {
@@ -422,8 +443,7 @@ SOFTWARE.
             }
         },
         execute: function ExecuteJUSTC(code) {
-            JUSTC.CheckInput(code);
-            JUSTC.CheckWASM();
+            JUSTC.Check(code);
 
             const result = JUSTC.Parse(code, true);
             if (result.error) {
@@ -440,16 +460,11 @@ SOFTWARE.
             if (typeof JavaScriptObjectNotation != 'object') throw new JUSTC.Error(JUSTC.Errors.objectInput);
             return JUSTC.fromJSON(JavaScriptObjectNotation);
         },
-        parseAsync: async function ParseJUSTC(code) {
-            JUSTC.CheckInput(code);
-            JUSTC.CheckWASM();
-
-            const result = JUSTC.Parse(code);
-            if (result.error) {
-                throw new JUSTC.Error(result.error);
-            } else {
-                return result.return || {};
-            }
+        parseAsync: async function ParseJUSTC(...code) {
+            return await Promise.all(JUSTC.Taskify(false, code));
+        },
+        executeAsync: async function ExecuteJUSTC(...code) {
+            return await Promise.all(JUSTC.Taskify(true, code));
         },
         background: function ExecuteORParseJUSTC(urlORcode, doExecute = true) {
             if (typeof doExecute != 'boolean') throw new JUSTC.Error(JUSTC.Errors.boolInput);

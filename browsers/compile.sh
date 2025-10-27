@@ -50,8 +50,15 @@ emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp c
     -s ASSERTIONS=0 \
     -s ASYNCIFY=1 \
     -s FETCH=1 \
-    -s ASYNCIFY_IMPORTS=['emscripten_fetch','emscripten_fetch_close'] \
-    -Os
+    -s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close'] \
+    -O3 \
+    -flto \
+    -s TOTAL_STACK=8MB \
+    -s TOTAL_MEMORY=32MB \
+    -s ENVIRONMENT='web,worker' \
+    -s MODULARIZE=1 \
+    -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
+    -s MAXIMUM_MEMORY=256MB
 COMPILE_EXIT_CODE=$?
 set -e
 

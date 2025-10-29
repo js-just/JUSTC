@@ -1,3 +1,6 @@
 module.exports = {
-    mode: "compressor"
+    mode: "compressor",
+    install: {
+        uglifyjs: true
+    }
 }

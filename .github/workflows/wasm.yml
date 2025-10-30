@@ -117,4 +117,4 @@ jobs:
         with:
           node-version: '24.x'
       - name: Test
-        run: node javascript/test.js
+        run: node javascript/${{ steps.compile.outputs.dirpath }}/test.js

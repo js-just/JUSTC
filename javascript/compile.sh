@@ -110,6 +110,7 @@ mv javascript/$SAFE_DIR/justc.core.wasm javascript_output/$SAFE_DIR/justc.wasm
 sed -i 's/justc\.core\.wasm/justc.wasm/g' javascript/$SAFE_DIR/justc.core.js
 mv javascript/$SAFE_DIR/justc.core.js javascript_output/$SAFE_DIR/justc.core.js
 mv javascript/core.js javascript_output/$SAFE_DIR/justc.js
+mv javascript/test.js javascript_output/$SAFE_DIR/test.js
 
 for file in javascript_output/$SAFE_DIR/justc.core.js javascript_output/$SAFE_DIR/justc.js javascript_output/$SAFE_DIR/justc.node.js; do
     printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"

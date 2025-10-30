@@ -70,17 +70,34 @@ SOFTWARE.
     const ERR = Error;
     const CONSOLE = console;
 
-    JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR);
-    JUSTC.Checks.sysObj(json_, CONSOLE);
-    if (isBrowser) JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
-    JUSTC.Checks.sysFunc(
-        OBJECT.entries, OBJECT.defineProperty, OBJECT.freeze,
-        json_.parse, json_.stringify,
-        ARRAY.isArray, ARRAY.from,
-        __URL__.parse,
-        CONSOLE.log, CONSOLE.info, CONSOLE.error, CONSOLE.warn, CONSOLE.group, CONSOLE.groupEnd
-    );
+    JUSTC.Errors = {
+        initWasm: 'JUSTC WebAssembly module hasn\'t been initialized yet.',
+        wrongInputType: 'Argument 0 should be a string.',
+        wasmFailed: 'Failed to initialize JUSTC WebAssembly module:',
+        wasmInitFailed: 'Unable to initialize JUSTC WebAssembly module.',
+        executionError: 'JUSTC/core/browsers.cpp error:',
+        arrayInput: 'Array cannot be converted to JUSTC.',
+        objectInput: 'Provided input is not valid object.',
+        arg0: 'Invalid argument 0. Run "JUSTC = \'help\'" for help.',
+        lexerError: 'JUSTC/core/lexer.cpp error:',
+        parseError: 'JUSTC/core/parser.cpp error:',
+        jsonInput: 'Argument 0 should be an object.',
+        lexerInput: 'Provided input is not valid core.lexer output.',
+        boolInput: 'Argument 1 should be a boolean.',
+        environment: 'Invalid or compromised environment.'
+    };
+
     if (isBrowser) {
+        JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR);
+        JUSTC.Checks.sysObj(json_, CONSOLE);
+        JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
+        JUSTC.Checks.sysFunc(
+            OBJECT.entries, OBJECT.defineProperty, OBJECT.freeze,
+            json_.parse, json_.stringify,
+            ARRAY.isArray, ARRAY.from,
+            __URL__.parse,
+            CONSOLE.log, CONSOLE.info, CONSOLE.error, CONSOLE.warn, CONSOLE.group, CONSOLE.groupEnd
+        );
         JUSTC.Checks.sysFunc(DOCUMENT.createElement);
         JUSTC.Checks.sysObj(
             DOCUMENT.head,
@@ -107,23 +124,6 @@ SOFTWARE.
         if (JUSTC.ErrorEnabled) {
             throw new JUSTC.Error(...args);
         }
-    };
-
-    JUSTC.Errors = {
-        initWasm: 'JUSTC WebAssembly module hasn\'t been initialized yet.',
-        wrongInputType: 'Argument 0 should be a string.',
-        wasmFailed: 'Failed to initialize JUSTC WebAssembly module:',
-        wasmInitFailed: 'Unable to initialize JUSTC WebAssembly module.',
-        executionError: 'JUSTC/core/browsers.cpp error:',
-        arrayInput: 'Array cannot be converted to JUSTC.',
-        objectInput: 'Provided input is not valid object.',
-        arg0: 'Invalid argument 0. Run "JUSTC = \'help\'" for help.',
-        lexerError: 'JUSTC/core/lexer.cpp error:',
-        parseError: 'JUSTC/core/parser.cpp error:',
-        jsonInput: 'Argument 0 should be an object.',
-        lexerInput: 'Provided input is not valid core.lexer output.',
-        boolInput: 'Argument 1 should be a boolean.',
-        environment: 'Invalid or compromised environment.'
     };
 
     JUSTC.Core = {};

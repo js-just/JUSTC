@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 #!/bin/bash
+bash linux/compile.sh
 set -e
 
 OUTPUT_DIR="${1:-development}"
@@ -72,16 +73,20 @@ sed -i 's/justc\.core\.wasm/justc.wasm/g' browsers/$SAFE_DIR/justc.core.js
 mv browsers/core.js browsers/$SAFE_DIR/justc.js
 rm browsers/compile.sh
 
+VERSION="$(justc -v) ($SAFE_DIR)"
+WEBSITE="https://just.js.org/justc"
+
 for file in browsers/$SAFE_DIR/justc.core.js browsers/$SAFE_DIR/justc.js; do
-    printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
+    printf "/*\n\n%s\n\n*/\n\n/*\n\nJust an Ultimate Site Tool Configuration language\nv$VERSION\n$WEBSITE\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
 done
 wasm2wat browsers/$SAFE_DIR/justc.wasm > browsers/$SAFE_DIR/justc.wat
 {
     head -n1 "browsers/$SAFE_DIR/justc.wat"
     echo "  (@custom \"justc\" \"Just an Ultimate Site Tool Configuration language\")"
-    echo "  (@custom \"justc.website\" \"https://just.js.org/justc\")"
+    echo "  (@custom \"justc.website\" \"$WEBSITE\")"
     echo "  (@custom \"justc.license\" \"MIT License. https://just.js.org/justc/license.txt\")"
     echo "  (@custom \"justc.copyright\" \"Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>\")"
+    echo "  (@custom \"justc.version\" \"$VERSION\")"
     tail -n +2 "browsers/$SAFE_DIR/justc.wat"
 } > browsers/$SAFE_DIR/justc.tmp
 wat2wasm browsers/$SAFE_DIR/justc.tmp --enable-annotations -o browsers/$SAFE_DIR/justc.wasm

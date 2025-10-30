@@ -495,21 +495,6 @@ SOFTWARE.
     JUSTC.Public = {
         get [Symbol.toStringTag]() {
             return 'JUSTC'
-        },
-        get ['version']() {
-            const resultptr = JUSTC.WASM.ccall(
-                'version',
-                'number',
-                [], []
-            );
-            const result = JUSTC.WASM.UTF8ToString(resultptr);
-            JUSTC.WASM.ccall(
-                'free_string',
-                null,
-                ['number'],
-                [resultptr]
-            );
-            return result
         }
     };
     for (const [name, value] of OBJECT.entries(JUSTC.Output)) {

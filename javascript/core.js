@@ -47,7 +47,7 @@ SOFTWARE.
     const isModule  = typeof module === 'object' && module.exports;
     const isBrowser =                          !isAMD && !isModule;
 
-    const globalThis_ = isBrowser ? []["filter"]["constructor"]("return globalThis")() || []["filter"]["constructor"]("return this")() || globalThis : globalThis || self || this || {__justc__};
+    const globalThis_ = isBrowser ? []["filter"]["constructor"]("return globalThis")() || []["filter"]["constructor"]("return this")() || globalThis : globalThis || self || (isAMD ? {__justc__} : this) || {__justc__};
     if (!isBrowser) globalThis_.window = {};
     const OBJECT = Object;
     const json_ = JSON;
@@ -211,6 +211,13 @@ SOFTWARE.
                 NeedsWASM: false,
                 Name: "vfs.get",
                 Return: JUSTC.PublicVFSGet
+            },
+            env: {
+                NeedsWASM: false,
+                Name: "detectedEnvironment",
+                Return: ()=>{return(
+                    isAMD ? 'AMD' : isModule ? 'Module/CommonJS' : isBrowser ? 'Browser' : 'unknown'
+                )}
             }
         },
         Available: [
@@ -218,7 +225,8 @@ SOFTWARE.
             'logsEnabled',
             'isSilent',
             'vfs.all',
-            'vfs.get'
+            'vfs.get',
+            'env'
         ],
         WhatToName: {
             "core.lexer": "Lexer",
@@ -227,7 +235,8 @@ SOFTWARE.
             "logsEnabled": "CoreLogs",
             "isSilent": "Silent",
             "vfs.all": "VFS",
-            'vfs.get': 'VFSget'
+            "vfs.get": "VFSget",
+            "detectedEnvironment": "env"
         }
     };
 
@@ -533,6 +542,26 @@ SOFTWARE.
             enumerable: false
         })
     };
+
+    JUSTC.CreateAsyncProxy = () => {
+        return new Proxy({}, {
+            get: function(target, prop) {
+                if (prop in JUSTC.Output) {
+                    return async function(...args) {
+                        await JUSTC.InitWASM();
+                        return JUSTC.Output[prop](...args);
+                    };
+                }
+                if (prop in JUSTC.HiddenOutput) {
+                    return async function(...args) {
+                        await JUSTC.InitWASM();
+                        return JUSTC.HiddenOutput[prop](...args);
+                    };
+                }
+                return undefined;
+            }
+        });
+    };
     
     if (isBrowser) {
         OBJECT.defineProperty(globalThis_.window, 'JUSTC', {
@@ -575,12 +604,12 @@ SOFTWARE.
             configurable: false
         })
     } else if (isModule) {
-        JUSTC.InitWASM();
-        module.exports = OBJECT.freeze(JUSTC.Public)
+        module.exports = JUSTC.CreateAsyncProxy()
     } else if (isAMD) {
-        define([], ()=>{
-            JUSTC.InitWASM();
-            return OBJECT.freeze(JUSTC.Public);
+        define(['require'], function(require) {            
+            return JUSTC.CreateAsyncProxy()
         })
+    } else {
+        throw new JUSTC.Error('Unsupported environment.')
     }
 })()

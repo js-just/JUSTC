@@ -566,6 +566,16 @@ SOFTWARE.
             value: 'JUSTC',
             configurable: false
         });
+        OBJECT.defineProperty(exports, "defineWASM", {
+            value: function(WASMmodule) {
+                if (!JUSTC.JUSTC) {
+                    JUSTC.JUSTC = WASMmodule;
+                }
+            },
+            writable: false,
+            configurable: false,
+            enumerable: false
+        });
         
         return exports;
     };

@@ -96,6 +96,24 @@ jobs:
           OUTPUT_DIR: ${{ needs.determine-dirpath.outputs.dirpath }}
         run: bash javascript/compile.sh "${{ needs.determine-dirpath.outputs.dirpath }}"
         id: compile
+
+  test-node:
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24.x'
+      - name: Test
+        run: node javascript_output/${{ steps.compile.outputs.dirpath }}/test.js
+
+  commit:
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - name: Cleanup
+        run: rm javascript_output/${{ steps.compile.outputs.dirpath }}/test.js
       - name: Commit
         uses: cpina/github-action-push-to-another-repository@main
         env:
@@ -107,14 +125,3 @@ jobs:
           user-email: "support@juststudio.is-a.dev"
           target-branch: main
           target-directory: "justc/${{ steps.compile.outputs.dirpath }}"
-
-  test-node:
-    runs-on: ubuntu-latest
-    needs: compile
-    steps:
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '24.x'
-      - name: Test
-        run: node javascript/${{ steps.compile.outputs.dirpath }}/test.js

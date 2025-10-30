@@ -135,3 +135,7 @@ hexdump -C javascript_output/$SAFE_DIR/justc.core.wasm | head -20
 
 mv javascript/test.html javascript_output/$SAFE_DIR/test.html
 mv javascript/test.justc javascript_output/$SAFE_DIR/test.justc
+
+for FILE in javascript_output/*; do
+  echo "::debug::$FILE"
+done

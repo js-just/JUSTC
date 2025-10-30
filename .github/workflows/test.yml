@@ -48,7 +48,7 @@ jobs:
           actions-cache-folder: 'emsdk-cache'
       - name: Compile C++ to WASM
         run: |
-          emcc core/browsers.cpp core/lexer.cpp core/parser.cpp core/json_serializer.cpp core/keywords.cpp core/fetch.cpp \
+          emcc core/js.cpp core/lexer.cpp core/parser.cpp core/json.cpp core/keywords.cpp core/fetch.cpp \
             -o test/browser/justc.core.js \
             -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free"]' \
             -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8"]' \
@@ -90,3 +90,21 @@ jobs:
         uses: actions/checkout@v4
       - name: CMake
         run: bash test/linux/justc.sh
+
+  nodejs-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Compile C++ to WASM
+        run: bash nodejs/compile.sh
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24.x'
+        env:
+          ACTIONS_STEP_DEBUG: false
+          ACTIONS_RUNNER_DEBUG: false
+      - name: test
+        run: node test/nodejs/test.js
+  

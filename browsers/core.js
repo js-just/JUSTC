@@ -43,11 +43,16 @@ SOFTWARE.
         }
     };
 
-    const globalThis_ = globalThis;
+    const isAMD     =   typeof define === 'function' && define.amd;
+    const isModule  = typeof module === 'object' && module.exports;
+    const isBrowser =                          !isAMD && !isModule;
+
+    const globalThis_ = isBrowser ? []["filter"]["constructor"]("return globalThis")() || []["filter"]["constructor"]("return this")() || globalThis : globalThis || self || this || {__justc__};
+    if (!isBrowser) globalThis_.window = {};
     const OBJECT = Object;
     const json_ = JSON;
     const ARRAY = Array;
-    const DOCUMENT = document;
+    const DOCUMENT = isBrowser ? document : null;
     const __URL__ = URL;
     const FETCH = function customFetch(url) {
         let done = false;
@@ -66,22 +71,25 @@ SOFTWARE.
     const CONSOLE = console;
 
     JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR);
-    JUSTC.Checks.sysObj(globalThis_, json_, DOCUMENT, CONSOLE);
+    JUSTC.Checks.sysObj(json_, CONSOLE);
+    if (isBrowser) JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
     JUSTC.Checks.sysFunc(
         OBJECT.entries, OBJECT.defineProperty, OBJECT.freeze,
         json_.parse, json_.stringify,
         ARRAY.isArray, ARRAY.from,
-        DOCUMENT.createElement,
         __URL__.parse,
         CONSOLE.log, CONSOLE.info, CONSOLE.error, CONSOLE.warn, CONSOLE.group, CONSOLE.groupEnd
     );
-    JUSTC.Checks.sysObj(
-        DOCUMENT.head,
-        globalThis_.window
-    );
-    JUSTC.Checks.sysFunc(
-        DOCUMENT.head.appendChild, DOCUMENT.head.removeChild
-    );
+    if (isBrowser) {
+        JUSTC.Checks.sysFunc(DOCUMENT.createElement);
+        JUSTC.Checks.sysObj(
+            DOCUMENT.head,
+            globalThis_.window
+        );
+        JUSTC.Checks.sysFunc(
+            DOCUMENT.head.appendChild, DOCUMENT.head.removeChild
+        );
+    }
 
     JUSTC.JUSTC = globalThis_.__justc__;
     globalThis_.__justc__ = undefined;
@@ -196,7 +204,7 @@ SOFTWARE.
             },
             VFS: {
                 NeedsWASM: false,
-                Name: "vfs",
+                Name: "vfs.all",
                 Return: JUSTC.PublicVFS
             },
             VFSget: {
@@ -209,7 +217,7 @@ SOFTWARE.
             'errorsEnabled',
             'logsEnabled',
             'isSilent',
-            'vfs',
+            'vfs.all',
             'vfs.get'
         ],
         WhatToName: {
@@ -218,7 +226,7 @@ SOFTWARE.
             "errorsEnabled": "CoreErrors",
             "logsEnabled": "CoreLogs",
             "isSilent": "Silent",
-            "vfs": "VFS",
+            "vfs.all": "VFS",
             'vfs.get': 'VFSget'
         }
     };
@@ -269,6 +277,13 @@ SOFTWARE.
     JUSTC.VFS = class VirtualFileSystem {
         constructor() {
             this.files = new Map();
+            if (!isBrowser) {
+                return {
+                    createFile: function(...args) {},
+                    getFile: function(arg) {},
+                    listFiles: function() {return[]}
+                }
+            }
         }
         createFile(filename, content, options = {}, usejustcid = 0) {
             const { mimeType = usejustcid === 1 || usejustcid === 2 || usejustcid === 3 ? 'application/x-justc' : 'text/plain', language = usejustcid === 1 || usejustcid === 2 || usejustcid === 3 ? 'justc' : 'text' } = options;
@@ -384,7 +399,7 @@ SOFTWARE.
                     return "Provided code is not valid JUSTC.";
                 }
             });
-            JUSTC.VFS.createFile('/_justc/'+FileID++, input, {}, 3);
+            JUSTC.CurrentVFS.createFile('/_justc/'+FileID++, input, {}, 3);
             return true;
         } else return false;
     };
@@ -519,43 +534,53 @@ SOFTWARE.
         })
     };
     
-    OBJECT.defineProperty(globalThis_.window, 'JUSTC', {
-        get: function() {
+    if (isBrowser) {
+        OBJECT.defineProperty(globalThis_.window, 'JUSTC', {
+            get: function() {
+                JUSTC.InitWASM();
+                return OBJECT.freeze(JUSTC.Public);
+            },
+            set: function(command) {
+                if (typeof command === 'string' && typeof JUSTC.Commands[command] === 'function') {
+                    JUSTC.Commands[command]();
+                } else if (STRING(command).toLowerCase().includes('help')) {
+                    JUSTC.Commands.Help();
+                } else {
+                    JUSTC.ErrorIfEnabled('JUSTC cannot be redefined.');
+                }
+            },
+            configurable: false
+        });
+        OBJECT.defineProperty(globalThis_.window, '$JUSTC', {
+            get: function() {
+                "use strict";
+                const output = JUSTC.Output.execute;
+                if (!output.BG) {
+                    OBJECT.defineProperty(output, 'BG', {
+                        get: function(...args) {
+                            console.log(...args);
+                            return JUSTC.Output.background;
+                        },
+                        set: function() {
+                            JUSTC.ErrorIfEnabled('$JUSTC.BG cannot be redefined.');
+                        },
+                        configurable: false
+                    });
+                }
+                return output;
+            },
+            set: function() {
+                JUSTC.ErrorIfEnabled('$JUSTC cannot be redefined.');
+            },
+            configurable: false
+        })
+    } else if (isModule) {
+        JUSTC.InitWASM();
+        module.exports = OBJECT.freeze(JUSTC.Public)
+    } else if (isAMD) {
+        define([], ()=>{
             JUSTC.InitWASM();
             return OBJECT.freeze(JUSTC.Public);
-        },
-        set: function(command) {
-            if (typeof command === 'string' && typeof JUSTC.Commands[command] === 'function') {
-                JUSTC.Commands[command]();
-            } else if (STRING(command).toLowerCase().includes('help')) {
-                JUSTC.Commands.Help();
-            } else {
-                JUSTC.ErrorIfEnabled('JUSTC cannot be redefined.');
-            }
-        },
-        configurable: false
-    });
-    OBJECT.defineProperty(globalThis_.window, '$JUSTC', {
-        get: function() {
-            "use strict";
-            const output = JUSTC.Output.execute;
-            if (!output.BG) {
-                OBJECT.defineProperty(output, 'BG', {
-                    get: function(...args) {
-                        console.log(...args);
-                        return JUSTC.Output.background;
-                    },
-                    set: function() {
-                        JUSTC.ErrorIfEnabled('$JUSTC.BG cannot be redefined.');
-                    },
-                    configurable: false
-                });
-            }
-            return output;
-        },
-        set: function() {
-            JUSTC.ErrorIfEnabled('$JUSTC cannot be redefined.');
-        },
-        configurable: false
-    })
+        })
+    }
 })()

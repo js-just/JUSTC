@@ -29,7 +29,7 @@ SOFTWARE.
 #include <string>
 #include "lexer.h"
 #include "parser.h"
-#include "json_serializer.h"
+#include "json.h"
 #include "version.h"
 
 void printUsage() {

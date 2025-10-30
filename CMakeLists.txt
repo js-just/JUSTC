@@ -31,7 +31,7 @@ add_library(justc_core
     core/lexer.cpp
     core/parser.cpp
     core/keywords.cpp
-    core/json_serializer.cpp
+    core/json.cpp
     core/fetch.cpp
 )
 

@@ -31,7 +31,7 @@ SOFTWARE.
 #include <sstream>
 #include "lexer.h"
 #include "parser.h"
-#include "json_serializer.h"
+#include "json.h"
 #include "fetch.h"
 #include "version.h"
 

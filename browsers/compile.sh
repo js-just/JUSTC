@@ -37,9 +37,6 @@ tar -xzf wabt-1.0.34-ubuntu.tar.gz
 sudo cp wabt-1.0.34/bin/* /usr/local/bin/
 rm -rf wabt-1.0.34 wabt-1.0.34-ubuntu.tar.gz
 
-emsdk clear cache
-emcc --clear-cache
-
 set +e
 emcc core/js.cpp core/lexer.cpp core/parser.cpp core/json.cpp core/keywords.cpp core/fetch.cpp \
     -o browsers/$SAFE_DIR/justc.core.js \

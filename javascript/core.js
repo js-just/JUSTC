@@ -226,7 +226,7 @@ SOFTWARE.
             'isSilent',
             'vfs.all',
             'vfs.get',
-            'env'
+            'detectedEnvironment'
         ],
         WhatToName: {
             "core.lexer": "Lexer",
@@ -543,24 +543,31 @@ SOFTWARE.
         })
     };
 
-    JUSTC.CreateAsyncProxy = () => {
-        return new Proxy({}, {
-            get: function(target, prop) {
-                if (prop in JUSTC.Output) {
-                    return async function(...args) {
-                        await JUSTC.InitWASM();
-                        return JUSTC.Output[prop](...args);
-                    };
-                }
-                if (prop in JUSTC.HiddenOutput) {
-                    return async function(...args) {
-                        await JUSTC.InitWASM();
-                        return JUSTC.HiddenOutput[prop](...args);
-                    };
-                }
-                return undefined;
-            }
+    JUSTC.CreateAsyncExports = function() {
+        const exports = {};
+        for (const [name, value] of OBJECT.entries(JUSTC.Output)) {
+            exports[name] = async function(...args) {
+                await JUSTC.InitWASM();
+                return value(...args);
+            };
+        }
+        for (const [name, value] of OBJECT.entries(JUSTC.HiddenOutput)) {
+            OBJECT.defineProperty(exports, name, {
+                value: async function(...args) {
+                    await JUSTC.InitWASM();
+                    return value(...args);
+                },
+                writable: false,
+                configurable: false,
+                enumerable: false
+            });
+        }
+        OBJECT.defineProperty(exports, Symbol.toStringTag, {
+            value: 'JUSTC',
+            configurable: false
         });
+        
+        return exports;
     };
     
     if (isBrowser) {
@@ -604,10 +611,10 @@ SOFTWARE.
             configurable: false
         })
     } else if (isModule) {
-        module.exports = JUSTC.CreateAsyncProxy()
+        module.exports = JUSTC.CreateAsyncExports()
     } else if (isAMD) {
         define(['require'], function(require) {            
-            return JUSTC.CreateAsyncProxy()
+            return JUSTC.CreateAsyncExports()
         })
     } else {
         throw new JUSTC.Error('Unsupported environment.')

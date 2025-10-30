@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 #!/bin/bash
-bash browsers/compile.sh && \
 mv browsers/justc.wasm nodejs/justc.wasm && \
 mv browsers/justc.core.js nodejs/justc.js && \
 mv browsers/justc.js nodejs/index.js

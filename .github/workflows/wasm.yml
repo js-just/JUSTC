@@ -98,13 +98,22 @@ jobs:
           OUTPUT_DIR: ${{ needs.determine-dirpath.outputs.dirpath }}
         run: bash javascript/compile.sh "${{ needs.determine-dirpath.outputs.dirpath }}"
         id: compile
+      - name: Upload compiled files
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-wasm
+          path: javascript_output/${{ needs.determine-dirpath.outputs.dirpath }}/
+          retention-days: 1
 
   test-node:
     runs-on: ubuntu-latest
     needs: compile
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Download compiled files
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-wasm
+          path: javascript_output/${{ needs.determine-dirpath.outputs.dirpath }}/
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -116,8 +125,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: compile
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Download compiled files
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-wasm
+          path: javascript_output/${{ needs.determine-dirpath.outputs.dirpath }}/
       - name: Cleanup
         run: rm javascript_output/$OUTPUT_DIR/test.js
         env:

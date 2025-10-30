@@ -113,7 +113,9 @@ jobs:
     needs: compile
     steps:
       - name: Cleanup
-        run: rm javascript_output/${{ needs.compile.outputs.dirpath }}/test.js
+        run: rm javascript_output/$OUTPUT_DIR/test.js
+        env:
+          OUTPUT_DIR: ${{ needs.compile.outputs.dirpath }}
       - name: Commit
         uses: cpina/github-action-push-to-another-repository@main
         env:

@@ -156,7 +156,7 @@ void free_string(char* str) {
     }
 }
 
-char* version() {
+std::string version() {
     return JUSTC_VERSION;
 }
 

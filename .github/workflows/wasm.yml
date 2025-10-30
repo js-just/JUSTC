@@ -106,22 +106,22 @@ jobs:
         with:
           node-version: '24.x'
       - name: Test
-        run: node javascript_output/${{ steps.compile.outputs.dirpath }}/test.js
+        run: node javascript_output/${{ needs.compile.outputs.dirpath }}/test.js
 
   commit:
     runs-on: ubuntu-latest
     needs: compile
     steps:
       - name: Cleanup
-        run: rm javascript_output/${{ steps.compile.outputs.dirpath }}/test.js
+        run: rm javascript_output/${{ needs.compile.outputs.dirpath }}/test.js
       - name: Commit
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-directory: "javascript_output/${{ steps.compile.outputs.dirpath }}"
+          source-directory: "javascript_output/${{ needs.compile.outputs.dirpath }}"
           destination-github-username: js-just
           destination-repository-name: website
           user-email: "support@juststudio.is-a.dev"
           target-branch: main
-          target-directory: "justc/${{ steps.compile.outputs.dirpath }}"
+          target-directory: "justc/${{ needs.compile.outputs.dirpath }}"

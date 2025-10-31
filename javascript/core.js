@@ -455,8 +455,11 @@ SOFTWARE.
         }
         return tasks
     };
+    JUSTC.AsyncOutput = async function(bool, args) {
+        return await Promise.all(JUSTC.Taskify(bool, args))
+    };
     JUSTC.Output = {
-        parse: function ParseJUSTC(code) {
+        parse: isBrowser ? function(code) {
             JUSTC.Check(code);
 
             const result = JUSTC.Parse(code);
@@ -465,8 +468,10 @@ SOFTWARE.
             } else {
                 return result.return || {};
             }
+        } : async function(...code) {
+            return await JUSTC.AsyncOutput(false, code)
         },
-        execute: function ExecuteJUSTC(code) {
+        execute: isBrowser ? function(code) {
             JUSTC.Check(code);
 
             const result = JUSTC.Parse(code, true);
@@ -476,21 +481,23 @@ SOFTWARE.
                 JUSTC.DisplayLogs(result);
                 return result.return || {};
             }
+        } : async function(...code) {
+            return await JUSTC.AsyncOutput(true, code)
         },
-        initialize: async function InitializeJUSTC() {
+        initialize: async function() {
             await JUSTC.InitWASM();
         },
-        stringify: function JSONtoJUSTC(JavaScriptObjectNotation) {
+        stringify: function(JavaScriptObjectNotation) {
             if (typeof JavaScriptObjectNotation != 'object') throw new JUSTC.Error(JUSTC.Errors.objectInput);
             return JUSTC.fromJSON(JavaScriptObjectNotation);
         },
-        parseAsync: async function ParseJUSTC(...code) {
-            return await Promise.all(JUSTC.Taskify(false, code));
-        },
-        executeAsync: async function ExecuteJUSTC(...code) {
-            return await Promise.all(JUSTC.Taskify(true, code));
-        },
-        background: function ExecuteORParseJUSTC(urlORcode, doExecute = true) {
+        parseAsync: isBrowser ? async function(...code) {
+            return await JUSTC.AsyncOutput(false, code);
+        } : undefined,
+        executeAsync: isBrowser ? async function(...code) {
+            return await JUSTC.AsyncOutput(true, code);
+        } : undefined,
+        background: function(urlORcode, doExecute = true) {
             if (typeof doExecute != 'boolean') throw new JUSTC.Error(JUSTC.Errors.boolInput);
             try {
                 __URL__.parse(urlORcode);
@@ -548,14 +555,14 @@ SOFTWARE.
         for (const [name, value] of OBJECT.entries(JUSTC.Output)) {
             exports[name] = async function(...args) {
                 await JUSTC.InitWASM();
-                return value(...args);
+                return value.constructor.name === "AsyncFunction" ? await value(...args) : value(...args);
             };
         }
         for (const [name, value] of OBJECT.entries(JUSTC.HiddenOutput)) {
             OBJECT.defineProperty(exports, name, {
                 value: async function(...args) {
                     await JUSTC.InitWASM();
-                    return value(...args);
+                    return value.constructor.name === "AsyncFunction" ? await value(...args) : value(...args);
                 },
                 writable: false,
                 configurable: false,

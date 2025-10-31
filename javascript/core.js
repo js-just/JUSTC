@@ -114,6 +114,7 @@ SOFTWARE.
     JUSTC.ErrorEnabled = true;
     JUSTC.CoreLogsEnabled = false;
     JUSTC.Silent = false;
+    JUSTC.Experiments = false;
 
     JUSTC.Console = function(type, ...args) {
         if (!JUSTC.Silent) {
@@ -459,7 +460,7 @@ SOFTWARE.
         return await Promise.all(await Promise.all(JUSTC.Taskify(bool, args)))
     };
     JUSTC.Output = {
-        parse: isBrowser ? function(code) {
+        parse: isBrowser || !JUSTC.Experiments ? function(code) {
             JUSTC.Check(code);
 
             const result = JUSTC.Parse(code);
@@ -471,7 +472,7 @@ SOFTWARE.
         } : async function(...code) {
             return await JUSTC.AsyncOutput(false, code)
         },
-        execute: isBrowser ? function(code) {
+        execute: isBrowser || !JUSTC.Experiments ? function(code) {
             JUSTC.Check(code);
 
             const result = JUSTC.Parse(code, true);
@@ -491,13 +492,13 @@ SOFTWARE.
             if (typeof JavaScriptObjectNotation != 'object') throw new JUSTC.Error(JUSTC.Errors.objectInput);
             return JUSTC.fromJSON(JavaScriptObjectNotation);
         },
-        parseAsync: isBrowser ? async function(...code) {
+        parseAsync: isBrowser && JUSTC.Experiments ? async function(...code) {
             return await JUSTC.AsyncOutput(false, code);
         } : undefined,
-        executeAsync: isBrowser ? async function(...code) {
+        executeAsync: isBrowser && JUSTC.Experiments ? async function(...code) {
             return await JUSTC.AsyncOutput(true, code);
         } : undefined,
-        background: function(urlORcode, doExecute = true) {
+        background: JUSTC.Experiments ? function(urlORcode, doExecute = true) {
             if (typeof doExecute != 'boolean') throw new JUSTC.Error(JUSTC.Errors.boolInput);
             try {
                 __URL__.parse(urlORcode);
@@ -506,7 +507,7 @@ SOFTWARE.
                 if (typeof urlORcode != 'string') throw new JUSTC.Error(JUSTC.Errors.wrongInputType);
                 JUSTC.CurrentVFS.createFile('/_just/JUSTC//'+JUSTC.bgvfid++, urlORcode, {}, doExecute ? 2 : 1);
             }
-        }
+        } : undefined
     };
     JUSTC.Public = {
         get [Symbol.toStringTag]() {

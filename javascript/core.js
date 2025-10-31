@@ -456,7 +456,7 @@ SOFTWARE.
         return tasks
     };
     JUSTC.AsyncOutput = async function(bool, args) {
-        return await Promise.all(JUSTC.Taskify(bool, args))
+        return await Promise.all(Promise.all(JUSTC.Taskify(bool, args)))
     };
     JUSTC.Output = {
         parse: isBrowser ? function(code) {

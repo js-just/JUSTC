@@ -515,7 +515,7 @@ SOFTWARE.
         }
     };
     for (const [name, value] of OBJECT.entries(JUSTC.Output)) {
-        OBJECT.defineProperty(JUSTC.Public, name, {
+        if (value != undefined) OBJECT.defineProperty(JUSTC.Public, name, {
             value, 
             writable: false,
             configurable: false,

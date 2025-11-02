@@ -44,9 +44,10 @@ void printUsage() {
     std::cout << "       justc -e \"<code>\"                - Execute JUSTC code" << std::endl;
     std::cout << "" << std::endl;
     std::cout << "Flags:" << std::endl;
+    std::cout << "  -a, --async                           - Evaluate script variables asynchronously (may run faster)" << std::endl;
     std::cout << "  -e, --eval                            - Execute (Evaluate) script (not file)" << std::endl;
-    std::cout << "  -h, --help                            - Print JUSTC command line options (this list)" << std::endl;
     std::cout << "  -E, --execute                         - Execute JUSTC from lexer output tokens as JSON" << std::endl;
+    std::cout << "  -h, --help                            - Print JUSTC command line options (this list)" << std::endl;
     std::cout << "  -l, --lexer                           - Run lexer only / Tokenize" << std::endl;
     std::cout << "  -P, --parser                          - Run parser only / Parse JUSTC (not execute) from lexer output tokens as JSON" << std::endl;
     std::cout << "  -p, --parse                           - Parse JUSTC (not execute) / No HTTP requests, some commands will not be executed" << std::endl;
@@ -85,6 +86,7 @@ int main(int argc, char* argv[]) {
     }
 
     try {
+        // parse arguments
         std::string mode = "execute";
         std::string input;
         std::string output;
@@ -92,8 +94,7 @@ int main(int argc, char* argv[]) {
         bool executeJUSTC = true;
         bool helpandorversionflag = false;
         bool lexerTokensToParser = false;
-        
-        // parse arguments
+        bool asynchronously = false;
         bool gotFileOrCode = false;
         bool outputToFile = false;
         bool waitingForVersion = false;
@@ -169,6 +170,9 @@ int main(int argc, char* argv[]) {
                 lexerTokensToParser = true;
                 mode = "parserExecute";
             }
+            else if (arg == "--async" || arg == "-a") {
+                asynchronously = true;
+            }
 
             // hidden flags. IMPORTANT: DO NOT USE THESE FLAGS! THESE FLAGS ARE ONLY FOR JUST AN ULTIMATE SITE TOOL ENVIRONMENT.
             waitingForVersion = false;
@@ -207,12 +211,12 @@ int main(int argc, char* argv[]) {
         else if (mode == "parser" || mode == "parserExecute") {
             std::vector<ParserToken> lexerResult;
             JsonParser::parseJsonTokens(input.c_str(), lexerResult);
-            auto parseResult = Parser::parseTokens(lexerResult, mode == "parserExecute");
+            auto parseResult = Parser::parseTokens(lexerResult, mode == "parserExecute", asynchronously);
             json = JsonSerializer::serialize(parseResult);
         }
         else {
             auto lexerResult = Lexer::parse(input);
-            auto parseResult = Parser::parseTokens(lexerResult.second, executeJUSTC);
+            auto parseResult = Parser::parseTokens(lexerResult.second, executeJUSTC, asynchronously);
             json = JsonSerializer::serialize(parseResult);
         }
 

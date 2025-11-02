@@ -98,6 +98,8 @@ jobs:
           OUTPUT_DIR: ${{ needs.determine-dirpath.outputs.dirpath }}
         run: bash javascript/compile.sh "${{ needs.determine-dirpath.outputs.dirpath }}"
         id: compile
+      - name: Copy LICENSE and README.md
+        run: cp LICENSE javascript_output/${{ needs.compile.outputs.dirpath }}/LICENSE && cp README.md javascript_output/${{ needs.compile.outputs.dirpath }}/README.md
       - name: Upload compiled files
         uses: actions/upload-artifact@v4
         with:
@@ -145,8 +147,6 @@ jobs:
           user-email: "support@juststudio.is-a.dev"
           target-branch: main
           target-directory: "justc/${{ needs.compile.outputs.dirpath }}"
-      - name: Copy LICENSE and README.md
-        run: cp LICENSE javascript_output/${{ needs.compile.outputs.dirpath }}/LICENSE && cp README.md javascript_output/${{ needs.compile.outputs.dirpath }}/README.md
       - name: Commit to JUSTC.js
         uses: cpina/github-action-push-to-another-repository@main
         env:

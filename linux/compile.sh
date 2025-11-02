@@ -22,43 +22,21 @@
 
 #!/bin/bash
 
-bash linux/compile.sh
-FILE=../test/linux/test
+sudo apt-get update
+sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config
 
-echo ""
-echo ""
-echo "running JUSTC"
-echo ""
-echo "--version:"
-justc --version
-echo ""
-echo "--help:"
-justc --help
-echo ""
-echo "execute:"
-justc $FILE.justc $FILE.json -r
-echo ""
-echo "lexer:"
-justc $FILE.justc $FILE.lexer.json -r -l
-echo ""
-echo "parse:"
-justc $FILE.justc $FILE.parse.json -r -p
-echo ""
-echo "parser:"
-justc $FILE.lexer.json $FILE.parser.json -r -P
-echo ""
-echo "parserExecute:"
-justc $FILE.lexer.json $FILE.parsEr.json -r -E
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
 
-echo ""
-echo "reading outputs"
-RESULT=$(cat $FILE.json)
-RESULT2=$(cat $FILE.lexer.json)
-RESULT3=$(cat $FILE.parse.json)
-RESULT4=$(cat $FILE.parser.json)
-RESULT5=$(cat $FILE.parsEr.json)
-echo "Executed:           $RESULT"
-echo "Parsed (string):    $RESULT3"
-echo "Tokenized:          $RESULT2"
-echo "Parsed (tokens):    $RESULT4"
-echo "Parsed (tokens,-E): $RESULT5"
+hash -r
+if ! command -v justc &> /dev/null; then
+    sudo ln -sf /usr/local/bin/justc /usr/bin/justc
+    hash -r
+fi
+
+if ! command -v justc &> /dev/null; then
+    echo -e "::error::CMake error." && exit 1
+fi

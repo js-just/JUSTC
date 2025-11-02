@@ -46,6 +46,7 @@ void printUsage() {
     std::cout << "Flags:" << std::endl;
     std::cout << "  -e, --eval                            - Execute (Evaluate) script (not file)" << std::endl;
     std::cout << "  -h, --help                            - Print JUSTC command line options (this list)" << std::endl;
+    std::cout << "  -E, --execute                         - Execute JUSTC from lexer output tokens as JSON" << std::endl;
     std::cout << "  -l, --lexer                           - Run lexer only / Tokenize" << std::endl;
     std::cout << "  -P, --parser                          - Run parser only / Parse JUSTC (not execute) from lexer output tokens as JSON" << std::endl;
     std::cout << "  -p, --parse                           - Parse JUSTC (not execute) / No HTTP requests, some commands will not be executed" << std::endl;
@@ -164,6 +165,10 @@ int main(int argc, char* argv[]) {
                 lexerTokensToParser = true;
                 mode = "parser";
             }
+            else if (arg == "--execute" || arg == "-E") {
+                lexerTokensToParser = true;
+                mode = "parserExecute";
+            }
 
             // hidden flags. IMPORTANT: DO NOT USE THESE FLAGS! THESE FLAGS ARE ONLY FOR JUST AN ULTIMATE SITE TOOL ENVIRONMENT.
             waitingForVersion = false;
@@ -199,10 +204,10 @@ int main(int argc, char* argv[]) {
             auto lexerResult = Lexer::parse(input);
             json = JsonSerializer::serialize(lexerResult.second, lexerResult.first);
         }
-        else if (mode == "parser") {
+        else if (mode == "parser" || mode == "parserExecute") {
             std::vector<ParserToken> lexerResult;
             JsonParser::parseJsonTokens(input.c_str(), lexerResult);
-            auto parseResult = Parser::parseTokens(lexerResult, executeJUSTC);
+            auto parseResult = Parser::parseTokens(lexerResult, mode == "parserExecute");
             json = JsonSerializer::serialize(parseResult);
         }
         else {

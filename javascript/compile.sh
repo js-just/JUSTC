@@ -73,7 +73,7 @@ JSOUT_DIR="javascript_output/$SAFE_DIR"
 
 node() {
     set +e
-    emcc core/js.cpp core/lexer.cpp core/parser.cpp core/json.cpp core/keywords.cpp core/fetch.cpp \
+    emcc core/js.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp \
         -o $JSOUT_DIR/justc.node.js \
         -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free"]' \
         -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8"]' \

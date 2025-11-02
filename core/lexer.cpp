@@ -411,7 +411,7 @@ std::vector<ParserToken> Lexer::getTokens() const {
     if (!tokens.empty()) {
         const auto& lastToken = tokens.back();
         if (lastToken.type != "." && lastToken.value != ".") {
-            throw std::runtime_error("Expected \".\", got \"" + lastToken.value + "\" at position " + lastToken.start);
+            throw std::runtime_error("Expected \".\", got \"" + lastToken.value + "\" at position " + std::to_string(lastToken.start));
         }
     }
     return tokens;

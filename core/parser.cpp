@@ -268,7 +268,7 @@ Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute, bool runA
       globalScope(false), strictMode(false), hasLogFile(false), 
       doExecute(doExecute), runAsync(runAsync) {}
 
-std::string Parser::getCurrentTimestamp() const {
+std::string Parser::getCurrentTimestamp() {
     auto now = std::chrono::system_clock::now();
     auto time_t = std::chrono::system_clock::to_time_t(now);
     

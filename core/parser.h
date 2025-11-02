@@ -187,8 +187,6 @@ private:
     bool isEnd() const;
     void skipCommas();
 
-    std::string getCurrentTimestamp() const;
-
     std::string toLower(const std::string& str) const {
         std::string result = str;
         std::transform(result.begin(), result.end(), result.begin(), 
@@ -322,6 +320,7 @@ private:
     Value onHTTPDisabled(size_t startPos, std::string args0string_value);
     
 public:
+    std::string getCurrentTimestamp() const;
     Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false);
     ParseResult parse(bool doExecute = true);
     static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false);

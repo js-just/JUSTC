@@ -29,35 +29,28 @@ SOFTWARE.
 #include <string>
 #include "lexer.h"
 #include "parser.h"
-#include "json.h"
+#include "json.hpp"
 #include "version.h"
 
 void printUsage() {
     std::cout << "" << std::endl;
-    std::cout << "JUSTC v" + JUSTC_VERSION << std::endl;
+    std::cout << "Just an Ultimate Site Tool Configuration language (JUSTC) v" + JUSTC_VERSION << std::endl;
+    std::cout << "https://just.js.org/justc" << std::endl;
     std::cout << "" << std::endl;
-    std::cout << "Basic usage:" << std::endl;
-    std::cout << "  justc <file.justc>                    - Execute JUSTC file" << std::endl;
-    std::cout << "  justc <file.justc> <file.json>        - Execute JUSTC file and output to JSON file" << std::endl;
-    std::cout << "  justc -c \"code\"                       - Execute JUSTC code" << std::endl;
-    std::cout << "  justc --lexer <file.justc>            - Run lexer only (file)" << std::endl;
-    std::cout << "  justc --lexer -c \"code\"               - Run lexer only" << std::endl;
-    std::cout << "  justc --parser <file.justc>           - Run parser only (file)" << std::endl;
-    std::cout << "  justc --parser -c \"code\"              - Run parser only" << std::endl;
-    std::cout << "  justc --help                          - Show this command list" << std::endl;
+    std::cout << "Usage: justc   [ flags ( [ arguments ] ) ]   [ input.justc ] ( [ output.json ] )" << std::endl;
+    std::cout << "       justc <file.justc>               - Execute JUSTC file" << std::endl;
+    std::cout << "       justc <file.justc> <file.json>   - Execute JUSTC file and output to JSON file" << std::endl;
+    std::cout << "       justc -e \"<code>\"                - Execute JUSTC code" << std::endl;
     std::cout << "" << std::endl;
-    std::cout << "Other flags:" << std::endl;
-    std::cout << "  --result                              - Output to console" << std::endl;
-    std::cout << "  --sha <commit sha>                    - Set commit SHA" << std::endl;
-    std::cout << "  --version                             - Show JUSTC version" << std::endl;
-    std::cout << "" << std::endl;
-    std::cout << "Short flags:" << std::endl;
-    std::cout << "  -h                                    - Same as --help" << std::endl;
-    std::cout << "  -r                                    - Same as --result" << std::endl;
-    std::cout << "  -p                                    - Same as --parser" << std::endl;
-    std::cout << "  -l                                    - Same as --lexer" << std::endl;
-    std::cout << "  -v                                    - Same as --version" << std::endl;
-    std::cout << "  -s <commit sha>                       - Same as --sha <commit sha>" << std::endl;
+    std::cout << "Flags:" << std::endl;
+    std::cout << "  -e, --eval                            - Execute (Evaluate) script (not file)" << std::endl;
+    std::cout << "  -h, --help                            - Print JUSTC command line options (this list)" << std::endl;
+    std::cout << "  -l, --lexer                           - Run lexer only / Tokenize" << std::endl;
+    std::cout << "  -P, --parser                          - Run parser only / Parse JUSTC (not execute) from lexer output tokens as JSON" << std::endl;
+    std::cout << "  -p, --parse                           - Parse JUSTC (not execute) / No HTTP requests, some commands will not be executed" << std::endl;
+    std::cout << "  -r, --result                          - Print result" << std::endl;
+    std::cout << "  -s <commit sha>, --sha <commit sha>   - Set commit SHA" << std::endl;
+    std::cout << "  -v, --version                         - Print JUSTC version" << std::endl;
     std::cout << "" << std::endl;
     std::cout << "\"Run parser only\" means that JUSTC (will not be executed) will only be compiled to JSON - no logs and/or HTTP requests." << std::endl;
     std::cout << "\"Run lexer only\" means that JUSTC won't be executed and/or parsed, JUSTC will only be tokenized." << std::endl;
@@ -96,6 +89,7 @@ int main(int argc, char* argv[]) {
         bool outputToConsole = false;
         bool executeJUSTC = true;
         bool helpandorversionflag = false;
+        bool lexerTokensToParser = false;
         
         // parse arguments
         bool gotFileOrCode = false;
@@ -143,7 +137,7 @@ int main(int argc, char* argv[]) {
             else if (arg == "--result" || arg == "-r") {
                 outputToConsole = true;
             }
-            else if (arg == "-c" && i + 1 < argc) {
+            else if ((arg == "-e" || arg == "--eval") && i + 1 < argc) {
                 input = argv[++i];
                 gotFileOrCode = true;
             }
@@ -162,8 +156,12 @@ int main(int argc, char* argv[]) {
                 helpandorversionflag = true;
                 std::cout << JUSTC_VERSION << std::endl;
             }
-            else if (arg == "--parser" || arg == "-p") {
+            else if (arg == "--parse" || arg == "-p") {
                 executeJUSTC = false;
+            }
+            else if (arg == "--parser" || arg == "-P") {
+                lexerTokensToParser = true;
+                mode = "parser"
             }
 
             // hidden flags. IMPORTANT: DO NOT USE THESE FLAGS! THESE FLAGS ARE ONLY FOR JUST AN ULTIMATE SITE TOOL ENVIRONMENT.
@@ -199,6 +197,12 @@ int main(int argc, char* argv[]) {
         if (mode == "lexer") {
             auto lexerResult = Lexer::parse(input);
             json = JsonSerializer::serialize(lexerResult.second, lexerResult.first);
+        }
+        else if (mode == "parser") {
+            std::vector<ParserToken> lexerResult;
+            JsonParser::parseJsonTokens(input, lexerResult);
+            auto parseResult = Parser::parseTokens(lexerResult, executeJUSTC);
+            json = JsonSerializer::serialize(parseResult);
         }
         else {
             auto lexerResult = Lexer::parse(input);

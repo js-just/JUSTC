@@ -27,20 +27,25 @@ echo ""
 echo "--help:"
 justc --help
 echo ""
-echo "exeute:"
-justc $FILE.justc $FILE.json --results
+echo "execute:"
+justc $FILE.justc $FILE.json -r
 echo ""
 echo "lexer:"
-justc $FILE.justc $FILE.lexer.json --results --lexer
+justc $FILE.justc $FILE.lexer.json -r -l
+echo ""
+echo "parse:"
+justc $FILE.justc $FILE.parse.json -r -p
 echo ""
 echo "parser:"
-justc $FILE.justc $FILE.parse.json --results --parser
+justc $FILE.lexer.json $FILE.parser.json -r -P
 
 echo ""
 echo "reading outputs"
 RESULT=$(cat $FILE.json)
 RESULT2=$(cat $FILE.lexer.json)
 RESULT3=$(cat $FILE.parse.json)
-echo "Executed:  $RESULT"
-echo "Parsed:    $RESULT3"
-echo "Tokenized: $RESULT2"
+RESULT4=$(cat $FILE.parser.json)
+echo "Executed:           $RESULT"
+echo "Parsed (string):    $RESULT3"
+echo "Tokenized:          $RESULT2"
+echo "Parsed (tokens):    $RESULT4"

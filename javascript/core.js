@@ -47,6 +47,12 @@ SOFTWARE.
     const isModule  = typeof module === 'object' && module.exports;
     const isBrowser =                          !isAMD && !isModule;
 
+    if (!isBrowser && typeof require === 'function') {
+        try {
+            JUSTC.NodeWASM = require('./justc.node.js')
+        } catch (_) {}
+    }
+
     const globalThis_ = isBrowser ? []["filter"]["constructor"]("return globalThis")() || []["filter"]["constructor"]("return this")() || globalThis : globalThis || self || (isAMD ? {__justc__} : this) || {__justc__};
     if (!isBrowser) globalThis_.window = {};
     const OBJECT = Object;
@@ -115,6 +121,9 @@ SOFTWARE.
     JUSTC.CoreLogsEnabled = false;
     JUSTC.Silent = false;
     JUSTC.Experiments = false;
+
+    if (!isBrowser && !JUSTC.JUSTC && !JUSTC.WASM && JUSTC.NodeWASM) JUSTC.JUSTC = JUSTC.NodeWASM
+    else if (isBrowser && !JUSTC.JUSTC && !JUSTC.WASM) throw new JUSTC.Error(JUSTC.Errors.environment);
 
     JUSTC.Console = function(type, ...args) {
         if (!JUSTC.Silent) {
@@ -512,6 +521,20 @@ SOFTWARE.
     JUSTC.Public = {
         get [Symbol.toStringTag]() {
             return 'JUSTC'
+        },
+        get ["version"]() {
+            const resultptr = JUSTC.WASM.ccall(
+                "version",
+                "number",
+                [], []
+            );
+            JUSTC.WASM.ccall(
+                'free_string',
+                null,
+                ['number'],
+                [resultptr]
+            );
+            return resultptr
         }
     };
     for (const [name, value] of OBJECT.entries(JUSTC.Output)) {

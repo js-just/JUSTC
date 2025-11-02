@@ -69,10 +69,12 @@ web() {
     fi
 }
 
+JSOUT_DIR="javascript_output/$SAFE_DIR"
+
 node() {
     set +e
     emcc core/js.cpp core/lexer.cpp core/parser.cpp core/json.cpp core/keywords.cpp core/fetch.cpp \
-        -o javascript_output/$SAFE_DIR/justc.node.js \
+        -o $JSOUT_DIR/justc.node.js \
         -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free"]' \
         -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8"]' \
         -s MODULARIZE=1 \
@@ -103,42 +105,43 @@ node() {
 }
 
 web
-mkdir javascript_output && mkdir javascript_output/$SAFE_DIR && \
+mkdir javascript_output && mkdir $JSOUT_DIR && \
 node
 
-mv javascript/$SAFE_DIR/justc.core.wasm javascript_output/$SAFE_DIR/justc.wasm
+mv javascript/$SAFE_DIR/justc.core.wasm $JSOUT_DIR/justc.wasm
 sed -i 's/justc\.core\.wasm/justc.wasm/g' javascript/$SAFE_DIR/justc.core.js
-mv javascript/$SAFE_DIR/justc.core.js javascript_output/$SAFE_DIR/justc.core.js
-mv javascript/core.js javascript_output/$SAFE_DIR/justc.js
-mv javascript/test.js javascript_output/$SAFE_DIR/test.js
+mv javascript/$SAFE_DIR/justc.core.js $JSOUT_DIR/justc.core.js
+mv javascript/core.js $JSOUT_DIR/justc.js
+mv javascript/test.js $JSOUT_DIR/test.js
 
-for file in javascript_output/$SAFE_DIR/justc.core.js javascript_output/$SAFE_DIR/justc.js javascript_output/$SAFE_DIR/justc.node.js; do
+for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js; do
     printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
 done
 for file in justc justc.node; do
-    wasm2wat javascript_output/$SAFE_DIR/$file.wasm > javascript_output/$SAFE_DIR/$file.wat
+    wasm2wat $JSOUT_DIR/$file.wasm > $JSOUT_DIR/$file.wat
     {
-        head -n1 "javascript_output/$SAFE_DIR/$file.wat"
+        head -n1 "$JSOUT_DIR/$file.wat"
         echo "  (@custom \"justc\" \"Just an Ultimate Site Tool Configuration language\")"
         echo "  (@custom \"justc.website\" \"https://just.js.org/justc\")"
         echo "  (@custom \"justc.license\" \"MIT License. https://just.js.org/justc/license.txt\")"
         echo "  (@custom \"justc.copyright\" \"Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>\")"
-        tail -n +2 "javascript_output/$SAFE_DIR/$file.wat"
-    } > javascript_output/$SAFE_DIR/$file.tmp
-    wat2wasm javascript_output/$SAFE_DIR/$file.tmp --enable-annotations -o javascript_output/$SAFE_DIR/$file.wasm
-    rm javascript_output/$SAFE_DIR/$file.wat javascript_output/$SAFE_DIR/$file.tmp
+        tail -n +2 "$JSOUT_DIR/$file.wat"
+    } > $JSOUT_DIR/$file.tmp
+    wat2wasm $JSOUT_DIR/$file.tmp --enable-annotations -o $JSOUT_DIR/$file.wasm
+    rm $JSOUT_DIR/$file.wat $JSOUT_DIR/$file.tmp
 done
 
-ls -la javascript_output/$SAFE_DIR/
-file javascript_output/$SAFE_DIR/justc.core.wasm
-hexdump -C javascript_output/$SAFE_DIR/justc.core.wasm | head -20
+ls -la $JSOUT_DIR/
+file $JSOUT_DIR/justc.core.wasm
+hexdump -C $JSOUT_DIR/justc.core.wasm | head -20
 
-mv javascript/test.html javascript_output/$SAFE_DIR/test.html
-mv javascript/test.justc javascript_output/$SAFE_DIR/test.justc
+mv javascript/test.html $JSOUT_DIR/test.html
+mv javascript/test.justc $JSOUT_DIR/test.justc
 
-cp javascript_output/$SAFE_DIR/justc.js javascript_output/$SAFE_DIR/index.js
-mv javascript/index.d.ts javascript_output/$SAFE_DIR/index.d.ts
+cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
+mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
+mv javascript/npm.json $JSOUT_DIR/package.json
 
-for FILE in javascript_output/$SAFE_DIR/*; do
+for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"
 done

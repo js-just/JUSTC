@@ -134,7 +134,7 @@ jobs:
         run: rm javascript_output/$OUTPUT_DIR/test.js
         env:
           OUTPUT_DIR: ${{ needs.compile.outputs.dirpath }}
-      - name: Commit
+      - name: Commit to Website
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
@@ -145,3 +145,15 @@ jobs:
           user-email: "support@juststudio.is-a.dev"
           target-branch: main
           target-directory: "justc/${{ needs.compile.outputs.dirpath }}"
+      - name: Copy LICENSE and README.md
+        run: cp LICENSE javascript_output/${{ needs.compile.outputs.dirpath }}/LICENSE && cp README.md javascript_output/${{ needs.compile.outputs.dirpath }}/README.md
+      - name: Commit to JUSTC.js
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-directory: "javascript_output/${{ needs.compile.outputs.dirpath }}"
+          destination-github-username: js-just
+          destination-repository-name: JUSTC.js
+          user-email: "support@juststudio.is-a.dev"
+          target-branch: main

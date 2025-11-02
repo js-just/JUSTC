@@ -24,9 +24,15 @@ SOFTWARE.
 
 */
 
-#include "json.h"
+#include "to.json.h"
 #include <sstream>
 #include <algorithm>
+#include <iostream>
+#include "parser.h"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 std::string JsonSerializer::escapeJsonString(const std::string& str) {
     std::stringstream ss;
@@ -52,7 +58,13 @@ std::string JsonSerializer::escapeJsonString(const std::string& str) {
         }
         
         if (i > 100000) {
-            ss << "...(truncated)";
+            #ifdef __EMSCRIPTEN__
+            EM_ASM({
+                console.warn("[JUSTC] (" + $0 + ") string is too long. It will be truncated in the JSON output.");
+            }, Parser::getCurrentTimestamp());
+            #else
+            std::cout << "JUSTC: Warning: string is too long. It will be truncated in the JSON output." << std::endl;
+            #endif
             break;
         }
     }
@@ -65,7 +77,11 @@ std::string JsonSerializer::valueToJson(const Value& value) {
         case DataType::HEXADECIMAL:
         case DataType::BINARY:
         case DataType::OCTAL:
-            return std::to_string(value.number_value);
+            if (value.number_value == std::floor(value.number_value)) {
+                return std::to_string(static_cast<long long>(value.number_value));
+            } else {
+                return std::to_string(value.number_value);
+            }
         case DataType::STRING:
         case DataType::LINK:
         case DataType::PATH:

@@ -61,7 +61,7 @@ std::string JsonSerializer::escapeJsonString(const std::string& str) {
             #ifdef __EMSCRIPTEN__
             EM_ASM({
                 console.warn("[JUSTC] (" + $0 + ") string is too long. It will be truncated in the JSON output.");
-            }, Parser::getCurrentTimestamp());
+            }, Parser::getCurrentTimestamp().c_str());
             #else
             std::cout << "JUSTC: Warning: string is too long. It will be truncated in the JSON output." << std::endl;
             #endif

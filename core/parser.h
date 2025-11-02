@@ -320,7 +320,7 @@ private:
     Value onHTTPDisabled(size_t startPos, std::string args0string_value);
     
 public:
-    std::string getCurrentTimestamp() const;
+    static std::string getCurrentTimestamp() const;
     Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false);
     ParseResult parse(bool doExecute = true);
     static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false);

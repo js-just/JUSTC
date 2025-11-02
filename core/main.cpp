@@ -79,6 +79,32 @@ void writeFile(const std::string& filename, const std::string& content) {
     }
 }
 
+struct cmdFlags {
+    std::string mode = "execute";
+    std::string input;
+    std::string output;
+    bool outputToConsole = false;
+    bool executeJUSTC = true;
+    bool helpandorversionflag = false;
+    bool lexerTokensToParser = false;
+    bool asynchronously = false;
+    bool gotFileOrCode = false;
+    bool outputToFile = false;
+    
+    bool waitingForVersion = false;
+    bool waitingForConfig = false;
+    bool waitingForCommitSHA = false;
+    bool waitingForNav = false;
+    bool waitingForPages = false;
+    bool waitingForCSS = false;
+    
+    std::string justversion;
+    std::string configpath;
+    std::string commitSHA;
+    std::string builtinvarNAV;
+    std::string builtinvarPAGES;
+    std::string builtinvarCSS;
+};
 int main(int argc, char* argv[]) {
     if (argc < 1) {
         printUsage();
@@ -86,145 +112,125 @@ int main(int argc, char* argv[]) {
     }
 
     try {
+        cmdFlags flags;
+
         // parse arguments
-        std::string mode = "execute";
-        std::string input;
-        std::string output;
-        bool outputToConsole = false;
-        bool executeJUSTC = true;
-        bool helpandorversionflag = false;
-        bool lexerTokensToParser = false;
-        bool asynchronously = false;
-        bool gotFileOrCode = false;
-        bool outputToFile = false;
-        bool waitingForVersion = false;
-        bool waitingForConfig = false;
-        bool waitingForCommitSHA = false;
-        bool waitingForNav = false;
-        bool waitingForPages = false;
-        bool waitingForCSS = false;
-        std::string justversion;
-        std::string configpath;
-        std::string commitSHA;
-        std::string builtinvarNAV;
-        std::string builtinvarPAGES;
-        std::string builtinvarCSS;
         for (int i = 1; i < argc; i++) {
             std::string arg = argv[i];
-            if (waitingForVersion) {
-                justversion = arg;
+            if (flags.waitingForVersion) {
+                flags.justversion = arg;
             }
-            else if (waitingForConfig) {
-                configpath = arg;
+            else if (flags.waitingForConfig) {
+                flags.configpath = arg;
             }
-            else if (waitingForCommitSHA) {
-                commitSHA = arg;
+            else if (flags.waitingForCommitSHA) {
+                flags.commitSHA = arg;
             }
-            else if (waitingForNav) {
-                builtinvarNAV = arg;
+            else if (flags.waitingForNav) {
+                flags.builtinvarNAV = arg;
             }
-            else if (waitingForPages) {
-                builtinvarPAGES = arg;
+            else if (flags.waitingForPages) {
+                flags.builtinvarPAGES = arg;
             }
-            else if (waitingForCSS) {
-                builtinvarCSS = arg;
+            else if (flags.waitingForCSS) {
+                flags.builtinvarCSS = arg;
             }
             
             else if (arg == "--help" || arg == "-h") {
-                helpandorversionflag = true;
+                flags.helpandorversionflag = true;
                 printUsage();
             }
             else if (arg == "--lexer" || arg == "-l") {
-                mode = "lexer";
+                flags.mode = "lexer";
             }
             else if (arg == "--result" || arg == "-r") {
-                outputToConsole = true;
+                flags.outputToConsole = true;
             }
             else if ((arg == "-e" || arg == "--eval") && i + 1 < argc) {
-                input = argv[++i];
-                gotFileOrCode = true;
+                flags.input = argv[++i];
+                flags.gotFileOrCode = true;
             }
-            else if (arg[0] != '-' && gotFileOrCode) {
-                output = arg;
-                outputToFile = true;
+            else if (arg[0] != '-' && flags.gotFileOrCode) {
+                flags.output = arg;
+                flags.outputToFile = true;
             }
             else if (arg[0] != '-') {
-                input = readFile(arg);
-                gotFileOrCode = true;
+                flags.input = readFile(arg);
+                flags.gotFileOrCode = true;
             }
             else if (arg == "--sha") {
-                waitingForCommitSHA = true;
+                flags.waitingForCommitSHA = true;
             }
             else if (arg == "--version" || arg == "-v") {
-                helpandorversionflag = true;
+                flags.helpandorversionflag = true;
                 std::cout << JUSTC_VERSION << std::endl;
             }
             else if (arg == "--parse" || arg == "-p") {
-                executeJUSTC = false;
+                flags.executeJUSTC = false;
             }
             else if (arg == "--parser" || arg == "-P") {
-                lexerTokensToParser = true;
-                mode = "parser";
+                flags.lexerTokensToParser = true;
+                flags.mode = "parser";
             }
             else if (arg == "--execute" || arg == "-E") {
-                lexerTokensToParser = true;
-                mode = "parserExecute";
+                flags.lexerTokensToParser = true;
+                flags.mode = "parserExecute";
             }
             else if (arg == "--async" || arg == "-a") {
-                asynchronously = true;
+                flags.asynchronously = true;
             }
 
             // hidden flags. IMPORTANT: DO NOT USE THESE FLAGS! THESE FLAGS ARE ONLY FOR JUST AN ULTIMATE SITE TOOL ENVIRONMENT.
-            waitingForVersion = false;
-            waitingForConfig = false;
-            waitingForCommitSHA = false;
-            waitingForNav = false;
-            waitingForPages = false;
-            waitingForCSS = false;
+            flags.waitingForVersion = false;
+            flags.waitingForConfig = false;
+            flags.waitingForCommitSHA = false;
+            flags.waitingForNav = false;
+            flags.waitingForPages = false;
+            flags.waitingForCSS = false;
             if (arg == "--justversion") {
-                waitingForVersion = true;
+                flags.waitingForVersion = true;
             }
             else if (arg == "--configfile") {
-                waitingForConfig = true;
+                flags.waitingForConfig = true;
             }
             else if (arg == "--setnav") {
-                waitingForNav = true;
+                flags.waitingForNav = true;
             }
             else if (arg == "--setpages") {
-                waitingForPages = true;
+                flags.waitingForPages = true;
             }
             else if (arg == "--setcss") {
-                waitingForCSS = true;
+                flags.waitingForCSS = true;
             }
         }
         
-        if (input.empty() && !helpandorversionflag) {
+        if (flags.input.empty() && !flags.helpandorversionflag) {
             std::runtime_error("No input provided");
             return 1;
         }
         
         std::string json;
-        if (mode == "lexer") {
-            auto lexerResult = Lexer::parse(input);
+        if (flags.mode == "lexer") {
+            auto lexerResult = Lexer::parse(flags.input);
             json = JsonSerializer::serialize(lexerResult.second, lexerResult.first);
         }
-        else if (mode == "parser" || mode == "parserExecute") {
+        else if (flags.mode == "parser" || flags.mode == "parserExecute") {
             std::vector<ParserToken> lexerResult;
-            JsonParser::parseJsonTokens(input.c_str(), lexerResult);
-            auto parseResult = Parser::parseTokens(lexerResult, mode == "parserExecute", asynchronously);
+            JsonParser::parseJsonTokens(flags.input.c_str(), lexerResult);
+            auto parseResult = Parser::parseTokens(lexerResult, flags.mode == "parserExecute", flags.asynchronously);
             json = JsonSerializer::serialize(parseResult);
         }
         else {
-            auto lexerResult = Lexer::parse(input);
-            auto parseResult = Parser::parseTokens(lexerResult.second, executeJUSTC, asynchronously);
+            auto lexerResult = Lexer::parse(flags.input);
+            auto parseResult = Parser::parseTokens(lexerResult.second, flags.executeJUSTC, flags.asynchronously);
             json = JsonSerializer::serialize(parseResult);
         }
 
-        if (outputToConsole) {
+        if (flags.outputToConsole) {
             std::cout << json << std::endl;
         }
-        if (outputToFile) {
-            writeFile(output, json);
+        if (flags.outputToFile) {
+            writeFile(flags.output, json);
         }
         
     } catch (const std::exception& e) {

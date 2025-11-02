@@ -29,6 +29,7 @@ SOFTWARE.
 #include <algorithm>
 #include <iostream>
 #include "parser.h"
+#include <cmath>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>

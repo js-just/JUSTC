@@ -15,6 +15,10 @@ if ! command -v justc &> /dev/null; then
     hash -r
 fi
 
+if ! command -v justc &> /dev/null; then
+    echo -e "::error::CMake error." && exit 1
+fi
+
 FILE=../test/linux/test
 
 echo ""

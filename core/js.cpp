@@ -37,8 +37,6 @@ SOFTWARE.
 
 extern "C" {
 
-namespace {
-
 char* lexer(const char* input) {
     if (input == nullptr) return nullptr;
     

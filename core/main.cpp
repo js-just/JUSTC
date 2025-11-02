@@ -31,6 +31,7 @@ SOFTWARE.
 #include "parser.h"
 #include "json.hpp"
 #include "version.h"
+#include <cstring>
 
 void printUsage() {
     std::cout << "" << std::endl;
@@ -161,7 +162,7 @@ int main(int argc, char* argv[]) {
             }
             else if (arg == "--parser" || arg == "-P") {
                 lexerTokensToParser = true;
-                mode = "parser"
+                mode = "parser";
             }
 
             // hidden flags. IMPORTANT: DO NOT USE THESE FLAGS! THESE FLAGS ARE ONLY FOR JUST AN ULTIMATE SITE TOOL ENVIRONMENT.
@@ -200,7 +201,7 @@ int main(int argc, char* argv[]) {
         }
         else if (mode == "parser") {
             std::vector<ParserToken> lexerResult;
-            JsonParser::parseJsonTokens(input, lexerResult);
+            JsonParser::parseJsonTokens(input.c_str(), lexerResult);
             auto parseResult = Parser::parseTokens(lexerResult, executeJUSTC);
             json = JsonSerializer::serialize(parseResult);
         }

@@ -95,6 +95,7 @@ struct cmdFlags {
     bool asynchronously = false;
     bool gotFileOrCode = false;
     bool outputToFile = false;
+    bool noInput = false;
     
     bool waitingForVersion = false;
     bool waitingForConfig = false;
@@ -212,34 +213,37 @@ int main(int argc, char* argv[]) {
         if (flags.input.empty() && !flags.helpandorversionflag) {
             throw std::runtime_error("No input provided");
             return 1;
+        } else if (flags.input.empty() && flags.helpandorversionflag) {
+            flags.noInput = true;
         }
         
-        std::string json;
-        if (flags.mode == "lexer") {
-            auto lexerResult = Lexer::parse(flags.input);
-            json = JsonSerializer::serialize(lexerResult.second, lexerResult.first);
-        }
-        else if (flags.mode == "parser" || flags.mode == "parserExecute") {
-            std::vector<ParserToken> lexerResult;
-            JsonParser::parseJsonTokens(flags.input.c_str(), lexerResult);
-            auto parseResult = Parser::parseTokens(lexerResult, flags.mode == "parserExecute", flags.asynchronously);
-            json = JsonSerializer::serialize(parseResult);
-        }
-        else {
-            auto lexerResult = Lexer::parse(flags.input);
-            auto parseResult = Parser::parseTokens(lexerResult.second, flags.executeJUSTC, flags.asynchronously);
-            json = JsonSerializer::serialize(parseResult);
-        }
+        if (!flags.noInput) {
+            std::string json;
+            if (flags.mode == "lexer") {
+                auto lexerResult = Lexer::parse(flags.input);
+                json = JsonSerializer::serialize(lexerResult.second, lexerResult.first);
+            }
+            else if (flags.mode == "parser" || flags.mode == "parserExecute") {
+                std::vector<ParserToken> lexerResult;
+                JsonParser::parseJsonTokens(flags.input.c_str(), lexerResult);
+                auto parseResult = Parser::parseTokens(lexerResult, flags.mode == "parserExecute", flags.asynchronously);
+                json = JsonSerializer::serialize(parseResult);
+            }
+            else {
+                auto lexerResult = Lexer::parse(flags.input);
+                auto parseResult = Parser::parseTokens(lexerResult.second, flags.executeJUSTC, flags.asynchronously);
+                json = JsonSerializer::serialize(parseResult);
+            }
 
-        if (flags.outputToConsole) {
-            std::cout << json << std::endl;
+            if (flags.outputToConsole) {
+                std::cout << json << std::endl;
+            }
+            if (flags.outputToFile) {
+                writeFile(flags.output, json);
+            }
         }
-        if (flags.outputToFile) {
-            writeFile(flags.output, json);
-        }
-        
     } catch (const std::exception& e) {
-        throw std::runtime_error(e.what());
+        std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
     

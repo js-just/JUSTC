@@ -128,13 +128,13 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
         
         std::stringstream valuesXml;
         valuesXml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        valuesXml << "<values>\n";
+        valuesXml << "<justc>\n";
         for (const auto& pair : result.returnValues) {
             valuesXml << "  <" << escapeXmlString(pair.first) << ">";
             valuesXml << valueToXml(pair.second);
             valuesXml << "</" << escapeXmlString(pair.first) << ">\n";
         }
-        valuesXml << "</values>";
+        valuesXml << "</justc>";
         
         json << "\"return\":\"" << escapeXmlString(valuesXml.str()) << "\",";
         
@@ -166,7 +166,7 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
     #else
 
     xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    xml << "<values>\n";
+    xml << "<justc>\n";
     
     for (const auto& pair : result.returnValues) {
         xml << "  <" << escapeXmlString(pair.first) << ">";
@@ -174,7 +174,7 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
         xml << "</" << escapeXmlString(pair.first) << ">\n";
     }
     
-    xml << "</values>";
+    xml << "</justc>";
     return xml.str();
 
     #endif

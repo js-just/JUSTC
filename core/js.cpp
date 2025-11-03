@@ -34,15 +34,28 @@ SOFTWARE.
 #include "json.hpp"
 #include "fetch.h"
 #include "version.h"
+#include <tuple>
+
+template<typename... Args>
+std::string outputString(std::string mode, Args... args) {
+    if (mode == "xml") {
+        return XmlSerializer::serialize(args...);
+    } else if (mode == "yaml") {
+        return YamlSerializer::serialize(args...);
+    } else {
+        return JsonSerializer::serialize(args...);
+    }
+}
 
 extern "C" {
 
-char* lexer(const char* input) {
+char* lexer(const char* input, const char* outputMode) {
     if (input == nullptr) return nullptr;
+    std::string mode(outputMode || "json");
     
     try {
         auto parsed = Lexer::parse(input);
-        std::string json = JsonSerializer::serialize(parsed.second, parsed.first);
+        std::string json = outputString(mode, parsed.second, parsed.first);
         return strdup(json.c_str());
         
     } catch (const std::exception& e) {
@@ -51,15 +64,16 @@ char* lexer(const char* input) {
     }
 }
 
-char* parser(const char* tokensJson) {
+char* parser(const char* tokensJson, const char* outputMode) {
     if (tokensJson == nullptr) return nullptr;
+    std::string mode(outputMode || "json");
     
     try {
         std::vector<ParserToken> parserTokens;
         
         if (JsonParser::parseJsonTokens(tokensJson, parserTokens)) {
             ParseResult result = Parser::parseTokens(parserTokens, false, false);
-            std::string json = JsonSerializer::serialize(result);
+            std::string json = outputString(mode, result);
             return strdup(json.c_str());
         } else {
             std::string error = "{\"error\":\"Failed to parse tokens JSON\"}";
@@ -72,13 +86,14 @@ char* parser(const char* tokensJson) {
     }
 }
 
-char* parse(const char* input, const bool execute, const bool runAsync) {
+char* parse(const char* input, const bool execute, const bool runAsync, const char* outputMode) {
     if (input == nullptr) return nullptr;
+    std::string mode(outputMode || "json");
     
     try {
         auto lexerResult = Lexer::parse(input);
         ParseResult result = Parser::parseTokens(lexerResult.second, execute, runAsync);
-        std::string json = JsonSerializer::serialize(result);
+        std::string json = outputString(mode, result);
         return strdup(json.c_str());
         
     } catch (const std::exception& e) {

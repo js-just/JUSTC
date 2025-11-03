@@ -33,6 +33,7 @@ SOFTWARE.
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+#include "to.json.h"
 #endif
 
 std::string XmlSerializer::escapeXmlString(const std::string& str) {
@@ -117,11 +118,7 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
     #ifdef __EMSCRIPTEN__
     
     if (!result.error.empty()) {
-        xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        xml << "<result>\n";
-        xml << "  <error>" << escapeXmlString(result.error) << "</error>\n";
-        xml << "</result>";
-        return xml.str();
+        return "{\"error\":\"" + JsonSerializer::escapeJsonString(result.error) + "\"}";
     } else {
         std::stringstream json;
         json << "{";
@@ -136,27 +133,13 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
         }
         valuesXml << "</justc>";
         
-        json << "\"return\":\"" << escapeXmlString(valuesXml.str()) << "\",";
-        
-        std::stringstream logsXml;
-        logsXml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        logsXml << "<logs>\n";
-        for (const auto& log : result.logs) {
-            logsXml << "  <log>\n";
-            logsXml << "    <type>" << escapeXmlString(log.type) << "</type>\n";
-            logsXml << "    <message>" << escapeXmlString(log.message) << "</message>\n";
-            logsXml << "    <position>" << log.position << "</position>\n";
-            logsXml << "    <time>" << escapeXmlString(log.timestamp) << "</time>\n";
-            logsXml << "  </log>\n";
-        }
-        logsXml << "</logs>";
-        
-        json << "\"logs\":\"" << escapeXmlString(logsXml.str()) << "\",";
+        json << "\"type\":\"xml\",\"return\":\"" << JsonSerializer::escapeJsonString(valuesXml.str()) << "\",";
+        json << "\"logs\":" << JsonSerializer::serialize(result.logs) << ",";
         
         // logfile object
         json << "\"logfile\":{";
-        json << "\"file\":\"" << escapeXmlString(result.logFilePath) << "\",";
-        json << "\"logs\":\"" << escapeXmlString(result.logFileContent) << "\"";
+        json << "\"file\":\"" << JsonSerializer::escapeJsonString(result.logFilePath) << "\",";
+        json << "\"logs\":\"" << JsonSerializer::escapeJsonString(result.logFileContent) << "\"";
         json << "}";
         
         json << "}";
@@ -183,27 +166,9 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
 std::string XmlSerializer::serialize(const std::vector<ParserToken>& tokens, const std::string& input) {
     std::stringstream xml;
     xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    xml << "<parser>\n";
+    xml << "<justcLexer>\n";
     xml << "  <input>" << escapeXmlString(input) << "</input>\n";
     xml << "  " << tokensToXml(tokens) << "\n";
-    xml << "</parser>";
-    return xml.str();
-}
-
-std::string XmlSerializer::serialize(const std::vector<LogEntry>& logs) {
-    std::stringstream xml;
-    xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    xml << "<logs>\n";
-    
-    for (const auto& log : logs) {
-        xml << "  <log>\n";
-        xml << "    <type>" << escapeXmlString(log.type) << "</type>\n";
-        xml << "    <message>" << escapeXmlString(log.message) << "</message>\n";
-        xml << "    <position>" << log.position << "</position>\n";
-        xml << "    <time>" << escapeXmlString(log.timestamp) << "</time>\n";
-        xml << "  </log>\n";
-    }
-    
-    xml << "</logs>";
+    xml << "</justcLexer>";
     return xml.str();
 }

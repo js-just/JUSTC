@@ -133,7 +133,7 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
         json << "\"error\":\"" << escapeJsonString(result.error) << "\"";
     } else {
         // return values
-        json << "\"return\":{";
+        json << "\"type\":\"json\",\"return\":{";
         bool first = true;
         for (const auto& pair : result.returnValues) {
             if (!first) json << ",";

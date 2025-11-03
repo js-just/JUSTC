@@ -33,6 +33,7 @@ SOFTWARE.
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+#include "to.json.h"
 #endif
 
 std::string YamlSerializer::escapeYamlString(const std::string& str) {
@@ -138,13 +139,7 @@ std::string YamlSerializer::serialize(const ParseResult& result) {
     #ifdef __EMSCRIPTEN__
     
     if (!result.error.empty()) {
-        yaml << "error: " << escapeYamlString(result.error) << "\n";
-        
-        std::stringstream json;
-        json << "{";
-        json << "\"return\":\"" << escapeYamlString(yaml.str()) << "\"";
-        json << "}";
-        return json.str();
+        return "{\"error\":\"" + JsonSerializer::escapeJsonString(result.error) + "\"}";
     } else {
         std::stringstream valuesYaml;
         valuesYaml << "---\n";
@@ -155,23 +150,13 @@ std::string YamlSerializer::serialize(const ParseResult& result) {
         std::stringstream json;
         json << "{";
         
-        json << "\"return\":\"" << escapeYamlString(valuesYaml.str()) << "\",";
-        
-        std::stringstream logsYaml;
-        logsYaml << "logs:\n";
-        for (const auto& log : result.logs) {
-            logsYaml << "  - type: " << escapeYamlString(log.type) << "\n";
-            logsYaml << "    message: " << escapeYamlString(log.message) << "\n";
-            logsYaml << "    position: " << log.position << "\n";
-            logsYaml << "    time: " << escapeYamlString(log.timestamp) << "\n";
-        }
-        
-        json << "\"logs\":\"" << escapeYamlString(logsYaml.str()) << "\",";
+        json << "\"type\":\"yaml\",\"return\":\"" << JsonSerializer::escapeJsonString(valuesYaml.str()) << "\",";
+        json << "\"logs\":" << JsonSerializer::serialize(result.logs) << ",";
         
         // logfile object
         json << "\"logfile\":{";
-        json << "\"file\":\"" << escapeYamlString(result.logFilePath) << "\",";
-        json << "\"logs\":\"" << escapeYamlString(result.logFileContent) << "\"";
+        json << "\"file\":\"" << JsonSerializer::escapeJsonString(result.logFilePath) << "\",";
+        json << "\"logs\":\"" << JsonSerializer::escapeJsonString(result.logFileContent) << "\"";
         json << "}";
         
         json << "}";
@@ -195,19 +180,5 @@ std::string YamlSerializer::serialize(const std::vector<ParserToken>& tokens, co
     yaml << "---\n";
     yaml << "input: " << escapeYamlString(input) << "\n";
     yaml << tokensToYaml(tokens);
-    return yaml.str();
-}
-
-std::string YamlSerializer::serialize(const std::vector<LogEntry>& logs) {
-    std::stringstream yaml;
-    yaml << "logs:\n";
-    
-    for (const auto& log : logs) {
-        yaml << "  - type: " << escapeYamlString(log.type) << "\n";
-        yaml << "    message: " << escapeYamlString(log.message) << "\n";
-        yaml << "    position: " << log.position << "\n";
-        yaml << "    time: " << escapeYamlString(log.timestamp) << "\n";
-    }
-    
     return yaml.str();
 }

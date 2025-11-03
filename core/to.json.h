@@ -35,9 +35,9 @@ public:
     static std::string serialize(const ParseResult& result);
     static std::string serialize(const std::vector<ParserToken>& tokens, const std::string& input);
     static std::string serialize(const std::vector<LogEntry>& logs);
+    static std::string escapeJsonString(const std::string& str);
     
 private:
-    static std::string escapeJsonString(const std::string& str);
     static std::string valueToJson(const Value& value);
     static std::string tokensToJson(const std::vector<ParserToken>& tokens);
 };

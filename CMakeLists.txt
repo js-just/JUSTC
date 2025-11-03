@@ -34,6 +34,8 @@ add_library(justc_core
     core/from.json.cpp
     core/to.json.cpp
     core/fetch.cpp
+    core/to.xml.cpp
+    core/to.yaml.cpp
 )
 
 add_executable(justc core/main.cpp)

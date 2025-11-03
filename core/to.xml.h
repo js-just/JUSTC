@@ -24,8 +24,22 @@ SOFTWARE.
 
 */
 
-#include   "to.json.h"
-#include "from.json.hpp"
+#ifndef XML_SERIALIZER_H
+#define XML_SERIALIZER_H
 
-#include    "to.xml.h"
-#include   "to.yaml.h"
+#include "parser.h"
+#include <string>
+
+class XmlSerializer {
+public:
+    static std::string serialize(const ParseResult& result);
+    static std::string serialize(const std::vector<ParserToken>& tokens, const std::string& input);
+    static std::string serialize(const std::vector<LogEntry>& logs);
+    
+private:
+    static std::string escapeXmlString(const std::string& str);
+    static std::string valueToXml(const Value& value);
+    static std::string tokensToXml(const std::vector<ParserToken>& tokens);
+};
+
+#endif

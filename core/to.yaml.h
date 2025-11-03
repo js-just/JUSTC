@@ -24,8 +24,22 @@ SOFTWARE.
 
 */
 
-#include   "to.json.h"
-#include "from.json.hpp"
+#ifndef YAML_SERIALIZER_H
+#define YAML_SERIALIZER_H
 
-#include    "to.xml.h"
-#include   "to.yaml.h"
+#include "parser.h"
+#include <string>
+
+class YamlSerializer {
+public:
+    static std::string serialize(const ParseResult& result);
+    static std::string serialize(const std::vector<ParserToken>& tokens, const std::string& input);
+    static std::string serialize(const std::vector<LogEntry>& logs);
+    
+private:
+    static std::string escapeYamlString(const std::string& str);
+    static std::string valueToYaml(const Value& value);
+    static std::string tokensToYaml(const std::vector<ParserToken>& tokens);
+};
+
+#endif

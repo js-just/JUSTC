@@ -62,3 +62,17 @@ echo "Parsed (string):    $RESULT3"
 echo "Tokenized:          $RESULT2"
 echo "Parsed (tokens):    $RESULT4"
 echo "Parsed (tokens,-E): $RESULT5"
+
+echo ""
+echo "executing JUSTC to XML"
+justc $FILE.justc $FILE.xml -r -x
+echo "reading output"
+RESULTX=$(cat $FILE.xml)
+echo "Executed (XML):     $RESULTX"
+
+echo ""
+echo "executing JUSTC to YAML"
+justc $FILE.justc $FILE.yml -r -y
+echo "reading output"
+RESULTX=$(cat $FILE.yml)
+echo "Executed (YAML):    $RESULTX"

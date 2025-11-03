@@ -34,6 +34,7 @@ SOFTWARE.
 #include <cstring>
 #include <cstdlib>
 #include <stdexcept>
+#include <tuple>
 
 void printUsage() {
     std::cout << "" << std::endl;
@@ -50,12 +51,15 @@ void printUsage() {
     std::cout << "  -e, --eval                            - Execute (Evaluate) script (not file)" << std::endl;
     std::cout << "  -E, --execute                         - Execute JUSTC from lexer output tokens as JSON" << std::endl;
     std::cout << "  -h, --help                            - Print JUSTC command line options (this list)" << std::endl;
+    std::cout << "  -j, --json                            - Output as JSON (default)" << std::endl;
     std::cout << "  -l, --lexer                           - Run lexer only / Tokenize" << std::endl;
     std::cout << "  -P, --parser                          - Run parser only / Parse JUSTC (not execute) from lexer output tokens as JSON" << std::endl;
     std::cout << "  -p, --parse                           - Parse JUSTC (not execute) / No HTTP requests, some commands will not be executed" << std::endl;
     std::cout << "  -r, --result                          - Print result" << std::endl;
     std::cout << "  -s <commit sha>, --sha <commit sha>   - Set commit SHA" << std::endl;
     std::cout << "  -v, --version                         - Print JUSTC version" << std::endl;
+    std::cout << "  -x, --xml                             - Output as XML" << std::endl;
+    std::cout << "  -y, --yaml                            - Output as YAML" << std::endl;
     std::cout << "" << std::endl;
     std::cout << "\"Run parser only\" means that JUSTC (will not be executed) will only be compiled to JSON - no logs and/or HTTP requests." << std::endl;
     std::cout << "\"Run lexer only\" means that JUSTC won't be executed and/or parsed, JUSTC will only be tokenized." << std::endl;
@@ -92,6 +96,7 @@ void writeFile(const std::string& filename, const std::string& content) {
 
 struct cmdFlags {
     std::string mode = "execute";
+    std::string outputMode = "json";
     std::string input;
     std::string output;
     bool outputToConsole = false;
@@ -117,6 +122,16 @@ struct cmdFlags {
     std::string builtinvarPAGES;
     std::string builtinvarCSS;
 };
+template<typename... Args>
+std::string outputString(cmdFlags flags, Args... args) {
+    if (flags.outputMode == "xml") {
+        return XmlSerializer::serialize(args...);
+    } else if (flags.outputMode == "yaml") {
+        return YamlSerializer::serialize(args...);
+    } else {
+        return JsonSerializer::serialize(args...);
+    }
+}
 int main(int argc, char* argv[]) {
     if (argc < 1) {
         printUsage();
@@ -191,6 +206,15 @@ int main(int argc, char* argv[]) {
             else if (arg == "--async" || arg == "-a") {
                 flags.asynchronously = true;
             }
+            else if (arg == "--json" || arg == "-j") {
+                flags.outputMode = "json";
+            }
+            else if (arg == "--xml" || arg == "-x") {
+                flags.outputMode = "xml";
+            }
+            else if (arg == "--yaml" || arg == "-y") {
+                flags.outputMode = "yaml";
+            }
 
             // hidden flags. IMPORTANT: DO NOT USE THESE FLAGS! THESE FLAGS ARE ONLY FOR JUST AN ULTIMATE SITE TOOL ENVIRONMENT.
             flags.waitingForVersion = false;
@@ -227,18 +251,18 @@ int main(int argc, char* argv[]) {
             std::string json;
             if (flags.mode == "lexer") {
                 auto lexerResult = Lexer::parse(flags.input);
-                json = JsonSerializer::serialize(lexerResult.second, lexerResult.first);
+                json = outputString(flags, lexerResult.second, lexerResult.first);
             }
             else if (flags.mode == "parser" || flags.mode == "parserExecute") {
                 std::vector<ParserToken> lexerResult;
                 JsonParser::parseJsonTokens(flags.input.c_str(), lexerResult);
                 auto parseResult = Parser::parseTokens(lexerResult, flags.mode == "parserExecute", flags.asynchronously);
-                json = JsonSerializer::serialize(parseResult);
+                json = outputString(flags, parseResult);
             }
             else {
                 auto lexerResult = Lexer::parse(flags.input);
                 auto parseResult = Parser::parseTokens(lexerResult.second, flags.executeJUSTC, flags.asynchronously);
-                json = JsonSerializer::serialize(parseResult);
+                json = outputString(flags, parseResult);
             }
 
             if (flags.outputToConsole) {

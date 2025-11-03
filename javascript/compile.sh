@@ -114,17 +114,23 @@ mv javascript/$SAFE_DIR/justc.core.js $JSOUT_DIR/justc.core.js
 mv javascript/core.js $JSOUT_DIR/justc.js
 mv javascript/test.js $JSOUT_DIR/test.js
 
+bash linux/compile.sh
+JUSTC_CMD_HELP=$(justc -h)
+JUSTC_VERSION=$(justc -v)
+JUSTC_NAME="Just an Ultimate Site Tool Configuration language"
+
 for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js; do
-    printf "/*\n\n%s\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
+    printf "/*\n\n%s\n\n*/\n\n/*\n\n$JUSTC_NAME v$JUSTC_VERSION ($SAFE_DIR)\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
 done
 for file in justc justc.node; do
     wasm2wat $JSOUT_DIR/$file.wasm > $JSOUT_DIR/$file.wat
     {
         head -n1 "$JSOUT_DIR/$file.wat"
-        echo "  (@custom \"justc\" \"Just an Ultimate Site Tool Configuration language\")"
+        echo "  (@custom \"justc\" \"$JUSTC_NAME\")"
         echo "  (@custom \"justc.website\" \"https://just.js.org/justc\")"
         echo "  (@custom \"justc.license\" \"MIT License. https://just.js.org/justc/license.txt\")"
         echo "  (@custom \"justc.copyright\" \"Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>\")"
+        echo "  (@custom \"justc.version\" \"$JUSTC_VERSION ($SAFE_DIR)\")"
         tail -n +2 "$JSOUT_DIR/$file.wat"
     } > $JSOUT_DIR/$file.tmp
     wat2wasm $JSOUT_DIR/$file.tmp --enable-annotations -o $JSOUT_DIR/$file.wasm
@@ -145,3 +151,5 @@ mv javascript/npm.json $JSOUT_DIR/package.json
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"
 done
+
+sed -i '$s/()$/(`'"$JUSTC_CMD_HELP"'`)/' "$JSOUT_DIR/justc.js"

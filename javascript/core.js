@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-(async()=>{
+(async(JUSTC_CMD_HELP = "")=>{
     "use strict";
  
     const JUSTC = {};
@@ -90,7 +90,8 @@ SOFTWARE.
         jsonInput: 'Argument 0 should be an object.',
         lexerInput: 'Provided input is not valid core.lexer output.',
         boolInput: 'Argument 1 should be a boolean.',
-        environment: 'Invalid or compromised environment.'
+        environment: 'Invalid or compromised environment.',
+        outputMode: 'Invalid output format.'
     };
 
     if (isBrowser) {
@@ -333,15 +334,37 @@ SOFTWARE.
         return JUSTC.CurrentVFS.getFile(filename);
     };
 
+    JUSTC.DefaultOutputMode = 'json';
+
+    JUSTC._commands= {
+        EnableCoreLogs: function() { JUSTC.CoreLogsEnabled = true },
+        DisableCoreLogs: function() { JUSTC.CoreLogsEnabled = false },
+        EnableCoreErrors: function() { JUSTC.ErrorEnabled = true },
+        DisableCoreErrors: function() { JUSTC.ErrorEnabled = false },
+        Silent: function() { JUSTC.Silent = true },
+        "Silent=false": function() { JUSTC.Silent = false },
+        "DefaultOutputMode=json": function() { JUSTC.DefaultOutputMode = 'json' },
+        "DefaultOutputMode=xml": function() { JUSTC.DefaultOutputMode = 'xml' },
+        "DefaultOutputMode=yaml": function() { JUSTC.DefaultOutputMode = 'yaml' },
+    }
     JUSTC.Commands = {
-        "EnableCoreLogs": function() { JUSTC.CoreLogsEnabled = true },
-        "DisableCoreLogs": function() { JUSTC.CoreLogsEnabled = false },
+        "EnableCoreLogs": JUSTC._commands.EnableCoreLogs,
+        "DisableCoreLogs": JUSTC._commands.DisableCoreLogs,
         "SwitchCoreLogs": function() { JUSTC.CoreLogsEnabled = !JUSTC.CoreLogsEnabled },
-        "ShowCoreErrors": function() { JUSTC.ErrorEnabled = true },
-        "HideCoreErrors": function() { JUSTC.ErrorEnabled = false },
+        "EnableCoreErrors": JUSTC._commands.EnableCoreErrors,
+        "DisableCoreErrors": JUSTC._commands.DisableCoreErrors,
         "SwitchCoreErrors": function() { JUSTC.ErrorEnabled = !JUSTC.ErrorEnabled },
-        "Silent": function() { JUSTC.Silent = true },
-        "Help": function() { CONSOLE.info("https://just.js.org/justc") },
+        "Silent": JUSTC._commands.Silent,
+        "Help": function() { CONSOLE.info(JUSTC_CMD_HELP != "" ? JUSTC_CMD_HELP || "https://just.js.org/justc" : "https://just.js.org/justc") },
+        "DefaultOutputMode=json": JUSTC._commands["DefaultOutputMode=json"], "DefaultOutputMode=0": JUSTC._commands["DefaultOutputMode=json"],
+        "DefaultOutputMode=xml": JUSTC._commands["DefaultOutputMode=xml"], "DefaultOutputMode=1": JUSTC._commands["DefaultOutputMode=xml"],
+        "DefaultOutputMode=yaml": JUSTC._commands["DefaultOutputMode=yaml"], "DefaultOutputMode=2": JUSTC._commands["DefaultOutputMode=yaml"],
+        "CoreLogs=true": JUSTC._commands.EnableCoreLogs, "CoreLogs=y": JUSTC._commands.EnableCoreLogs, "CoreLogs=1": JUSTC._commands.EnableCoreLogs,
+        "CoreLogs=false": JUSTC._commands.DisableCoreLogs, "CoreLogs=n": JUSTC._commands.DisableCoreLogs, "CoreLogs=0": JUSTC._commands.DisableCoreLogs,
+        "CoreErrors=true": JUSTC._commands.EnableCoreErrors, "CoreErrors=y": JUSTC._commands.EnableCoreErrors, "CoreErrors=1": JUSTC._commands.EnableCoreErrors,
+        "CoreErrors=false": JUSTC._commands.DisableCoreErrors, "CoreErrors=n": JUSTC._commands.DisableCoreErrors, "CoreErrors=0": JUSTC._commands.DisableCoreErrors,
+        "Silent=true": JUSTC._commands.Silent, "Silent=y": JUSTC._commands.Silent, "Silent=1": JUSTC._commands.Silent,
+        "Silent=false": JUSTC._commands["Silent=false"], "Silent=n": JUSTC._commands["Silent=false"], "Silent=0": JUSTC._commands["Silent=false"],
     };
 
     JUSTC.TryCatchLog = function(func, log) {
@@ -353,13 +376,13 @@ SOFTWARE.
         }
     };
 
-    JUSTC.Parse = function(code, execute = false) {
+    JUSTC.Parse = function(code, execute = false, outputMode = JUSTC.DefaultOutputMode) {
         try {
             const resultPtr = JUSTC.WASM.ccall(
                 'parse',
                 'number',
-                ['string', 'boolean', 'boolean'],
-                [code, execute, false]
+                ['string', 'boolean', 'boolean', 'string'],
+                [code, execute, false, outputMode]
             );
             
             const resultJson = JUSTC.WASM.UTF8ToString(resultPtr);
@@ -373,7 +396,7 @@ SOFTWARE.
             throw error;
         }
     };
-    JUSTC.AsyncParse = async function(code, execute) {
+    JUSTC.AsyncParse = async function(code, execute, outputMode = JUSTC.DefaultOutputMode) {
         return new Promise((resolve, reject) => {
             try {
                 setTimeout(() => {
@@ -381,8 +404,8 @@ SOFTWARE.
                         const resultPtr = JUSTC.WASM.ccall(
                             'parse',
                             'number',
-                            ['string', 'boolean', 'boolean'],
-                            [code, execute, true]
+                            ['string', 'boolean', 'boolean', 'string'],
+                            [code, execute, true, outputMode]
                         );
 
                         const resultJson = JUSTC.WASM.UTF8ToString(resultPtr);
@@ -441,14 +464,18 @@ SOFTWARE.
         }
     };
 
+    JUSTC.OutputModes = [
+        'json', 'xml', 'yaml'
+    ];
+
     JUSTC.bgvfid = 0;
     JUSTC.Check = (code) => {
         JUSTC.CheckInput(code);
         JUSTC.CheckWASM();
     };
-    JUSTC.RunAsync = async (code, doExecute) => {
+    JUSTC.RunAsync = async (code, doExecute, ...args) => {
         JUSTC.Check(code);
-        const result = await JUSTC.AsyncParse(code, doExecute);
+        const result = await JUSTC.AsyncParse(code, doExecute, ...args);
         if (result.error) {
             throw new JUSTC.Error(result.error);
         } else {
@@ -456,23 +483,35 @@ SOFTWARE.
             return result.return || {};
         }
     };
-    JUSTC.Taskify = (doExecute = false, ...code) => {
+    JUSTC.Taskify = (doExecute = false, outputMode = JUSTC.DefaultOutputMode, code) => {
         const tasks = [];
         for (const code_ of code) {
             tasks.push(async()=>{
-                return await JUSTC.RunAsync(code_, doExecute);
+                return await JUSTC.RunAsync(code_, doExecute, outputMode);
             });
         }
         return tasks
     };
     JUSTC.AsyncOutput = async function(bool, args) {
-        return await Promise.all(await Promise.all(JUSTC.Taskify(bool, args)))
+        let outputMode = JUSTC.DefaultOutputMode;
+        let start = 0;
+        let end = args.length;
+        const lastArg = args[end - 1];
+        if (JUSTC.OutputModes.includes(lastArg)) {
+            outputMode = lastArg;
+            end -= 1;
+        } else if (JUSTC.OutputModes.includes(args[0])) {
+            outputMode = args[0];
+            start += 1;
+        };
+        return await Promise.all(await Promise.all(JUSTC.Taskify(bool, outputMode, args.slice(start, end))))
     };
     JUSTC.Output = {
-        parse: isBrowser || !JUSTC.Experiments ? function(code) {
+        parse: isBrowser || !JUSTC.Experiments ? function(code, outputMode = JUSTC.DefaultOutputMode) {
             JUSTC.Check(code);
+            if (!JUSTC.OutputModes.includes(outputMode)) throw new JUSTC.Error(JUSTC.Errors.outputMode);
 
-            const result = JUSTC.Parse(code);
+            const result = JUSTC.Parse(code, false, outputMode);
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
@@ -481,10 +520,11 @@ SOFTWARE.
         } : async function(...code) {
             return await JUSTC.AsyncOutput(false, code)
         },
-        execute: isBrowser || !JUSTC.Experiments ? function(code) {
+        execute: isBrowser || !JUSTC.Experiments ? function(code, outputMode = JUSTC.DefaultOutputMode) {
             JUSTC.Check(code);
+            if (!JUSTC.OutputModes.includes(outputMode)) throw new JUSTC.Error(JUSTC.Errors.outputMode);
 
-            const result = JUSTC.Parse(code, true);
+            const result = JUSTC.Parse(code, true, outputMode);
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {

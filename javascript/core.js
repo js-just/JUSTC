@@ -96,7 +96,7 @@ SOFTWARE.
     };
 
     if (isBrowser) {
-        JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR);
+        JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR, MAP);
         JUSTC.Checks.sysObj(json_, CONSOLE);
         JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
         JUSTC.Checks.sysFunc(

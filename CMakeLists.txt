@@ -1,31 +1,35 @@
 cmake_minimum_required(VERSION 3.10)
-project(JUSTC)
+project(JUSTC LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include(ProcessorCount)
+ProcessorCount(NUM_PROCESSORS)
+if(NUM_PROCESSORS EQUAL 0)
+    set(NUM_PROCESSORS 1)
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+if(UNIX AND NOT APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pipe")
+endif()
 
 if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
-find_package(CURL)
+find_package(CURL REQUIRED)
 
 if(CURL_FOUND)
-    message(STATUS "Found CURL library")
-else()
-    find_package(PkgConfig)
-    if(PKG_CONFIG_FOUND)
-        if(UNIX AND NOT APPLE)
-            pkg_check_modules(CURL libcurl)
-        elseif(APPLE)
-            find_library(CURL_LIBRARIES curl)
-            find_path(CURL_INCLUDE_DIRS curl/curl.h)
-        endif()
-    endif()
+    message(STATUS "Found CURL: ${CURL_VERSION}")
 endif()
 
 if(WIN32)
     set(WINHTTP_LIBRARIES "winhttp.lib")
 endif()
+
+# set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
 
 add_library(justc_core
     core/lexer.cpp
@@ -40,28 +44,25 @@ add_library(justc_core
 
 add_executable(justc core/main.cpp)
 
-target_include_directories(justc_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core)
+target_include_directories(justc_core PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
+)
 
 if(CURL_FOUND)
-    target_include_directories(justc_core PRIVATE ${CURL_INCLUDE_DIRS})
-    target_link_libraries(justc_core ${CURL_LIBRARIES})
-elseif(UNIX AND NOT APPLE AND CURL_INCLUDE_DIRS)
-    target_include_directories(justc_core PRIVATE ${CURL_INCLUDE_DIRS})
-    target_link_libraries(justc_core ${CURL_LIBRARIES})
-elseif(APPLE AND CURL_LIBRARIES)
-    target_include_directories(justc_core PRIVATE ${CURL_INCLUDE_DIRS})
-    target_link_libraries(justc_core ${CURL_LIBRARIES})
+    target_link_libraries(justc_core PRIVATE CURL::libcurl)
 elseif(WIN32)
-    target_link_libraries(justc_core ${WINHTTP_LIBRARIES})
+    target_link_libraries(justc_core PRIVATE ${WINHTTP_LIBRARIES})
 else()
     message(WARNING "CURL library not found - HTTP functionality will be limited")
 endif()
 
-target_link_libraries(justc justc_core)
+target_link_libraries(justc PRIVATE justc_core)
 
 install(TARGETS justc DESTINATION bin)
+
 if(WIN32)
     add_custom_command(TARGET justc POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:justc> ${CMAKE_BINARY_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+                $<TARGET_FILE:justc> ${CMAKE_BINARY_DIR}
     )
 endif()

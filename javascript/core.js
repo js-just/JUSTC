@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-(async(JUSTC_CMD_HELP = "")=>{
+(async()=>{
     "use strict";
  
     const JUSTC = {};
@@ -355,7 +355,7 @@ SOFTWARE.
         "DisableCoreErrors": JUSTC._commands.DisableCoreErrors,
         "SwitchCoreErrors": function() { JUSTC.ErrorEnabled = !JUSTC.ErrorEnabled },
         "Silent": JUSTC._commands.Silent,
-        "Help": function() { CONSOLE.info(JUSTC_CMD_HELP != "" ? JUSTC_CMD_HELP || "https://just.js.org/justc" : "https://just.js.org/justc") },
+        "Help": function() { CONSOLE.info("Just an Ultimate Site Tool Configuration language (JUSTC)", "https://just.js.org/justc") },
         "DefaultOutputMode=json": JUSTC._commands["DefaultOutputMode=json"], "DefaultOutputMode=0": JUSTC._commands["DefaultOutputMode=json"],
         "DefaultOutputMode=xml": JUSTC._commands["DefaultOutputMode=xml"], "DefaultOutputMode=1": JUSTC._commands["DefaultOutputMode=xml"],
         "DefaultOutputMode=yaml": JUSTC._commands["DefaultOutputMode=yaml"], "DefaultOutputMode=2": JUSTC._commands["DefaultOutputMode=yaml"],

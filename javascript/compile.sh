@@ -115,7 +115,6 @@ mv javascript/core.js $JSOUT_DIR/justc.js
 mv javascript/test.js $JSOUT_DIR/test.js
 
 bash linux/compile.sh
-JUSTC_CMD_HELP=$(justc -h)
 JUSTC_VERSION=$(justc -v)
 JUSTC_NAME="Just an Ultimate Site Tool Configuration language"
 
@@ -151,9 +150,3 @@ mv javascript/npm.json $JSOUT_DIR/package.json
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"
 done
-
-{
-    head -n -1 "$JSOUT_DIR/justc.js"
-    tail -1 "$JSOUT_DIR/justc.js" | sed 's/[[:space:]]*()[[:space:]]*$//'
-    echo "(\`$JUSTC_CMD_HELP\`)"
-} > temp.js && mv temp.js "$JSOUT_DIR/justc.js"

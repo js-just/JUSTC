@@ -346,7 +346,7 @@ SOFTWARE.
         "DefaultOutputMode=json": function() { JUSTC.DefaultOutputMode = 'json' },
         "DefaultOutputMode=xml": function() { JUSTC.DefaultOutputMode = 'xml' },
         "DefaultOutputMode=yaml": function() { JUSTC.DefaultOutputMode = 'yaml' },
-    }
+    };
     JUSTC.Commands = {
         "EnableCoreLogs": JUSTC._commands.EnableCoreLogs,
         "DisableCoreLogs": JUSTC._commands.DisableCoreLogs,

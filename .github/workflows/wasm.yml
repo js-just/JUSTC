@@ -22,7 +22,7 @@ permissions:
 
 concurrency:
   group: "wasm"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   determine-dirpath:

@@ -51,7 +51,7 @@ extern "C" {
 
 char* lexer(const char* input, const char* outputMode) {
     if (input == nullptr) return nullptr;
-    std::string mode(outputMode || "json");
+    std::string mode(outputMode == nullptr ? "json" : outputMode);
     
     try {
         auto parsed = Lexer::parse(input);
@@ -66,7 +66,7 @@ char* lexer(const char* input, const char* outputMode) {
 
 char* parser(const char* tokensJson, const char* outputMode) {
     if (tokensJson == nullptr) return nullptr;
-    std::string mode(outputMode || "json");
+    std::string mode(outputMode == nullptr ? "json" : outputMode);
     
     try {
         std::vector<ParserToken> parserTokens;
@@ -88,7 +88,7 @@ char* parser(const char* tokensJson, const char* outputMode) {
 
 char* parse(const char* input, const bool execute, const bool runAsync, const char* outputMode) {
     if (input == nullptr) return nullptr;
-    std::string mode(outputMode || "json");
+    std::string mode(outputMode == nullptr ? "json" : outputMode);
     
     try {
         auto lexerResult = Lexer::parse(input);

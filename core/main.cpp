@@ -61,12 +61,20 @@ void printUsage() {
     std::cout << "\"Run lexer only\" means that JUSTC won't be executed and/or parsed, JUSTC will only be tokenized." << std::endl;
     std::cout << "" << std::endl;
 }
+void throwError(const std::string& error) {
+    const char* githubActions = std::getenv("GITHUB_ACTIONS");
+    if (githubActions && std::string(githubActions) == "true") {
+        std::cerr << "::error::" << error << std::endl;
+    } else {
+        std::cerr << error << std::endl;
+    }
+    std::exit(1);
+}
 
 std::string readFile(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "Unable to read the file: " + filename << std::endl;
-        std::exit(1);
+        throwError("Unable to read the file: " + filename);
     }
     return std::string((std::istreambuf_iterator<char>(file)), 
                        std::istreambuf_iterator<char>());
@@ -74,13 +82,11 @@ std::string readFile(const std::string& filename) {
 void writeFile(const std::string& filename, const std::string& content) {
     std::ofstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "Unable to write the file: " + filename << std::endl;
-        std::exit(1);
+        throwError("Unable to write the file: " + filename);
     }
     file << content;
     if (!file.good()) {
-        std::cerr << "Error occurred while writing to file: " + filename << std::endl;
-        std::exit(1);
+        throwError("Error occurred while writing to file: " + filename);
     }
 }
 

@@ -75,6 +75,7 @@ SOFTWARE.
     const STRING = String;
     const ERR = Error;
     const CONSOLE = console;
+    const MAP = Map;
 
     JUSTC.Errors = {
         initWasm: 'JUSTC WebAssembly module hasn\'t been initialized yet.',
@@ -296,7 +297,7 @@ SOFTWARE.
     };
     JUSTC.VFS = class VirtualFileSystem {
         constructor() {
-            this.files = new Map();
+            this.files = new MAP();
             if (!isBrowser) {
                 return {
                     createFile: function(...args) {},
@@ -563,18 +564,15 @@ SOFTWARE.
             return 'JUSTC'
         },
         get ["version"]() {
-            const resultptr = JUSTC.WASM.ccall(
-                "version",
-                "number",
-                [], []
-            );
+            const resultptr = JUSTC.WASM.ccall("version", "number");
+            const result = JUSTC.WASM.UTF8ToString(resultptr);
             JUSTC.WASM.ccall(
                 'free_string',
                 null,
                 ['number'],
                 [resultptr]
             );
-            return resultptr
+            return result
         }
     };
     for (const [name, value] of OBJECT.entries(JUSTC.Output)) {

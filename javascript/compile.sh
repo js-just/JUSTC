@@ -152,4 +152,8 @@ for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"
 done
 
-sed -i '$s/()$/(`'"$JUSTC_CMD_HELP"'`)/' "$JSOUT_DIR/justc.js"
+{
+    head -n -1 "$JSOUT_DIR/justc.js"
+    tail -1 "$JSOUT_DIR/justc.js" | sed 's/[[:space:]]*()[[:space:]]*$//'
+    echo "(\`$JUSTC_CMD_HELP\`)"
+} > temp.js && mv temp.js "$JSOUT_DIR/justc.js"

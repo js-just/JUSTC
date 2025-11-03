@@ -23,7 +23,7 @@
 #!/bin/bash
 
 bash linux/compile.sh
-FILE=test/linux/test
+FILE=test/linux/testttt
 
 echo ""
 echo ""

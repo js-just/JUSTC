@@ -205,7 +205,7 @@ int main(int argc, char* argv[]) {
         }
         
         if (flags.input.empty() && !flags.helpandorversionflag) {
-            std::runtime_error("No input provided");
+            throw std::runtime_error("No input provided");
             return 1;
         }
         
@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
         }
         
     } catch (const std::exception& e) {
-        std::runtime_error(e.what());
+        throw std::runtime_error(e.what());
         return 1;
     }
     

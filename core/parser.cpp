@@ -1113,11 +1113,11 @@ Value Parser::concatenateStrings(const Value& left, const Value& right) {
     ) {
         std::string error = "Cannot concatenate string with ";
         if (left.type == DataType::STRING || left.type == DataType::UNKNOWN) {
-            throw std::runtime_error(error + right.name + " at position " + position + ".");
+            throw std::runtime_error(error + right.name + " at position " + std::to_string(position) + ".");
         } else if (right.type == DataType::STRING || right.type == DataType::UNKNOWN) {
-            throw std::runtime_error(error + left.name + " at position " + position + ".");
+            throw std::runtime_error(error + left.name + " at position " + std::to_string(position) + ".");
         } else {
-            throw std::runtime_error("Unexpected operator \"..\" at position " + position + ". Did you mean " + left.name + " + " + right.name + "?");
+            throw std::runtime_error("Unexpected operator \"..\" at position " + std::to_string(position) + ". Did you mean " + left.name + " + " + right.name + "?");
         }
     } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
         result = stringToValue(left.name + right.name);             // "abc .. def" = ""abcdef"", where both "abc" and "def" are not defined.
@@ -1141,11 +1141,11 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             (left.type == DataType::UNKNOWN && right.type == DataType::STRING) ||
             (left.type == DataType::STRING && right.type == DataType::UNKNOWN)
         ) {
-            throw std::runtime_error("Unexpected operator \"+\" at position " + position + ". Did you mean " + left.name + " .. " + right.name + "?");
+            throw std::runtime_error("Unexpected operator \"+\" at position " + std::to_string(position) + ". Did you mean " + left.name + " .. " + right.name + "?");
         } else if (left.type == DataType::STRING) {
-            throw std::runtime_error("Cannot add string to " + right.name + " at position " + position + ".");
+            throw std::runtime_error("Cannot add string to " + right.name + " at position " + std::to_string(position) + ".");
         } else if (right.type == DataType::STRING) {
-            throw std::runtime_error("Cannot add " + left.name + " to string at position " + position + ".");
+            throw std::runtime_error("Cannot add " + left.name + " to string at position " + std::to_string(position) + ".");
         } else if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
             result = numberToValue(left.toNumber() + right.toNumber());
         } else if (left.type == DataType::UNKNOWN) {
@@ -1162,7 +1162,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (Utility::checkNumbers(left, right)) {
             result = numberToValue(left.toNumber() - right.toNumber());
         } else {
-            throw std::runtime_error("Unexpected operator \"-\" at position " + [position + ".");
+            throw std::runtime_error("Unexpected operator \"-\" at position " + std::to_string(position) + ".");
         }
     }
     else if (op == "*" && Utility::checkNumbers(left, right)) {
@@ -1223,7 +1223,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     }
 
     else {
-        throw std::runtime_error("Unexpected operator \"" + op + "\" at position " + [position] + ".");
+        throw std::runtime_error("Unexpected operator \"" + op + "\" at position " + std::to_string(position) + ".");
     }
     
     return result;

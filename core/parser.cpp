@@ -157,7 +157,7 @@ Value Value::createString(const std::string& str) {
     Value result;
     result.type = DataType::STRING;
     result.string_value = str;
-    result.name = "\"" + str "\"";
+    result.name = "\"" + str + "\"";
     return result;
 }
 
@@ -1141,7 +1141,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             (left.type == DataType::UNKNOWN && right.type == DataType::STRING) ||
             (left.type == DataType::STRING && right.type == DataType::UNKNOWN)
         ) {
-            throw std::runtime_error("Unexpected operator \"+\" at position " + position + ". Did you mean " + left.name + " .. " + right.name + "?")
+            throw std::runtime_error("Unexpected operator \"+\" at position " + position + ". Did you mean " + left.name + " .. " + right.name + "?");
         } else if (left.type == DataType::STRING) {
             throw std::runtime_error("Cannot add string to " + right.name + " at position " + position + ".");
         } else if (right.type == DataType::STRING) {
@@ -1162,7 +1162,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (Utility::checkNumbers(left, right)) {
             result = numberToValue(left.toNumber() - right.toNumber());
         } else {
-            throw std::runtime_error("Unexpected operator \"-\" at position " + position + ".");
+            throw std::runtime_error("Unexpected operator \"-\" at position " + [position + ".");
         }
     }
     else if (op == "*" && Utility::checkNumbers(left, right)) {
@@ -1223,7 +1223,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     }
 
     else {
-        throw std::runtime_error("Unexpected operator \"" + op + "\" at position " + position + ".");
+        throw std::runtime_error("Unexpected operator \"" + op + "\" at position " + [position] + ".");
     }
     
     return result;
@@ -1608,7 +1608,7 @@ Value Parser::booleanToValue(bool b) {
     Value result;
     result.type = DataType::BOOLEAN;
     result.boolean_value = b;
-    result.name = num;
+    result.name = b;
     return result;
 }
 

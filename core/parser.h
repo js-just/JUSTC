@@ -92,9 +92,10 @@ struct Value {
     };
     std::string string_value;
     std::shared_ptr<void> complex_value;
+    std::string name;
     
-    Value() : type(DataType::UNKNOWN), number_value(0) {}
-    Value(DataType t) : type(t), number_value(0) {}
+    Value() : type(DataType::UNKNOWN), number_value(0), name("unknown") {}
+    Value(DataType t) : type(t), number_value(0), name(t) {}
     
     std::string toString() const;
     double toNumber() const;
@@ -224,6 +225,7 @@ private:
     ASTNode parseImportCommand();
     
     Value executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos);
+    Value concatenateStrings(const Value& left, const Value& right);
     Value evaluateExpression(const Value& left, const std::string& op, const Value& right);
     Value handleInequality(const Value& value);
     Value handleConditional(const Value& condition, const Value& thenVal, const Value& elseVal, 

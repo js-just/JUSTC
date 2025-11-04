@@ -30,6 +30,7 @@ SOFTWARE.
 #include <iostream>
 #include "parser.h"
 #include <cmath>
+#include "utility.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -73,11 +74,7 @@ std::string XmlSerializer::valueToXml(const Value& value) {
         case DataType::HEXADECIMAL:
         case DataType::BINARY:
         case DataType::OCTAL:
-            if (value.number_value == std::floor(value.number_value)) {
-                return std::to_string(static_cast<long long>(value.number_value));
-            } else {
-                return std::to_string(value.number_value);
-            }
+            return Utility::numberValue2string(value);
         case DataType::STRING:
         case DataType::LINK:
         case DataType::PATH:

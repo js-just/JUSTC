@@ -40,6 +40,7 @@ add_library(justc_core
     core/fetch.cpp
     core/to.xml.cpp
     core/to.yaml.cpp
+    core/utility.cpp
 )
 
 add_executable(justc core/main.cpp)

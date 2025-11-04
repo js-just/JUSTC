@@ -36,6 +36,7 @@ SOFTWARE.
 #include <cstring>
 #include "fetch.h"
 #include "version.h"
+#include "utility.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -148,6 +149,7 @@ Value Value::createNumber(double num) {
     Value result;
     result.type = DataType::NUMBER;
     result.number_value = num;
+    result.name = std::to_string(num);
     return result;
 }
 
@@ -155,6 +157,7 @@ Value Value::createString(const std::string& str) {
     Value result;
     result.type = DataType::STRING;
     result.string_value = str;
+    result.name = "\"" + str "\"";
     return result;
 }
 
@@ -162,12 +165,14 @@ Value Value::createBoolean(bool b) {
     Value result;
     result.type = DataType::BOOLEAN;
     result.boolean_value = b;
+    result.name = b;
     return result;
 }
 
 Value Value::createNull() {
     Value result;
     result.type = DataType::NULL_TYPE;
+    result.name = "nil";
     return result;
 }
 
@@ -175,6 +180,7 @@ Value Value::createLink(const std::string& link) {
     Value result;
     result.type = DataType::LINK;
     result.string_value = link;
+    result.name = "<" + link + ">";
     return result;
 }
 
@@ -182,6 +188,7 @@ Value Value::createPath(const std::string& path) {
     Value result;
     result.type = DataType::PATH;
     result.string_value = path;
+    result.name = path;
     return result;
 }
 
@@ -189,6 +196,7 @@ Value Value::createVariable(const std::string& varName) {
     Value result;
     result.type = DataType::VARIABLE;
     result.string_value = varName;
+    result.name = varName;
     return result;
 }
 
@@ -196,6 +204,7 @@ Value Value::createHexadecimal(double num) {
     Value result;
     result.type = DataType::HEXADECIMAL;
     result.number_value = num;
+    result.name = "x" + Utility::double2hexString(num);
     return result;
 }
 
@@ -203,6 +212,7 @@ Value Value::createBinary(double num) {
     Value result;
     result.type = DataType::BINARY;
     result.number_value = num;
+    result.name = "b" + Utility::double2binString(num);
     return result;
 }
 
@@ -210,6 +220,7 @@ Value Value::createOctal(double num) {
     Value result;
     result.type = DataType::OCTAL;
     result.number_value = num;
+    result.name = "o" + Utility::double2octString(num);
     return result;
 }
 
@@ -432,6 +443,7 @@ Value Parser::convertToDecimal(const Value& value) {
         Value result;
         result.type = DataType::NUMBER;
         result.number_value = value.number_value;
+        result.name = value.name;
         return result;
     }
     return value;
@@ -826,6 +838,7 @@ Value Parser::parsePrimary(bool doExecute) {
     else if (match("null")) {
         Value result;
         result.type = DataType::NULL_TYPE;
+        result.name = "null";
         advance();
         return result;
     }
@@ -869,6 +882,7 @@ Value Parser::parsePrimary(bool doExecute) {
         Value result;
         result.type = DataType::NULL_TYPE;
         result.string_value = "null";
+        result.name = "null";
         return result;
     }
     else if (match("keyword") || match("?") || match("!=") || match("=")) {
@@ -963,8 +977,8 @@ ASTNode Parser::parseCommand(bool doExecute) {
                     addLog("ECHO", message, node.startPos);
                     std::cout << message << std::endl;
                 } else {
-                    addLog("ECHO", varval.toString(), node.startPos);
-                    std::cout << varval.toString() << std::endl;
+                    addLog("ECHO", Utility::value2string(varval), node.startPos);
+                    std::cout << Utility::value2string(varval) << std::endl;
                 }
             }
         } else if (command == "LOGFILE") {
@@ -979,7 +993,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
                 if (varval.type == DataType::UNKNOWN) {
                     addLog("LOG", message, node.startPos);
                 } else {
-                    addLog("LOG", varval.toString(), node.startPos);
+                    addLog("LOG", Utility::value2string(varval), node.startPos);
                 }
             }
         }
@@ -998,6 +1012,7 @@ Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
     Value result;
     result.type = DataType::ERROR;
     result.string_value = "HTTP requests are disabled";
+    result.name = "<" + args0string_value + ">";
     return result;
 }
 
@@ -1087,12 +1102,56 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     throw std::runtime_error("Unknown function: " + funcName);
 }
 
+Value Parser::concatenateStrings(const Value& left, const Value& right) {
+    Value result;
+
+    if (
+        ( left.type != DataType::STRING &&
+          left.type != DataType::UNKNOWN ) ||
+        ( right.type != DataType::STRING &&
+          right.type != DataType::UNKNOWN )
+    ) {
+        std::string error = "Cannot concatenate string with ";
+        if (left.type == DataType::STRING || left.type == DataType::UNKNOWN) {
+            throw std::runtime_error(error + right.name + " at position " + position + ".");
+        } else if (right.type == DataType::STRING || right.type == DataType::UNKNOWN) {
+            throw std::runtime_error(error + left.name + " at position " + position + ".");
+        } else {
+            throw std::runtime_error("Unexpected operator \"..\" at position " + position + ". Did you mean " + left.name + " + " + right.name + "?");
+        }
+    } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
+        result = stringToValue(left.name + right.name);             // "abc .. def" = ""abcdef"", where both "abc" and "def" are not defined.
+    } else if (left.type == DataType::UNKNOWN) {
+        result = stringToValue(left.name + right.toString());       // "abc .. "def"" = ""abcdef"", where "abc" is not defined.
+    } else if (right.type == DataType::UNKNOWN) {
+        result = stringToValue(left.toString() + right.name);       // ""abc" .. def" = ""abcdef"", where "def" is not defined.
+    } else {
+        result = stringToValue(left.toString() + right.toString()); // ""abc" .. "def"" = ""abcdef"".
+    }
+
+    return result;
+}
 Value Parser::evaluateExpression(const Value& left, const std::string& op, const Value& right) {
     Value result;
     
     if (op == "+") {
-        if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
+        if (
+            (left.type == DataType::STRING && right.type == DataType::STRING) ||
+            (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) ||
+            (left.type == DataType::UNKNOWN && right.type == DataType::STRING) ||
+            (left.type == DataType::STRING && right.type == DataType::UNKNOWN)
+        ) {
+            throw std::runtime_error("Unexpected operator \"+\" at position " + position + ". Did you mean " + left.name + " .. " + right.name + "?")
+        } else if (left.type == DataType::STRING) {
+            throw std::runtime_error("Cannot add string to " + right.name + " at position " + position + ".");
+        } else if (right.type == DataType::STRING) {
+            throw std::runtime_error("Cannot add " + left.name + " to string at position " + position + ".");
+        } else if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
             result = numberToValue(left.toNumber() + right.toNumber());
+        } else if (left.type == DataType::UNKNOWN) {
+            result = stringToValue(left.name + right.toString());
+        } else if (right.type == DataType::UNKNOWN) {
+            result = stringToValue(left.toString() + right.name);
         } else {
             result = stringToValue(left.toString() + right.toString());
         }
@@ -1100,33 +1159,32 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     else if (op == "minus" || op == "-") {
         if (left.type == DataType::UNKNOWN) {
             result = numberToValue(-right.toNumber());
+        } else if (Utility::checkNumbers(left, right)) {
+            result = numberToValue(left.toNumber() - right.toNumber());
         } else {
-            if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
-                result = numberToValue(left.toNumber() - right.toNumber());
-            } else {
-                result = numberToValue(left.toNumber() - right.toNumber());
-            }
+            throw std::runtime_error("Unexpected operator \"-\" at position " + position + ".");
         }
     }
-    else if (op == "*") {
+    else if (op == "*" && Utility::checkNumbers(left, right)) {
         result = numberToValue(left.toNumber() * right.toNumber());
     }
-    else if (op == "/") {
+    else if (op == "/" && Utility::checkNumbers(left, right)) {
         double divisor = right.toNumber();
         if (divisor == 0) {
             result.type = DataType::INFINITE;
+            result.name = "infinity";
         } else {
             result = numberToValue(left.toNumber() / divisor);
         }
     }
-    else if (op == "^") {
+    else if (op == "^" && Utility::checkNumbers(left, right)) {
         result = numberToValue(std::pow(left.toNumber(), right.toNumber()));
     }
-    else if (op == "%") {
+    else if (op == "%" && Utility::checkNumbers(left, right)) {
         result = numberToValue(std::fmod(left.toNumber(), right.toNumber()));
     }
     else if (op == "..") {
-        result = stringToValue(left.toString() + right.toString());
+        result = concatenateStrings(left, right);
     }
     
     else if (op == "=" || op == "is") {
@@ -1135,16 +1193,16 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     else if (op == "!=" || op == "isn't") {
         result = booleanToValue(left.toNumber() != right.toNumber());
     }
-    else if (op == "<") {
+    else if (op == "<" && Utility::checkNumbers(left, right)) {
         result = booleanToValue(left.toNumber() < right.toNumber());
     }
-    else if (op == ">") {
+    else if (op == ">" && Utility::checkNumbers(left, right)) {
         result = booleanToValue(left.toNumber() > right.toNumber());
     }
-    else if (op == "<=") {
+    else if (op == "<=" && Utility::checkNumbers(left, right)) {
         result = booleanToValue(left.toNumber() <= right.toNumber());
     }
-    else if (op == ">=") {
+    else if (op == ">=" && Utility::checkNumbers(left, right)) {
         result = booleanToValue(left.toNumber() >= right.toNumber());
     }
     
@@ -1162,6 +1220,10 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     }
     else if (op == "!") {
         result = booleanToValue(!right.toBoolean());
+    }
+
+    else {
+        throw std::runtime_error("Unexpected operator \"" + op "\" at position " + position + ".");
     }
     
     return result;
@@ -1267,6 +1329,7 @@ Value Parser::resolveVariableValue(const std::string& varName) {
     
     Value result;
     result.type = DataType::UNKNOWN;
+    result.name = "unknown";
     return result;
 }
 
@@ -1529,6 +1592,7 @@ Value Parser::stringToValue(const std::string& str) {
     Value result;
     result.type = DataType::STRING;
     result.string_value = str;
+    result.name = "\"" + str + "\"";
     return result;
 }
 
@@ -1536,6 +1600,7 @@ Value Parser::numberToValue(double num) {
     Value result;
     result.type = DataType::NUMBER;
     result.number_value = num;
+    result.name = num;
     return result;
 }
 
@@ -1543,6 +1608,7 @@ Value Parser::booleanToValue(bool b) {
     Value result;
     result.type = DataType::BOOLEAN;
     result.boolean_value = b;
+    result.name = num;
     return result;
 }
 
@@ -1550,6 +1616,7 @@ Value Parser::linkToValue(const std::string& link) {
     Value result;
     result.type = DataType::LINK;
     result.string_value = link;
+    result.name = "<" + link + ">";
     return result;
 }
 
@@ -1557,6 +1624,7 @@ Value Parser::pathToValue(const std::string& path) {
     Value result;
     result.type = DataType::PATH;
     result.string_value = path;
+    result.name = path;
     return result;
 }
 
@@ -1578,7 +1646,8 @@ Value Parser::hexToValue(const std::string& hexStr) {
     } catch (...) {
         result.number_value = 0.0;
     }
-    
+
+    result.name = Utility::double2hexString(result.number_value);
     return result;
 }
 
@@ -1598,6 +1667,7 @@ Value Parser::binaryToValue(const std::string& binStr) {
         result.number_value = 0.0;
     }
     
+    result.name = Utility::double2binString(result.number_value);
     return result;
 }
 
@@ -1617,6 +1687,7 @@ Value Parser::octalToValue(const std::string& octStr) {
         result.number_value = 0.0;
     }
     
+    result.name = Utility::double2octString(result.number_value);
     return result;
 }
 

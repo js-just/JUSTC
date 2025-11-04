@@ -70,9 +70,10 @@ char* parser(const char* tokensJson, const char* outputMode) {
     
     try {
         std::vector<ParserToken> parserTokens;
+        std::string input = "";
         
-        if (JsonParser::parseJsonTokens(tokensJson, parserTokens)) {
-            ParseResult result = Parser::parseTokens(parserTokens, false, false);
+        if (JsonParser::parseJsonTokens(tokensJson, parserTokens, input)) {
+            ParseResult result = Parser::parseTokens(parserTokens, false, false, input);
             std::string json = outputString(mode, result);
             return strdup(json.c_str());
         } else {
@@ -92,7 +93,7 @@ char* parse(const char* input, const bool execute, const bool runAsync, const ch
     
     try {
         auto lexerResult = Lexer::parse(input);
-        ParseResult result = Parser::parseTokens(lexerResult.second, execute, runAsync);
+        ParseResult result = Parser::parseTokens(lexerResult.second, execute, runAsync, input);
         std::string json = outputString(mode, result);
         return strdup(json.c_str());
         

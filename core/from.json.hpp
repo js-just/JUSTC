@@ -32,7 +32,7 @@ SOFTWARE.
 #include "parser.h"
 
 namespace JsonParser {
-    bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTokens);
+    bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTokens, std::string& input);
 }
 
 #endif

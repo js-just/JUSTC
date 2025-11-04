@@ -255,13 +255,14 @@ int main(int argc, char* argv[]) {
             }
             else if (flags.mode == "parser" || flags.mode == "parserExecute") {
                 std::vector<ParserToken> lexerResult;
-                JsonParser::parseJsonTokens(flags.input.c_str(), lexerResult);
-                auto parseResult = Parser::parseTokens(lexerResult, flags.mode == "parserExecute", flags.asynchronously);
+                std::string input = "";
+                JsonParser::parseJsonTokens(flags.input.c_str(), lexerResult, input);
+                auto parseResult = Parser::parseTokens(lexerResult, flags.mode == "parserExecute", flags.asynchronously, input);
                 json = outputString(flags, parseResult);
             }
             else {
                 auto lexerResult = Lexer::parse(flags.input);
-                auto parseResult = Parser::parseTokens(lexerResult.second, flags.executeJUSTC, flags.asynchronously);
+                auto parseResult = Parser::parseTokens(lexerResult.second, flags.executeJUSTC, flags.asynchronously, flags.input);
                 json = outputString(flags, parseResult);
             }
 

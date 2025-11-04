@@ -30,13 +30,16 @@ SOFTWARE.
 
 namespace JsonParser {
 
-bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTokens) {
+bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTokens, std::string& input) {
     if (!tokensJson) return false;
     
     std::string jsonStr(tokensJson);
     
     size_t tokensStart = jsonStr.find("\"tokens\":[");
     if (tokensStart == std::string::npos) return false;
+    size_t inputStart = jsonStr.find("\"input\":\"");
+    if (inputStart == std::string::npos) return false;
+    input += jsonStr.substr(inputStart, tokensStart - 2 - inputStart);
     
     size_t pos = tokensStart + 10;
     

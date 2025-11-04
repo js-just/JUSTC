@@ -165,6 +165,7 @@ private:
     std::vector<ParserToken> tokens;
     std::vector<ASTNode> ast;
     size_t position;
+    std::string input;
     
     std::unordered_map<std::string, Value> variables;
     std::unordered_map<std::string, std::vector<std::string>> dependencies;

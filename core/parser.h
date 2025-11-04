@@ -95,7 +95,7 @@ struct Value {
     std::string name;
     
     Value() : type(DataType::UNKNOWN), number_value(0), name("unknown") {}
-    Value(DataType t) : type(t), number_value(0), name(t) {}
+    Value(DataType t) : type(t), number_value(0), name(dataTypeToString(t)) {}
     
     std::string toString() const;
     double toNumber() const;

@@ -1223,7 +1223,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     }
 
     else {
-        throw std::runtime_error("Unexpected operator \"" + op "\" at position " + position + ".");
+        throw std::runtime_error("Unexpected operator \"" + op + "\" at position " + position + ".");
     }
     
     return result;

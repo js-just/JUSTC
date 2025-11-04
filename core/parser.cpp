@@ -274,7 +274,7 @@ long getCurrentTime() {
 
 }
 
-Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, std::string& input) 
+Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input) 
     : tokens(tokens), input(input), position(0), outputMode("EVERYTHING"), allowJavaScript(true), 
       globalScope(false), strictMode(false), hasLogFile(false), 
       doExecute(doExecute), runAsync(runAsync) {}

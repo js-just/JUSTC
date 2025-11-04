@@ -381,7 +381,7 @@ ParseResult Parser::parse(bool doExecute) {
             } else if (match(".")) {
                 break;
             } else {
-                throw std::runtime_error("Unexpected token: " + currentToken().value + " at " + Utility::position(currentToken().start));
+                throw std::runtime_error("Unexpected token: " + currentToken().value + " at " + Utility::position(currentToken().start, input));
             }
             
             skipCommas();
@@ -603,9 +603,9 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute) {
     }
     else {
         if (isEnd()) {
-            throw std::runtime_error("Expected assignment operator at " + Utility::position(position) + ", got EOF.");
+            throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got EOF.");
         }
-        throw std::runtime_error("Expected assignment operator at " + Utility::position(position) + ", got \"" + currentToken().value +"\".");
+        throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got \"" + currentToken().value +"\".");
     }
     
     variables[identifier] = Value();
@@ -889,7 +889,7 @@ Value Parser::parsePrimary(bool doExecute) {
         return astNodeToValue(parseStatement(doExecute));
     }
 
-    throw std::runtime_error("Invalid or unexpected token \"" + currentToken().value + "\" at " + Utility::position(position) + ".");
+    throw std::runtime_error("Invalid or unexpected token \"" + currentToken().value + "\" at " + Utility::position(position, input) + ".");
 }
 
 Value Parser::parseFunctionCall(bool doExecute) {
@@ -898,7 +898,7 @@ Value Parser::parseFunctionCall(bool doExecute) {
     advance();
     
     if (!match("(")) {
-        throw std::runtime_error("Expected '(' after function name at " + Utility::position(startPos) + ".");
+        throw std::runtime_error("Expected '(' after function name at " + Utility::position(startPos, input) + ".");
     }
     advance();
     
@@ -909,7 +909,7 @@ Value Parser::parseFunctionCall(bool doExecute) {
     }
     
     if (!match(")")) {
-        throw std::runtime_error("Expected ')' after function arguments at" + Utility::position(startPos) + ".");
+        throw std::runtime_error("Expected ')' after function arguments at" + Utility::position(startPos, input) + ".");
     }
     advance();
     
@@ -1006,7 +1006,7 @@ Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
     #ifdef __EMSCRIPTEN__
     EM_ASM({
         console.warn('[JUSTC] (' + UTF8ToString($2) + ') Running lexer and parser only - Cannot fetch', '"' + UTF8ToString($1) + '"', 'at', $0, '\nUse JUSTC.execute for HTTP requests.');
-    }, Utility::position(startPos), args0string_value.c_str(), getCurrentTimestamp().c_str());
+    }, Utility::position(startPos, input), args0string_value.c_str(), getCurrentTimestamp().c_str());
     #endif
 
     Value result;
@@ -1113,11 +1113,11 @@ Value Parser::concatenateStrings(const Value& left, const Value& right) {
     ) {
         std::string error = "Cannot concatenate string with ";
         if (left.type == DataType::STRING || left.type == DataType::UNKNOWN) {
-            throw std::runtime_error(error + right.name + " at " + Utility::position(position) + ".");
+            throw std::runtime_error(error + right.name + " at " + Utility::position(position, input) + ".");
         } else if (right.type == DataType::STRING || right.type == DataType::UNKNOWN) {
-            throw std::runtime_error(error + left.name + " at " + Utility::position(position) + ".");
+            throw std::runtime_error(error + left.name + " at " + Utility::position(position, input) + ".");
         } else {
-            throw std::runtime_error("Unexpected operator \"..\" at " + Utility::position(position) + ". Did you mean " + left.name + " + " + right.name + "?");
+            throw std::runtime_error("Unexpected operator \"..\" at " + Utility::position(position, input) + ". Did you mean " + left.name + " + " + right.name + "?");
         }
     } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
         result = stringToValue(left.name + right.name);             // "abc .. def" = ""abcdef"", where both "abc" and "def" are not defined.
@@ -1141,11 +1141,11 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             (left.type == DataType::UNKNOWN && right.type == DataType::STRING) ||
             (left.type == DataType::STRING && right.type == DataType::UNKNOWN)
         ) {
-            throw std::runtime_error("Unexpected operator \"+\" at " + Utility::position(position) + ". Did you mean " + left.name + " .. " + right.name + "?");
+            throw std::runtime_error("Unexpected operator \"+\" at " + Utility::position(position, input) + ". Did you mean " + left.name + " .. " + right.name + "?");
         } else if (left.type == DataType::STRING) {
-            throw std::runtime_error("Cannot add string to " + right.name + " at " + Utility::position(position) + ".");
+            throw std::runtime_error("Cannot add string to " + right.name + " at " + Utility::position(position, input) + ".");
         } else if (right.type == DataType::STRING) {
-            throw std::runtime_error("Cannot add " + left.name + " to string at " + Utility::position(position) + ".");
+            throw std::runtime_error("Cannot add " + left.name + " to string at " + Utility::position(position, input) + ".");
         } else if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
             result = numberToValue(left.toNumber() + right.toNumber());
         } else if (left.type == DataType::UNKNOWN) {
@@ -1162,7 +1162,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (Utility::checkNumbers(left, right)) {
             result = numberToValue(left.toNumber() - right.toNumber());
         } else {
-            throw std::runtime_error("Unexpected operator \"-\" at " + Utility::position(position) + ".");
+            throw std::runtime_error("Unexpected operator \"-\" at " + Utility::position(position, input) + ".");
         }
     }
     else if (op == "*" && Utility::checkNumbers(left, right)) {
@@ -1223,7 +1223,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     }
 
     else {
-        throw std::runtime_error("Unexpected operator \"" + op + "\" at " + Utility::position(position) + ".");
+        throw std::runtime_error("Unexpected operator \"" + op + "\" at " + Utility::position(position, input) + ".");
     }
     
     return result;
@@ -1497,9 +1497,9 @@ Value Parser::functionHTTPJSON(const std::vector<Value>& args) { return Value();
 
 Value Parser::functionHTTPTEXT(size_t startPos, const std::vector<Value>& args) {
     if (args.empty()) {
-        throw std::runtime_error("Expected one argument at function HTTPTEXT at " + Utility::position(startPos) + ".");
+        throw std::runtime_error("Expected one argument at function HTTPTEXT at " + Utility::position(startPos, input) + ".");
     } else if (args[0].type != DataType::LINK) {
-        throw std::runtime_error("Expected TYPEOF( argument 0 )=\"Link\" at function HTTPTEXT at " + Utility::position(startPos) + ", got \"" + dataTypeToString(args[0].type) + "\".");
+        throw std::runtime_error("Expected TYPEOF( argument 0 )=\"Link\" at function HTTPTEXT at " + Utility::position(startPos, input) + ", got \"" + dataTypeToString(args[0].type) + "\".");
     }
     
     std::string url = args[0].toString();
@@ -1747,7 +1747,7 @@ void Parser::evaluateAllVariablesAsync() {
 #endif
 }
 
-ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync) {
-    Parser parser(tokens, doExecute, runAsync);
+ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input) {
+    Parser parser(tokens, doExecute, runAsync, input);
     return parser.parse(doExecute);
 }

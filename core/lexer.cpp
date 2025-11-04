@@ -30,6 +30,7 @@ SOFTWARE.
 #include <cctype>
 #include <algorithm>
 #include <regex>
+#include "utility.h"
 
 Lexer::Lexer(const std::string& input) : input(input), position(0), dollarBefore(false) {
     if (input.empty()) {
@@ -411,7 +412,7 @@ std::vector<ParserToken> Lexer::getTokens() const {
     if (!tokens.empty()) {
         const auto& lastToken = tokens.back();
         if (lastToken.type != "." && lastToken.value != ".") {
-            throw std::runtime_error("Expected \".\", got \"" + lastToken.value + "\" at position " + std::to_string(lastToken.start));
+            throw std::runtime_error("Expected \".\", got EOF at " + Utility::position(lastToken.start));
         }
     }
     return tokens;

@@ -32,6 +32,7 @@ SOFTWARE.
 #include <bitset>
 #include <cstring>
 #include <sstream>
+#include <cstddef>
 
 std::string Utility::numberValue2string(const Value& value) {
     if (value.number_value == std::floor(value.number_value)) {
@@ -87,4 +88,44 @@ bool Utility::checkNumbers(const Value& left, const Value& right) {
         right.type == DataType::BINARY ||
         right.type == DataType::OCTAL
     ));
+}
+
+std::pair<size_t, size_t> Utility::pos(const size_t& pos, const std::string& script) {
+    if (script.empty() || pos >= script.length()) {
+        return {1, 1};
+    }
+    
+    size_t line = 1;
+    size_t column = 1;
+    size_t current_pos = 0;
+    
+    while (current_pos < pos && current_pos < script.length()) {
+        char current_char = script[current_pos];
+        
+        if (current_char == '\n') {                                                     //      \n
+            line++;
+            column = 1;
+            current_pos++;
+        } else if (current_char == '\r') {
+            if (current_pos + 1 < script.length() && script[current_pos + 1] == '\n') { //      \r\n
+                line++;
+                column = 1;
+                current_pos += 2;
+            } else {                                                                    //      \r
+                line++;
+                column = 1;
+                current_pos++;
+            }
+        } else {
+            column++;
+            current_pos++;
+        }
+    }
+    
+    return {line, column};
+}
+
+std::string Utility::position(const size_t& pos, const std::string& script) {
+    auto [line, column] = pos(pos, script);
+    return "line " + std::to_string(line) + ", column " + std::to_string(column);
 }

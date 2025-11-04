@@ -38,6 +38,8 @@ public:
     static std::string double2octString(const double d);
     static std::string double2binString(const double d);
     static bool checkNumbers(const Value& left, const Value& right);
+    std::pair<size_t, size_t> pos(const size_t& pos, const std::string& script);
+    static std::string position(const size_t& pos, const std::string& script);
 };
 
 #endif

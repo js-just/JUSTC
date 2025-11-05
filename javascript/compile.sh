@@ -45,7 +45,7 @@ web() {
         -s MODULARIZE=1 \
         -s ALLOW_MEMORY_GROWTH=1 \
         -s INVOKE_RUN=0 \
-        -std=c++17 \
+        -std=c++11 \
         -s DISABLE_EXCEPTION_CATCHING=0 \
         -s EXPORT_NAME='__justc__' \
         -s ASSERTIONS=0 \
@@ -80,7 +80,7 @@ node() {
         -s MODULARIZE=1 \
         -s ALLOW_MEMORY_GROWTH=1 \
         -s INVOKE_RUN=0 \
-        -std=c++17 \
+        -std=c++11 \
         -s DISABLE_EXCEPTION_CATCHING=0 \
         -s EXPORT_NAME='__justc__' \
         -s ASSERTIONS=0 \

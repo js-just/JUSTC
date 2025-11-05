@@ -458,7 +458,7 @@ SOFTWARE.
             });
             return true;
         } else {
-            JUSTC.CurrentVFS.createFile('/_justc/'+FileID++, input, {}, 3);
+            JUSTC.CurrentVFS.createFile('/_justc/'+JUSTC.FileID++, input, {}, 3);
             return false;
         };
     };

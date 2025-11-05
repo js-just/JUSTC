@@ -1006,7 +1006,7 @@ Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
     #ifdef __EMSCRIPTEN__
     EM_ASM({
         console.warn('[JUSTC] (' + UTF8ToString($2) + ') Running lexer and parser only - Cannot fetch', '"' + UTF8ToString($1) + '"', 'at', $0, '\nUse JUSTC.execute for HTTP requests.');
-    }, Utility::position(startPos, input), args0string_value.c_str(), getCurrentTimestamp().c_str());
+    }, Utility::position(startPos, input).c_str(), args0string_value.c_str(), getCurrentTimestamp().c_str());
     #endif
 
     Value result;

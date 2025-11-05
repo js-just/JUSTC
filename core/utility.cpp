@@ -126,6 +126,8 @@ std::pair<size_t, size_t> Utility::pos(const size_t& pos, const std::string& scr
 }
 
 std::string Utility::position(const size_t& pos_, const std::string& script) {
-    auto [line, column] = pos(pos_, script);
+    std::pair<size_t, size_t> position = pos(pos_, script);
+    size_t line = position.first;
+    size_t column = position.second;
     return "line " + std::to_string(line) + ", column " + std::to_string(column);
 }

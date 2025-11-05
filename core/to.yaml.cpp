@@ -31,6 +31,7 @@ SOFTWARE.
 #include "parser.h"
 #include <cmath>
 #include "utility.h"
+#include "version.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -175,6 +176,7 @@ std::string YamlSerializer::serialize(const ParseResult& result) {
 std::string YamlSerializer::serialize(const std::vector<ParserToken>& tokens, const std::string& input) {
     std::stringstream yaml;
     yaml << "---\n";
+    yaml << "version: " << escapeYamlString(JUSTC_VERSION) << "\n";
     yaml << "input: " << escapeYamlString(input) << "\n";
     yaml << tokensToYaml(tokens);
     return yaml.str();

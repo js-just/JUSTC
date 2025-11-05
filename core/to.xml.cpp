@@ -31,6 +31,7 @@ SOFTWARE.
 #include "parser.h"
 #include <cmath>
 #include "utility.h"
+#include "version.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -95,14 +96,14 @@ std::string XmlSerializer::valueToXml(const Value& value) {
 
 std::string XmlSerializer::tokensToXml(const std::vector<ParserToken>& tokens) {
     std::stringstream xml;
-    xml << "<tokens>\n";
+    xml << "<tokens>";
     
     for (const auto& token : tokens) {
-        xml << "  <token>\n";
-        xml << "    <type>" << escapeXmlString(token.type) << "</type>\n";
-        xml << "    <value>" << escapeXmlString(token.value) << "</value>\n";
-        xml << "    <start>" << token.start << "</start>\n";
-        xml << "  </token>\n";
+        xml << "<token>";
+        xml << "<type>" << escapeXmlString(token.type) << "</type>";
+        xml << "<value>" << escapeXmlString(token.value) << "</value>";
+        xml << "<start>" << token.start << "</start>";
+        xml << "</token>";
     }
     
     xml << "</tokens>";
@@ -121,12 +122,12 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
         json << "{";
         
         std::stringstream valuesXml;
-        valuesXml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        valuesXml << "<justc>\n";
+        valuesXml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+        valuesXml << "<justc version=\"" << escapeXmlString(JUSTC_VERSION) << "\">";
         for (const auto& pair : result.returnValues) {
-            valuesXml << "  <" << escapeXmlString(pair.first) << ">";
+            valuesXml << "<" << escapeXmlString(pair.first) << ">";
             valuesXml << valueToXml(pair.second);
-            valuesXml << "</" << escapeXmlString(pair.first) << ">\n";
+            valuesXml << "</" << escapeXmlString(pair.first) << ">";
         }
         valuesXml << "</justc>";
         
@@ -145,13 +146,13 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
 
     #else
 
-    xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    xml << "<justc>\n";
+    xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+    xml << "<justc version=\"" << escapeXmlString(JUSTC_VERSION) << "\">";
     
     for (const auto& pair : result.returnValues) {
-        xml << "  <" << escapeXmlString(pair.first) << ">";
+        xml << "<" << escapeXmlString(pair.first) << ">";
         xml << valueToXml(pair.second);
-        xml << "</" << escapeXmlString(pair.first) << ">\n";
+        xml << "</" << escapeXmlString(pair.first) << ">";
     }
     
     xml << "</justc>";
@@ -162,10 +163,10 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
 
 std::string XmlSerializer::serialize(const std::vector<ParserToken>& tokens, const std::string& input) {
     std::stringstream xml;
-    xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    xml << "<justcLexer>\n";
-    xml << "  <input>" << escapeXmlString(input) << "</input>\n";
-    xml << "  " << tokensToXml(tokens) << "\n";
-    xml << "</justcLexer>";
+    xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+    xml << "<justc outputType=\"lexer\" version=\"" << escapeXmlString(JUSTC_VERSION) << "\">";
+    xml << "<input>" << escapeXmlString(input) << "</input>";
+    xml << tokensToXml(tokens);
+    xml << "</justc>";
     return xml.str();
 }

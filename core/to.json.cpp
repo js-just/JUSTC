@@ -31,6 +31,7 @@ SOFTWARE.
 #include "parser.h"
 #include <cmath>
 #include "utility.h"
+#include "version.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -169,6 +170,7 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
 std::string JsonSerializer::serialize(const std::vector<ParserToken>& tokens, const std::string& input) {
     std::stringstream json;
     json << "{";
+    json << "\"version\":\"" << escapeJsonString(JUSTC_VERSION) << "\",";
     json << "\"input\":\"" << escapeJsonString(input) << "\",";
     json << "\"tokens\":" << tokensToJson(tokens);
     json << "}";

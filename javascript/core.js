@@ -621,7 +621,7 @@ SOFTWARE.
                     function print(arg) {
                         CONSOLE.info(typeof JUSTC[vars[arg]] === 'function' ? JUSTC[vars[arg]]() : JUSTC[vars[arg]])
                     };
-                    if (args.length = 1 && args[0] in vars) print(args[0]);
+                    if (args.length == 1 && args[0] in vars) print(args[0]);
                     else {
                         switch (args[0]) {
                             case 'print':

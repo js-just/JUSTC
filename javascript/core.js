@@ -80,7 +80,7 @@ SOFTWARE.
     JUSTC.VERSION = null;
     JUSTC.GetVersion = function() {
         return JUSTC.VERSION === null ? false : JUSTC.VERSION;
-    }
+    };
     JUSTC.SetVersion = function(version) {
         if (!JUSTC.GetVersion()) JUSTC.VERSION = version;
     };

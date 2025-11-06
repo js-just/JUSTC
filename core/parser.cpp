@@ -860,12 +860,9 @@ Value Parser::parsePrimary(bool doExecute) {
         if (varName == "$TIME" || varName == "$VERSION" || varName == "$LATEST" || 
             varName == "$DBID" || varName == "$SHA" || varName == "$NAV" || 
             varName == "$PAGES" || varName == "$CSS" || varName == "$PI" || 
-            varName == "$BACKSLASH") {
+            varName == "$BACKSLASH" || varName == "$JUST_VERSION") {
             advance();
             return executeFunction(varName.substr(1), {}, currentToken().start);
-        } else if (varName == "$JUSTC") {
-            advance();
-            return stringToValue(JUSTC_VERSION);
         }
         
         if (peekToken().type == "(") {
@@ -943,13 +940,13 @@ ASTNode Parser::parseCommand(bool doExecute) {
         if (command == "ECHO") {
             for (const auto& arg : args) {
                 std::string message = arg.toString();
-                auto varval = resolveVariableValue(message);
+                auto varval = resolveVariableValue(message, false);
                 if (varval.type == DataType::UNKNOWN) {
                     addLog("ECHO", message, node.startPos);
                     std::cout << message << std::endl;
                 } else {
-                    addLog("ECHO", varval.toString(), node.startPos);
-                    std::cout << varval.toString() << std::endl;
+                    addLog("ECHO", Utility::value2string(varval), node.startPos);
+                    std::cout << Utility::value2string(varval) << std::endl;
                 }
             }
         } else if (command == "LOGFILE") {
@@ -960,11 +957,11 @@ ASTNode Parser::parseCommand(bool doExecute) {
         } else if (command == "LOG") {
             for (const auto& arg : args) {
                 std::string message = arg.toString();
-                auto varval = resolveVariableValue(message);
+                auto varval = resolveVariableValue(message, false);
                 if (varval.type == DataType::UNKNOWN) {
                     addLog("LOG", message, node.startPos);
                 } else {
-                    addLog("LOG", varval.toString(), node.startPos);
+                    addLog("LOG", Utility::value2string(varval), node.startPos);
                 }
             }
         }
@@ -984,7 +981,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
         if (command == "ECHO") {
             for (const auto& arg : args) {
                 std::string message = arg.toString();
-                auto varval = resolveVariableValue(message);
+                auto varval = resolveVariableValue(message, false);
                 if (varval.type == DataType::UNKNOWN) {
                     addLog("ECHO", message, node.startPos);
                     std::cout << message << std::endl;
@@ -1001,7 +998,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
         } else if (command == "LOG") {
             for (const auto& arg : args) {
                 std::string message = arg.toString();
-                auto varval = resolveVariableValue(message);
+                auto varval = resolveVariableValue(message, false);
                 if (varval.type == DataType::UNKNOWN) {
                     addLog("LOG", message, node.startPos);
                 } else {
@@ -1031,13 +1028,16 @@ Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
 Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos) {
     if (funcName == "TIME") {
         long timestamp = getCurrentTime();
-        return hexToValue(std::to_string(timestamp));
+        return numberToValue(timestamp);
     }
     else if (funcName == "PI") {
         return numberToValue(3.14159265358979323846);
     }
     else if (funcName == "BACKSLASH") {
         return stringToValue("\\");
+    }
+    else if (funcName == "VERSION") {
+        return stringToValue(JUSTC_VERSION);
     }
     
     // built-in
@@ -1327,7 +1327,7 @@ bool Parser::dfsCycleDetection(const std::string& node,
     return false;
 }
 
-Value Parser::resolveVariableValue(const std::string& varName) {
+Value Parser::resolveVariableValue(const std::string& varName, const bool unknownIsString) {
     auto it = variables.find(varName);
     if (it != variables.end() && it->second.type != DataType::UNKNOWN) {
         return it->second;
@@ -1337,6 +1337,13 @@ Value Parser::resolveVariableValue(const std::string& varName) {
         if (node.type == "VARIABLE_DECLARATION" && node.identifier == varName) {
             return evaluateASTNode(node);
         }
+    }
+
+    if (unknownIsString) {
+        Value result;
+        result.type = DataType::STRING;
+        result.name = varName;
+        return result;
     }
     
     Value result;
@@ -1362,7 +1369,7 @@ Value Parser::evaluateASTNode(const ASTNode& node) {
             if (refVar == node.identifier) {
                 throw std::runtime_error("Variable cannot reference itself: " + node.identifier);
             }
-            return resolveVariableValue(refVar);
+            return resolveVariableValue(refVar, true);
         }
         
         return result;
@@ -1408,7 +1415,7 @@ Value Parser::functionVALUE(const std::vector<Value>& args) {
     }
     
     std::string varName = args[0].string_value;
-    return resolveVariableValue(varName);
+    return resolveVariableValue(varName, true);
 }
 
 Value Parser::functionSTRING(const std::vector<Value>& args) {

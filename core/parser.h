@@ -240,7 +240,7 @@ private:
                           std::unordered_map<std::string, bool>& recStack,
                           std::vector<std::string>& cyclePath);
     
-    Value resolveVariableValue(const std::string& varName);
+    Value resolveVariableValue(const std::string& varName, const bool unknownIsString);
     void evaluateAllVariables();
     void evaluateAllVariablesSync();
     void evaluateAllVariablesAsync();

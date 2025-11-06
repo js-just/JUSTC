@@ -887,7 +887,7 @@ Value Parser::parsePrimary(bool doExecute) {
         advance();
         return result;
     }
-    else if (match(".") || match(",")) {
+    else if ((match(".") && tokens[position + 1].type != 'number') || match(",")) {
         Value result;
         result.type = DataType::NULL_TYPE;
         result.string_value = "null";
@@ -896,6 +896,12 @@ Value Parser::parsePrimary(bool doExecute) {
     }
     else if (match("keyword") || match("?") || match("!=") || match("=")) {
         return astNodeToValue(parseStatement(doExecute));
+    }
+    else if (match(".") && tokens[position + 1].type == 'number') {
+        advance();
+        double num = parseNumber("0." + currentToken().value);
+        advance();
+        return numberToValue(num);
     }
 
     throw std::runtime_error("Invalid or unexpected token \"" + currentToken().value + "\" at " + Utility::position(position, input) + ".");
@@ -1118,9 +1124,9 @@ Value Parser::concatenateStrings(const Value& left, const Value& right) {
     Value result;
 
     if (
-        ( left.type != DataType::STRING &&
-          left.type != DataType::UNKNOWN ) ||
-        ( right.type != DataType::STRING &&
+        ( left.type  != DataType::STRING  &&
+          left.type  != DataType::UNKNOWN ) ||
+        ( right.type != DataType::STRING  &&
           right.type != DataType::UNKNOWN )
     ) {
         std::string error = "Cannot concatenate string with ";
@@ -1132,13 +1138,13 @@ Value Parser::concatenateStrings(const Value& left, const Value& right) {
             throw std::runtime_error("Unexpected operator \"..\" at " + Utility::position(position, input) + ". Did you mean " + left.name + " + " + right.name + "?");
         }
     } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
-        result = stringToValue(left.name + right.name);             // "abc .. def" = ""abcdef"", where both "abc" and "def" are not defined.
+        result = stringToValue(left.name + right.name);                                     // "abc .. def" = ""abcdef"", where both "abc" and "def" are not defined.
     } else if (left.type == DataType::UNKNOWN) {
-        result = stringToValue(left.name + right.toString());       // "abc .. "def"" = ""abcdef"", where "abc" is not defined.
+        result = stringToValue(left.name + Utility::value2string(right));                   // "abc .. "def"" = ""abcdef"", where "abc" is not defined.
     } else if (right.type == DataType::UNKNOWN) {
-        result = stringToValue(left.toString() + right.name);       // ""abc" .. def" = ""abcdef"", where "def" is not defined.
+        result = stringToValue(Utility::value2string(left) + right.name);                   // ""abc" .. def" = ""abcdef"", where "def" is not defined.
     } else {
-        result = stringToValue(left.toString() + right.toString()); // ""abc" .. "def"" = ""abcdef"".
+        result = stringToValue(Utility::value2string(left) + Utility::value2string(right)); // ""abc" .. "def"" = ""abcdef"".
     }
 
     return result;
@@ -1148,10 +1154,10 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     
     if (op == "+") {
         if (
-            (left.type == DataType::STRING && right.type == DataType::STRING) ||
+            (left.type == DataType::STRING  && right.type == DataType::STRING ) ||
             (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) ||
-            (left.type == DataType::UNKNOWN && right.type == DataType::STRING) ||
-            (left.type == DataType::STRING && right.type == DataType::UNKNOWN)
+            (left.type == DataType::UNKNOWN && right.type == DataType::STRING ) ||
+            (left.type == DataType::STRING  && right.type == DataType::UNKNOWN)
         ) {
             throw std::runtime_error("Unexpected operator \"+\" at " + Utility::position(position, input) + ". Did you mean " + left.name + " .. " + right.name + "?");
         } else if (left.type == DataType::STRING) {

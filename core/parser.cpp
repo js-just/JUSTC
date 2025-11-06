@@ -1696,11 +1696,11 @@ void Parser::evaluateAllVariablesSync() {
     bool changed;
     int passes = 0;
     const int MAX_PASSES = 100;
-    std::vector<std::string> vars;
     
     do {
         changed = false;
         passes++;
+        std::vector<std::string> vars;
         
         for (auto& node : ast) {
             if (node.type == "VARIABLE_DECLARATION") {

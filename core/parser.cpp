@@ -571,6 +571,17 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute) {
     advance();
     
     std::string assignOp;
+    std::string typeDecl;
+    if (match(":")) {
+        advance();
+        typeDecl = currentToken().value;
+        if (!match("identifier")) {
+            throw std::runtime_error("Invalid or unexpected token \"" + typeDecl + "\" at " + Utility::position(position, input) + ".");
+        }
+        node.typeDeclaration = Utility::typeDeclaration2dataType(typeDecl, Utility::position(position, input));
+        advance();
+    }
+    
     if (match("keyword", "is") || match("=")) {
         assignOp = currentToken().value;
         advance();

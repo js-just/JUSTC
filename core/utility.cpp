@@ -131,3 +131,30 @@ std::string Utility::position(const size_t& pos_, const std::string& script) {
     size_t column = position.second;
     return "line " + std::to_string(line) + ", column " + std::to_string(column);
 }
+
+DataType Utility::typeDeclaration2dataType(const std::string& typeDeclaration, const std::string& position) {
+    static const std::unordered_map<std::string, DataType> typeMap = {
+        {"number", DataType::NUMBER},               {"num", DataType::NUMBER},
+        {"string", DataType::STRING},               {"str", DataType::STRING},
+        {"boolean", DataType::BOOLEAN},             {"bool", DataType::BOOLEAN},
+        {"null", DataType::NULL_TYPE},              {"nil", DataType::NULL_TYPE},
+        {"link", DataType::LINK},
+        {"path", DataType::PATH},
+        {"binary", DataType::BINARY},               {"bin", DataType::BINARY},
+        {"octal", DataType::OCTAL},                 {"oct", DataType::OCTAL},
+        {"hexadecimal", DataType::HEXADECIMAL},     {"hex", DataType::HEXADECIMAL},
+        {"object", DataType::JUSTC_OBJECT},         {"obj", DataType::JUSTC_OBJECT},
+        {"json", DataType::JSON_OBJECT},
+        {"array", DataType::JSON_ARRAY},
+        {"nan", DataType::NOT_A_NUMBER},
+        {"infinity", DataType::INFINITE},           {"inf", DataType::INFINITE},
+        {"auto", DataType::UNKNOWN},
+    };
+    
+    auto it = typeMap.find(typeDeclaration);
+    if (it != typeMap.end()) {
+        return it->second;
+    }
+    
+    throw std::runtime_error("Invalid type declaration \"" + typeDeclaration + "\" at " + position + ".");
+}

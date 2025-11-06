@@ -153,9 +153,10 @@ struct ASTNode {
     std::vector<std::string> references;
     std::vector<std::string> tokens;
     size_t startPos;
+    DataType typeDeclaration;
     
     ASTNode(const std::string& t, const std::string& id = "", size_t start = 0) 
-        : type(t), identifier(id), startPos(start) {}
+        : type(t), identifier(id), startPos(start), typeDeclaration(DataType::UNKNOWN) {}
 };
 
 class Parser {

@@ -377,12 +377,15 @@ ParseResult Parser::parse(bool doExecute) {
                 } else {
                     ast.push_back(parseStatement(doExecute));
                 }
-            } else if (match("identifier")) {
+            } else if (match("identifier") || match("number")) {
                 ast.push_back(parseStatement(doExecute));
             } else if (match(".")) {
+                if (!isEnd()) {
+                    throw std::runtime_error("Unexpected token \"" + tokens[position + 1].value + "\" at " + Utility::position(position + 1, input) + ".");
+                }
                 break;
             } else {
-                throw std::runtime_error("Unexpected token: " + currentToken().value + " at " + Utility::position(currentToken().start, input));
+                throw std::runtime_error("Unexpected token \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
             }
             
             skipCommas();
@@ -557,7 +560,7 @@ ASTNode Parser::parseImportCommand() {
 }
 
 ASTNode Parser::parseStatement(bool doExecute) {
-    if (match("identifier")) {
+    if (match("identifier") || match("number")) {
         return parseVariableDeclaration(doExecute);
     } else {
         return parseCommand(doExecute);
@@ -873,6 +876,14 @@ Value Parser::parsePrimary(bool doExecute) {
         result.type = DataType::VARIABLE;
         result.string_value = varName;
         advance();
+        while (match(".") && tokens[position + 1].type == "identifier") {
+            advance();
+            result.string_value += "." + currentToken().value;
+            advance();
+            if (isEnd()) {
+                throw std::runtime_error("Unexpected EOF");
+            }
+        }
         return result;
     }
     else if (match("keyword") && peekToken().type == "(") {
@@ -882,7 +893,7 @@ Value Parser::parsePrimary(bool doExecute) {
         advance();
         Value result = parseExpression(doExecute);
         if (!match(")")) {
-            throw std::runtime_error("Expected ')'");
+            throw std::runtime_error("Expected \")\" at " + Utility::position(position, input) + ".");
         }
         advance();
         return result;
@@ -903,6 +914,23 @@ Value Parser::parsePrimary(bool doExecute) {
         advance();
         return numberToValue(num);
     }
+    else if (match("|")) {
+        advance();
+        std::stringstream object;
+        while (!match(".")) {
+            object << currentToken().value;
+            advance();
+            if (isEnd()) {
+                throw std::runtime_error("Expected \".\" to close object, got EOF at " + Utility::position(position, input) + ".");
+            }
+        }
+        object << ".";
+        advance();
+        Value result = stringToValue(object);
+        result.type = DataType::JUSTC_OBJECT;
+        result.name = object;
+        return result;
+    }
 
     throw std::runtime_error("Invalid or unexpected token \"" + currentToken().value + "\" at " + Utility::position(position, input) + ".");
 }
@@ -913,7 +941,7 @@ Value Parser::parseFunctionCall(bool doExecute) {
     advance();
     
     if (!match("(")) {
-        throw std::runtime_error("Expected '(' after function name at " + Utility::position(startPos, input) + ".");
+        throw std::runtime_error("Expected \"(\" after function name at " + Utility::position(startPos, input) + ".");
     }
     advance();
     
@@ -924,7 +952,7 @@ Value Parser::parseFunctionCall(bool doExecute) {
     }
     
     if (!match(")")) {
-        throw std::runtime_error("Expected ')' after function arguments at" + Utility::position(startPos, input) + ".");
+        throw std::runtime_error("Expected \")\" after function arguments at" + Utility::position(startPos, input) + ".");
     }
     advance();
     
@@ -1131,9 +1159,9 @@ Value Parser::concatenateStrings(const Value& left, const Value& right) {
     ) {
         std::string error = "Cannot concatenate string with ";
         if (left.type == DataType::STRING || left.type == DataType::UNKNOWN) {
-            throw std::runtime_error(error + right.name + " at " + Utility::position(position, input) + ".");
+            throw std::runtime_error(error + dataTypeToString(right.type) + " at " + Utility::position(position, input) + ".");
         } else if (right.type == DataType::STRING || right.type == DataType::UNKNOWN) {
-            throw std::runtime_error(error + left.name + " at " + Utility::position(position, input) + ".");
+            throw std::runtime_error(error + dataTypeToString(left.type)  + " at " + Utility::position(position, input) + ".");
         } else {
             throw std::runtime_error("Unexpected operator \"..\" at " + Utility::position(position, input) + ". Did you mean " + left.name + " + " + right.name + "?");
         }
@@ -1159,7 +1187,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             (left.type == DataType::UNKNOWN && right.type == DataType::STRING ) ||
             (left.type == DataType::STRING  && right.type == DataType::UNKNOWN)
         ) {
-            throw std::runtime_error("Unexpected operator \"+\" at " + Utility::position(position, input) + ". Did you mean " + left.name + " .. " + right.name + "?");
+            throw std::runtime_error("Unexpected operator \"+\" at " + Utility::position(position, input) + ". Did you mean '" + left.name + " .. " + right.name + "'?");
         } else if (left.type == DataType::STRING) {
             throw std::runtime_error("Cannot add string to " + Utility::value2string(right) + " at " + Utility::position(position, input) + ".");
         } else if (right.type == DataType::STRING) {

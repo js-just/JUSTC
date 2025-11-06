@@ -1155,15 +1155,15 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         ) {
             throw std::runtime_error("Unexpected operator \"+\" at " + Utility::position(position, input) + ". Did you mean " + left.name + " .. " + right.name + "?");
         } else if (left.type == DataType::STRING) {
-            throw std::runtime_error("Cannot add string to " + right.name + " at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Cannot add string to " + Utility::value2string(right) + " at " + Utility::position(position, input) + ".");
         } else if (right.type == DataType::STRING) {
-            throw std::runtime_error("Cannot add " + left.name + " to string at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Cannot add " + Utility::value2string(left) + " to string at " + Utility::position(position, input) + ".");
         } else if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
             result = numberToValue(left.toNumber() + right.toNumber());
         } else if (left.type == DataType::UNKNOWN) {
-            result = stringToValue(left.name + right.toString());
+            result = stringToValue(left.name + Utility::value2string(right));
         } else if (right.type == DataType::UNKNOWN) {
-            result = stringToValue(left.toString() + right.name);
+            result = stringToValue(Utility::value2string(left) + right.name);
         } else {
             result = stringToValue(left.toString() + right.toString());
         }

@@ -1708,7 +1708,7 @@ void Parser::evaluateAllVariablesSync() {
                 Value oldValue = variables[varName];
                 Value newValue = evaluateASTNode(node);
                 if (std::find(vars.begin(), vars.end(), varName) != vars.end()) {
-                    throw std::runtime_error("Attempt to redefine \"" + varName + "\" at " + Utility::position(node.startPos, input) + ".")
+                    throw std::runtime_error("Attempt to redefine \"" + varName + "\" at " + Utility::position(node.startPos, input) + ".");
                 }
                 vars.push_back(varName);
                 

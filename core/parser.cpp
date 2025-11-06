@@ -1343,6 +1343,7 @@ Value Parser::resolveVariableValue(const std::string& varName, const bool unknow
         Value result;
         result.type = DataType::STRING;
         result.name = varName;
+        result.string_value = varName;
         return result;
     }
     

@@ -67,7 +67,7 @@ private:
     ParserToken readAngleString();
     ParserToken readNumber();
     ParserToken readIdentifier();
-    void tokenize();
+    void tokenize(std::string input);
 
     void invalidInput();
     void invalidUsage();

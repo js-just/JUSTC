@@ -887,7 +887,7 @@ Value Parser::parsePrimary(bool doExecute) {
         advance();
         return result;
     }
-    else if ((match(".") && tokens[position + 1].type != 'number') || match(",")) {
+    else if ((match(".") && tokens[position + 1].type != "number") || match(",")) {
         Value result;
         result.type = DataType::NULL_TYPE;
         result.string_value = "null";
@@ -897,7 +897,7 @@ Value Parser::parsePrimary(bool doExecute) {
     else if (match("keyword") || match("?") || match("!=") || match("=")) {
         return astNodeToValue(parseStatement(doExecute));
     }
-    else if (match(".") && tokens[position + 1].type == 'number') {
+    else if (match(".") && tokens[position + 1].type == "number") {
         advance();
         double num = parseNumber("0." + currentToken().value);
         advance();

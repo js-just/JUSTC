@@ -37,6 +37,7 @@ SOFTWARE.
 #include "fetch.h"
 #include "version.h"
 #include "utility.h"
+#include <vector>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -1695,6 +1696,7 @@ void Parser::evaluateAllVariablesSync() {
     bool changed;
     int passes = 0;
     const int MAX_PASSES = 100;
+    std::vector<std::string> vars;
     
     do {
         changed = false;
@@ -1705,6 +1707,10 @@ void Parser::evaluateAllVariablesSync() {
                 std::string varName = node.identifier;
                 Value oldValue = variables[varName];
                 Value newValue = evaluateASTNode(node);
+                if (std::find(vars.begin(), vars.end(), varName) != vars.end()) {
+                    throw std::runtime_error("Attempt to redefine \"" + varName + "\" at " + Utility::position(node.startPos, input) + ".")
+                }
+                vars.push_back(varName);
                 
                 if (newValue.type != DataType::UNKNOWN && 
                     (oldValue.type == DataType::UNKNOWN || 

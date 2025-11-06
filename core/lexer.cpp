@@ -227,7 +227,7 @@ void Lexer::addDollarBefore() {
     }
 }
 
-void Lexer::tokenize(std::string input_) {
+void Lexer::tokenize(const std::string& input_) {
     while (position < input.length()) {
         char ch = input[position];
 

@@ -227,7 +227,7 @@ void Lexer::addDollarBefore() {
     }
 }
 
-void Lexer::tokenize(std::string input) {
+void Lexer::tokenize(std::string input_) {
     while (position < input.length()) {
         char ch = input[position];
 
@@ -303,7 +303,7 @@ void Lexer::tokenize(std::string input) {
             continue;
         }
 
-        if (ch == '.' && peek() == '.' && (position + 2) < input.length) {
+        if (ch == '.' && peek() == '.' && (position + 2) < input_.length) {
             addDollarBefore();
             tokens.push_back(ParserToken{"..", "..", position});
             position += 2;

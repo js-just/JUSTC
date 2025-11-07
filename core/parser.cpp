@@ -377,7 +377,7 @@ ParseResult Parser::parse(bool doExecute) {
                 } else {
                     ast.push_back(parseStatement(doExecute));
                 }
-            } else if (match("identifier") || match("number")) {
+            } else if (match("identifier")) {
                 ast.push_back(parseStatement(doExecute));
             } else if (match(".")) {
                 if (!isEnd()) {
@@ -560,7 +560,7 @@ ASTNode Parser::parseImportCommand() {
 }
 
 ASTNode Parser::parseStatement(bool doExecute) {
-    if (match("identifier") || match("number")) {
+    if (match("identifier")) {
         return parseVariableDeclaration(doExecute);
     } else {
         return parseCommand(doExecute);

@@ -925,10 +925,11 @@ Value Parser::parsePrimary(bool doExecute) {
             }
         }
         object << ".";
+        std::string objectstr = object.str();
         advance();
-        Value result = stringToValue(object);
+        Value result = stringToValue(objectstr);
         result.type = DataType::JUSTC_OBJECT;
-        result.name = object;
+        result.name = objectstr;
         return result;
     }
 

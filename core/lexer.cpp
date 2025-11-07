@@ -37,8 +37,7 @@ Lexer::Lexer(const std::string& input) : input(input), position(0), dollarBefore
         throw std::invalid_argument("Invalid Input.");
     }
     initializeKeywords();
-    std::string inpt = input;
-    tokenize(inpt);
+    tokenize();
 }
 
 void Lexer::initializeKeywords() {
@@ -228,7 +227,7 @@ void Lexer::addDollarBefore() {
     }
 }
 
-void Lexer::tokenize(const std::string& input_) {
+void Lexer::tokenize() {
     while (position < input.length()) {
         char ch = input[position];
 
@@ -304,7 +303,7 @@ void Lexer::tokenize(const std::string& input_) {
             continue;
         }
 
-        if (ch == '.' && peek() == '.' && (position + 2) < input_.length) {
+        if (ch == '.' && peek() == '.' && (position + 2) < input.length()) {
             addDollarBefore();
             tokens.push_back(ParserToken{"..", "..", position});
             position += 2;

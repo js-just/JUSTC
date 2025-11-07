@@ -49,7 +49,7 @@ std::string JsonSerializer::escapeJsonString(const std::string& str) {
             case '\n': ss << "\\n"; break;
             case '\r': ss << "\\r"; break;
             case '\t': ss << "\\t"; break;
-            default: 
+            default:
                 if (static_cast<unsigned char>(c) < 0x20 || static_cast<unsigned char>(c) == 0x7F) {
                     char buf[7];
                     snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
@@ -59,7 +59,7 @@ std::string JsonSerializer::escapeJsonString(const std::string& str) {
                 }
                 break;
         }
-        
+
         if (i > 100000) {
             #ifdef __EMSCRIPTEN__
             EM_ASM({
@@ -102,21 +102,21 @@ std::string JsonSerializer::valueToJson(const Value& value) {
 std::string JsonSerializer::tokensToJson(const std::vector<ParserToken>& tokens) {
     std::stringstream json;
     json << "[";
-    
+
     for (size_t i = 0; i < tokens.size(); i++) {
         const auto& token = tokens[i];
-        
+
         json << "{";
         json << "\"type\":\"" << escapeJsonString(token.type) << "\",";
         json << "\"value\":\"" << escapeJsonString(token.value) << "\",";
         json << "\"start\":" << token.start;
         json << "}";
-        
+
         if (i < tokens.size() - 1) {
             json << ",";
         }
     }
-    
+
     json << "]";
     return json.str();
 }
@@ -124,9 +124,9 @@ std::string JsonSerializer::tokensToJson(const std::vector<ParserToken>& tokens)
 std::string JsonSerializer::serialize(const ParseResult& result) {
     std::stringstream json;
     json << "{";
-    
+
     #ifdef __EMSCRIPTEN__
-    
+
     if (!result.error.empty()) {
         json << "\"error\":\"" << escapeJsonString(result.error) << "\"";
     } else {
@@ -139,12 +139,12 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
             json << "\"" << escapeJsonString(pair.first) << "\":" << valueToJson(pair.second);
         }
         json << "},";
-        
+
         // logs array
         json << "\"logs\":";
         json << serialize(result.logs);
         json << ",";
-        
+
         // logfile object
         json << "\"logfile\":{";
         json << "\"file\":\"" << escapeJsonString(result.logFilePath) << "\",";
@@ -162,7 +162,7 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
     }
 
     #endif
-    
+
     json << "}";
     return json.str();
 }
@@ -180,7 +180,7 @@ std::string JsonSerializer::serialize(const std::vector<ParserToken>& tokens, co
 std::string JsonSerializer::serialize(const std::vector<LogEntry>& logs) {
     std::stringstream json;
     json << "[";
-    
+
     for (size_t i = 0; i < logs.size(); i++) {
         const auto& log = logs[i];
         json << "{";
@@ -189,12 +189,12 @@ std::string JsonSerializer::serialize(const std::vector<LogEntry>& logs) {
         json << "\"position\":" << log.position << ",";
         json << "\"time\":\"" << escapeJsonString(log.timestamp) << "\"";
         json << "}";
-        
+
         if (i < logs.size() - 1) {
             json << ",";
         }
     }
-    
+
     json << "]";
     return json.str();
 }

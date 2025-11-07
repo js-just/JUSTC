@@ -80,7 +80,7 @@ std::string readFile(const std::string& filename) {
     if (!file.is_open()) {
         throwError("Unable to read the file: " + filename);
     }
-    return std::string((std::istreambuf_iterator<char>(file)), 
+    return std::string((std::istreambuf_iterator<char>(file)),
                        std::istreambuf_iterator<char>());
 }
 void writeFile(const std::string& filename, const std::string& content) {
@@ -107,14 +107,14 @@ struct cmdFlags {
     bool gotFileOrCode = false;
     bool outputToFile = false;
     bool noInput = false;
-    
+
     bool waitingForVersion = false;
     bool waitingForConfig = false;
     bool waitingForCommitSHA = false;
     bool waitingForNav = false;
     bool waitingForPages = false;
     bool waitingForCSS = false;
-    
+
     std::string justversion;
     std::string configpath;
     std::string commitSHA;
@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
             else if (flags.waitingForCSS) {
                 flags.builtinvarCSS = arg;
             }
-            
+
             else if (arg == "--help" || arg == "-h") {
                 flags.helpandorversionflag = true;
                 printUsage();
@@ -239,14 +239,14 @@ int main(int argc, char* argv[]) {
                 flags.waitingForCSS = true;
             }
         }
-        
+
         if (flags.input.empty() && !flags.helpandorversionflag) {
             throw std::runtime_error("No input provided");
             return 1;
         } else if (flags.input.empty() && flags.helpandorversionflag) {
             flags.noInput = true;
         }
-        
+
         if (!flags.noInput) {
             std::string json;
             if (flags.mode == "lexer") {
@@ -277,6 +277,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
-    
+
     return 0;
 }

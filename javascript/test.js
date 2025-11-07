@@ -9,7 +9,7 @@ const JUSTCWASM = require('./justc.node.js');
     })
 })
 
-/* 
+/*
 
 const __justc__=require('./justc.node.js');
 (async()=>{return await require('./justc.js')})().then(async(JUSTC)=>{

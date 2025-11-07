@@ -34,7 +34,7 @@ class YamlSerializer {
 public:
     static std::string serialize(const ParseResult& result);
     static std::string serialize(const std::vector<ParserToken>& tokens, const std::string& input);
-    
+
 private:
     static std::string escapeYamlString(const std::string& str);
     static std::string valueToYaml(const Value& value);

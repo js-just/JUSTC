@@ -32,25 +32,25 @@ namespace JsonParser {
 
 bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTokens, std::string& input) {
     if (!tokensJson) return false;
-    
+
     std::string jsonStr(tokensJson);
-    
+
     size_t tokensStart = jsonStr.find("\"tokens\":[");
     if (tokensStart == std::string::npos) return false;
     size_t inputStart = jsonStr.find("\"input\":\"");
     if (inputStart == std::string::npos) return false;
     input += jsonStr.substr(inputStart, tokensStart - 2 - inputStart);
-    
+
     size_t pos = tokensStart + 10;
-    
+
     while (pos < jsonStr.length()) {
         if (jsonStr[pos] == '{') {
             ParserToken token;
             size_t tokenEnd = jsonStr.find('}', pos);
             if (tokenEnd == std::string::npos) break;
-            
+
             std::string tokenStr = jsonStr.substr(pos, tokenEnd - pos + 1);
-            
+
             size_t typeStart = tokenStr.find("\"type\":\"");
             if (typeStart != std::string::npos) {
                 typeStart += 8;
@@ -59,7 +59,7 @@ bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTok
                     token.type = tokenStr.substr(typeStart, typeEnd - typeStart);
                 }
             }
-            
+
             size_t valueStart = tokenStr.find("\"value\":\"");
             if (valueStart != std::string::npos) {
                 valueStart += 9;
@@ -68,7 +68,7 @@ bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTok
                     token.value = tokenStr.substr(valueStart, valueEnd - valueStart);
                 }
             }
-            
+
             size_t startStart = tokenStr.find("\"start\":");
             if (startStart != std::string::npos) {
                 startStart += 8;
@@ -78,11 +78,11 @@ bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTok
                     token.start = std::atoi(startStr.c_str());
                 }
             }
-            
+
             if (!token.type.empty()) {
                 parserTokens.push_back(token);
             }
-            
+
             pos = tokenEnd + 1;
         } else if (jsonStr[pos] == ']') {
             break;
@@ -90,7 +90,7 @@ bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTok
             pos++;
         }
     }
-    
+
     return !parserTokens.empty();
 }
 

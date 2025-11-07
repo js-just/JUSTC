@@ -44,13 +44,13 @@ std::string YamlSerializer::escapeYamlString(const std::string& str) {
     for (size_t i = 0; i < str.length(); i++) {
         char c = str[i];
         if (c == '\"' || c == '\\' || c == '\0' || c == '\n' || c == '\r' || c == '\t' ||
-            c == '[' || c == ']' || c == '{' || c == '}' || c == ',' || c == ':' || 
-            c == '#' || c == '&' || c == '*' || c == '!' || c == '|' || c == '>' || 
+            c == '[' || c == ']' || c == '{' || c == '}' || c == ',' || c == ':' ||
+            c == '#' || c == '&' || c == '*' || c == '!' || c == '|' || c == '>' ||
             c == '\'' || c == '%' || c == '@' || c == '`') {
             needsQuoting = true;
             break;
         }
-        
+
         if (i > 100000) {
             #ifdef __EMSCRIPTEN__
             EM_ASM({
@@ -62,19 +62,19 @@ std::string YamlSerializer::escapeYamlString(const std::string& str) {
             break;
         }
     }
-    
+
     if (!needsQuoting) {
-        if (str == "true" || str == "false" || str == "null" || 
+        if (str == "true" || str == "false" || str == "null" ||
             str == "yes" || str == "no" || str == "on" || str == "off" ||
             (str.length() > 0 && isdigit(str[0]))) {
             needsQuoting = true;
         }
     }
-    
+
     if (!needsQuoting) {
         return str;
     }
-    
+
     std::stringstream ss;
     ss << "\"";
     for (char c : str) {
@@ -120,22 +120,22 @@ std::string YamlSerializer::valueToYaml(const Value& value) {
 std::string YamlSerializer::tokensToYaml(const std::vector<ParserToken>& tokens) {
     std::stringstream yaml;
     yaml << "tokens:\n";
-    
+
     for (size_t i = 0; i < tokens.size(); i++) {
         const auto& token = tokens[i];
         yaml << "  - type: " << escapeYamlString(token.type) << "\n";
         yaml << "    value: " << escapeYamlString(token.value) << "\n";
         yaml << "    start: " << token.start << "\n";
     }
-    
+
     return yaml.str();
 }
 
 std::string YamlSerializer::serialize(const ParseResult& result) {
     std::stringstream yaml;
-    
+
     #ifdef __EMSCRIPTEN__
-    
+
     if (!result.error.empty()) {
         return "{\"error\":\"" + JsonSerializer::escapeJsonString(result.error) + "\"}";
     } else {
@@ -144,19 +144,19 @@ std::string YamlSerializer::serialize(const ParseResult& result) {
         for (const auto& pair : result.returnValues) {
             valuesYaml << escapeYamlString(pair.first) << ": " << valueToYaml(pair.second) << "\n";
         }
-        
+
         std::stringstream json;
         json << "{";
-        
+
         json << "\"type\":\"yaml\",\"return\":\"" << JsonSerializer::escapeJsonString(valuesYaml.str()) << "\",";
         json << "\"logs\":" << JsonSerializer::serialize(result.logs) << ",";
-        
+
         // logfile object
         json << "\"logfile\":{";
         json << "\"file\":\"" << JsonSerializer::escapeJsonString(result.logFilePath) << "\",";
         json << "\"logs\":\"" << JsonSerializer::escapeJsonString(result.logFileContent) << "\"";
         json << "}";
-        
+
         json << "}";
         return json.str();
     }
@@ -167,7 +167,7 @@ std::string YamlSerializer::serialize(const ParseResult& result) {
     for (const auto& pair : result.returnValues) {
         yaml << escapeYamlString(pair.first) << ": " << valueToYaml(pair.second) << "\n";
     }
-    
+
     return yaml.str();
 
     #endif

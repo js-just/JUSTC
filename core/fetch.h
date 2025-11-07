@@ -34,7 +34,7 @@ SOFTWARE.
 class Fetch {
 public:
     static Value httpGet(const std::string& url, const std::string& format = "TEXT");
-    
+
 private:
     static Value fetchHttpContent(const std::string& url, const std::string& expectedType);
     static std::string executeHttpRequest(const std::string& url);

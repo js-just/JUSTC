@@ -34,7 +34,7 @@ class XmlSerializer {
 public:
     static std::string serialize(const ParseResult& result);
     static std::string serialize(const std::vector<ParserToken>& tokens, const std::string& input);
-    
+
 private:
     static std::string escapeXmlString(const std::string& str);
     static std::string valueToXml(const Value& value);

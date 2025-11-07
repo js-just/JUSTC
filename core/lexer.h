@@ -39,7 +39,7 @@ struct ParserToken {
     size_t start;
 
     ParserToken() : type(""), value(""), start(0) {}
-    ParserToken(const std::string& t, const std::string& v, size_t s) 
+    ParserToken(const std::string& t, const std::string& v, size_t s)
         : type(t), value(v), start(s) {}
 };
 
@@ -48,13 +48,13 @@ private:
     std::string input;
     size_t position;
     std::vector<ParserToken> tokens;
-    
+
     std::vector<std::string> keywords;
     std::unordered_map<std::string, std::string> smallkeywords;
     std::unordered_map<std::string, std::string> bigkeywords;
     std::vector<std::string> skw;
     std::vector<std::string> bkw;
-    
+
     void initializeKeywords();
     bool isWhitespace(char ch) const;
     bool isLetter(char ch) const;

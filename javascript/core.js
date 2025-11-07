@@ -26,7 +26,7 @@ SOFTWARE.
 
 (async()=>{
     "use strict";
- 
+
     const JUSTC = {};
     JUSTC.Checks = {
         funcRegex: /^function\s*\w*\s*\(\)\s*\{\s*\[native code\]\s*\}$/,
@@ -202,7 +202,7 @@ SOFTWARE.
                 Return: function Parser(JavaScriptObjectNotation) {
                     if (typeof JavaScriptObjectNotation != 'object') throw new JUSTC.Error(JUSTC.Errors.jsonInput);
                     if (
-                        typeof JavaScriptObjectNotation.input != 'string' || 
+                        typeof JavaScriptObjectNotation.input != 'string' ||
                         typeof JavaScriptObjectNotation.tokens != 'object' || !ARRAY.isArray(JavaScriptObjectNotation.tokens) ||
                         typeof JavaScriptObjectNotation.version != 'string'
                     ) throw new JUSTC.Error(JUSTC.Errors.lexerInput);
@@ -289,7 +289,7 @@ SOFTWARE.
             result.logs.forEach(log => {
                 if (log.type != 'ECHO') {
                     JUSTC.Console(
-                        log.type == 'ERROR' ? 'error' : 'log', 
+                        log.type == 'ERROR' ? 'error' : 'log',
                         `[JUSTC] (${log.time})`, log.message
                     );
                 }
@@ -316,12 +316,12 @@ SOFTWARE.
                 ['string', 'boolean', 'boolean', 'string'],
                 [code, execute, false, outputMode]
             );
-            
+
             const resultJson = JUSTC.WASM.UTF8ToString(resultPtr);
             JUSTC.WASM.ccall('free_string', null, ['number'], [resultPtr]);
-            
+
             const result = JUSTC.TryCatchLog(()=>json_.parse(resultJson), resultJson);
-            
+
             return result
         } catch (error) {
             CONSOLE.error(JUSTC.Errors.executionError, error);
@@ -499,7 +499,7 @@ SOFTWARE.
     };
     for (const [name, value] of OBJECT.entries(JUSTC.Output)) {
         if (value != undefined) OBJECT.defineProperty(JUSTC.Public, name, {
-            value, 
+            value,
             writable: false,
             configurable: false,
             enumerable: true
@@ -567,10 +567,10 @@ SOFTWARE.
             configurable: false,
             enumerable: false
         });
-        
+
         return exports;
     };
-    
+
     if (isBrowser) {
         if ("JUSTC" in globalThis_.window || "$JUSTC" in globalThis_.window) throw new JUSTC.Error(JUSTC.Errors.environment);
         OBJECT.defineProperty(globalThis_.window, 'JUSTC', {
@@ -719,7 +719,7 @@ SOFTWARE.
     } else if (isModule) {
         module.exports = JUSTC.CreateAsyncExports()
     } else if (isAMD) {
-        define(['require'], function(require) {            
+        define(['require'], function(require) {
             return JUSTC.CreateAsyncExports()
         })
     } else {

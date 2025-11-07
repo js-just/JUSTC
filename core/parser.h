@@ -85,7 +85,7 @@ inline std::string dataTypeToString(DataType type) {
 
 struct Value {
     DataType type;
-    
+
     union {
         double number_value;
         bool boolean_value;
@@ -93,14 +93,14 @@ struct Value {
     std::string string_value;
     std::shared_ptr<void> complex_value;
     std::string name;
-    
+
     Value() : type(DataType::UNKNOWN), number_value(0), name("unknown") {}
     Value(DataType t) : type(t), number_value(0), name(dataTypeToString(t)) {}
-    
+
     std::string toString() const;
     double toNumber() const;
     bool toBoolean() const;
-    
+
     static Value createNumber(double num);
     static Value createString(const std::string& str);
     static Value createBoolean(bool b);
@@ -118,8 +118,8 @@ struct LogEntry {
     std::string message;
     size_t position;
     std::string timestamp;
-    
-    LogEntry(const std::string& t, const std::string& m, size_t p, const std::string& ts = "") 
+
+    LogEntry(const std::string& t, const std::string& m, size_t p, const std::string& ts = "")
         : type(t), message(m), position(p), timestamp(ts) {}
 };
 
@@ -129,7 +129,7 @@ struct ParseResult {
     std::string logFilePath;
     std::string logFileContent;
     std::string error;
-    
+
     ParseResult() : logFilePath(""), logFileContent(""), error("") {}
 };
 
@@ -154,8 +154,8 @@ struct ASTNode {
     std::vector<std::string> tokens;
     size_t startPos;
     DataType typeDeclaration;
-    
-    ASTNode(const std::string& t, const std::string& id = "", size_t start = 0) 
+
+    ASTNode(const std::string& t, const std::string& id = "", size_t start = 0)
         : type(t), identifier(id), startPos(start), typeDeclaration(DataType::UNKNOWN) {}
 };
 
@@ -167,7 +167,7 @@ private:
     std::vector<ASTNode> ast;
     size_t position;
     std::string input;
-    
+
     std::unordered_map<std::string, Value> variables;
     std::unordered_map<std::string, std::vector<std::string>> dependencies;
     std::vector<std::string> outputVariables;
@@ -176,12 +176,12 @@ private:
     bool allowJavaScript;
     bool globalScope;
     bool strictMode;
-    
+
     std::vector<LogEntry> logs;
     std::string logFilePath;
     std::string logFileContent;
     bool hasLogFile;
-    
+
     ParserToken currentToken() const;
     ParserToken peekToken(size_t offset = 1) const;
     void advance();
@@ -192,18 +192,18 @@ private:
 
     std::string toLower(const std::string& str) const {
         std::string result = str;
-        std::transform(result.begin(), result.end(), result.begin(), 
+        std::transform(result.begin(), result.end(), result.begin(),
                       [](unsigned char c) { return std::tolower(c); });
         return result;
     }
-    
+
     // logs
     void addLog(const std::string& type, const std::string& message, size_t position = 0);
     void setLogFile(const std::string& path);
     void appendToLogFile(const std::string& content);
 
     Value astNodeToValue(const ASTNode& node);
-    
+
     Value parseExpression(bool doExecute);
     Value parsePrimary(bool doExecute);
     Value parseConditional(bool doExecute);
@@ -216,7 +216,7 @@ private:
     Value parsePower(bool doExecute);
     Value parseUnary(bool doExecute);
     Value parseFunctionCall(bool doExecute);
-    
+
     ASTNode parseStatement(bool doExecute);
     ASTNode parseVariableDeclaration(bool doExecute);
     ASTNode parseCommand(bool doExecute);
@@ -225,28 +225,28 @@ private:
     ASTNode parseReturnCommand();
     ASTNode parseAllowCommand();
     ASTNode parseImportCommand();
-    
+
     Value executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos);
     Value concatenateStrings(const Value& left, const Value& right);
     Value evaluateExpression(const Value& left, const std::string& op, const Value& right);
     Value handleInequality(const Value& value);
-    Value handleConditional(const Value& condition, const Value& thenVal, const Value& elseVal, 
+    Value handleConditional(const Value& condition, const Value& thenVal, const Value& elseVal,
                            const std::string& thenOp, const std::string& elseOp);
-    
+
     void buildDependencyGraph();
     bool detectCycles();
-    bool dfsCycleDetection(const std::string& node, 
+    bool dfsCycleDetection(const std::string& node,
                           std::unordered_map<std::string, bool>& visited,
                           std::unordered_map<std::string, bool>& recStack,
                           std::vector<std::string>& cyclePath);
-    
+
     Value resolveVariableValue(const std::string& varName, const bool unknownIsString);
     void evaluateAllVariables();
     void evaluateAllVariablesSync();
     void evaluateAllVariablesAsync();
     Value evaluateASTNode(const ASTNode& node);
     void extractReferences(const Value& value, std::vector<std::string>& references);
-    
+
     Value stringToValue(const std::string& str);
     Value numberToValue(double num);
     Value booleanToValue(bool b);
@@ -255,22 +255,22 @@ private:
     Value hexToValue(const std::string& hexStr);
     Value binaryToValue(const std::string& binStr);
     Value octalToValue(const std::string& octStr);
-    
+
     Value convertToDecimal(const Value& value);
-    
+
     template<typename Func, typename... Args>
-    std::future<typename std::result_of<Func(Args...)>::type> 
+    std::future<typename std::result_of<Func(Args...)>::type>
     executeAsyncIfEnabled(Func&& func, Args&&... args) {
         typedef typename std::result_of<Func(Args...)>::type ResultType;
-        
+
         if (runAsync) {
 #ifdef __EMSCRIPTEN__
-            return std::async(std::launch::deferred, 
-                            std::forward<Func>(func), 
+            return std::async(std::launch::deferred,
+                            std::forward<Func>(func),
                             std::forward<Args>(args)...);
 #else
-            return std::async(std::launch::async, 
-                            std::forward<Func>(func), 
+            return std::async(std::launch::async,
+                            std::forward<Func>(func),
                             std::forward<Args>(args)...);
 #endif
         } else {
@@ -278,7 +278,7 @@ private:
             return std::async(std::launch::deferred, [result]() { return result; });
         }
     }
-    
+
     // built-in
     std::future<Value> functionHTTPJSONAsync(const std::vector<Value>& args);
     std::future<Value> functionHTTPTEXTAsync(size_t startPos, const std::vector<Value>& args);
@@ -305,7 +305,7 @@ private:
     Value functionSTAT(const std::vector<Value>& args);
     Value functionENV(const std::vector<Value>& args);
     Value functionCONFIG(const std::vector<Value>& args);
-    
+
     // math
     Value functionV(const std::vector<Value>& args);
     Value functionD(const std::vector<Value>& args);
@@ -322,7 +322,7 @@ private:
     Value functionFLOOR(const std::vector<Value>& args);
 
     Value onHTTPDisabled(size_t startPos, std::string args0string_value);
-    
+
 public:
     static std::string getCurrentTimestamp();
     Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "");

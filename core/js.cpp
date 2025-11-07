@@ -52,12 +52,12 @@ extern "C" {
 char* lexer(const char* input, const char* outputMode) {
     if (input == nullptr) return nullptr;
     std::string mode(outputMode == nullptr ? "json" : outputMode);
-    
+
     try {
         auto parsed = Lexer::parse(input);
         std::string json = outputString(mode, parsed.second, parsed.first);
         return strdup(json.c_str());
-        
+
     } catch (const std::exception& e) {
         std::string error = "{\"error\":\"" + JsonSerializer::escapeJsonString(std::string(e.what())) + "\",\"lexer\":true}";
         return strdup(error.c_str());
@@ -67,11 +67,11 @@ char* lexer(const char* input, const char* outputMode) {
 char* parser(const char* tokensJson, const char* outputMode) {
     if (tokensJson == nullptr) return nullptr;
     std::string mode(outputMode == nullptr ? "json" : outputMode);
-    
+
     try {
         std::vector<ParserToken> parserTokens;
         std::string input = "";
-        
+
         if (JsonParser::parseJsonTokens(tokensJson, parserTokens, input)) {
             ParseResult result = Parser::parseTokens(parserTokens, false, false, input);
             std::string json = outputString(mode, result);
@@ -80,7 +80,7 @@ char* parser(const char* tokensJson, const char* outputMode) {
             std::string error = "{\"error\":\"Failed to parse tokens JSON\"}";
             return strdup(error.c_str());
         }
-        
+
     } catch (const std::exception& e) {
         std::string error = "{\"error\":\"" + JsonSerializer::escapeJsonString(std::string(e.what())) + "\",\"parser\":true}";
         return strdup(error.c_str());
@@ -90,13 +90,13 @@ char* parser(const char* tokensJson, const char* outputMode) {
 char* parse(const char* input, const bool execute, const bool runAsync, const char* outputMode) {
     if (input == nullptr) return nullptr;
     std::string mode(outputMode == nullptr ? "json" : outputMode);
-    
+
     try {
         auto lexerResult = Lexer::parse(input);
         ParseResult result = Parser::parseTokens(lexerResult.second, execute, runAsync, input);
         std::string json = outputString(mode, result);
         return strdup(json.c_str());
-        
+
     } catch (const std::exception& e) {
         std::string error = "{\"error\":\"" + JsonSerializer::escapeJsonString(std::string(e.what())) + "\"}";
         return strdup(error.c_str());

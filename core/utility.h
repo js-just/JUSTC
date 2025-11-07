@@ -30,7 +30,7 @@ SOFTWARE.
 #include "parser.h"
 #include <string>
 
-class Utility {    
+class Utility {
 public:
     static std::string numberValue2string(const Value& value);
     static std::string value2string(const Value& value);

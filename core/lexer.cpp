@@ -44,7 +44,7 @@ void Lexer::initializeKeywords() {
     keywords = ::keywords;
     smallkeywords = ::smallKeywords;
     bigkeywords = ::bigKeywords;
-    
+
     for (const auto& pair : smallkeywords) {
         skw.push_back(pair.first);
     }
@@ -101,7 +101,7 @@ ParserToken Lexer::readString() {
     size_t start = ++position;
     std::string value = "";
     while (position < input.length() &&
-           (input[position] != '"' || 
+           (input[position] != '"' ||
            (input[position] == '"' && position > 0 && input[position - 1] == '\\'))) {
         value += input[position++];
     }
@@ -122,18 +122,18 @@ ParserToken Lexer::readAngleString() {
 ParserToken Lexer::readNumber() {
     size_t start = position;
     bool point = false;
-    while (position < input.length() && 
+    while (position < input.length() &&
            (isDigit(input[position]) ||
             std::string(".#&bB").find(input[position]) != std::string::npos ||
-            isHexDigit(input[position]) || 
+            isHexDigit(input[position]) ||
             isBase64Char(input[position]))) {
-        
+
         char ch = input[position];
         if ((std::isalnum(static_cast<unsigned char>(ch)) || ch == '.' ||
              ch == '#' || ch == '&' || ch == 'b' || ch == 'B') &&
-            ((ch == '.' && position + 1 < input.length() && 
+            ((ch == '.' && position + 1 < input.length() &&
               isDigit(input[position + 1]) && !point) || ch != '.')) {
-            
+
             position++;
             if (ch == '.') {
                 point = true;
@@ -142,11 +142,11 @@ ParserToken Lexer::readNumber() {
             break;
         }
     }
-    
+
     std::string numStr = input.substr(start, position - start);
     std::string checkstr = numStr;
     std::transform(checkstr.begin(), checkstr.end(), checkstr.begin(), ::tolower);
-    
+
     std::string type;
     if (checkstr[0] == '#') {
         type = "hex";
@@ -157,27 +157,27 @@ ParserToken Lexer::readNumber() {
     } else {
         type = "number";
     }
-    
+
     return ParserToken{type, numStr, start};
 }
 
 ParserToken Lexer::readIdentifier() {
     size_t start = position;
-    
+
     if (dollarBefore) {
         dollarBefore = false;
         start = position - 1;
     }
-    
+
     while (position < input.length() &&
            (isLetter(input[position]) ||
-            isDigit(input[position]) || 
+            isDigit(input[position]) ||
             input[position] == '\'')) {
         position++;
     }
-    
+
     std::string id = input.substr(start, position - start);
-    
+
     std::string idWithoutDollar = id;
     if (!id.empty() && id[0] == '$') {
         idWithoutDollar = id.substr(1);
@@ -193,7 +193,7 @@ ParserToken Lexer::readIdentifier() {
         std::string fullKeyword = id[0] == '$' ? "$" + bigIt->second : bigIt->second;
         return ParserToken{"keyword", fullKeyword, start};
     }
-    
+
     if (std::find(keywords.begin(), keywords.end(), idWithoutDollar) != keywords.end()) {
         return ParserToken{"keyword", id, start};
     } else if (smallkeywords.find(idWithoutDollar) != smallkeywords.end()) {
@@ -201,12 +201,12 @@ ParserToken Lexer::readIdentifier() {
     } else if (bigkeywords.find(idWithoutDollar) != bigkeywords.end()) {
         return ParserToken{"keyword", id, start};
     }
-    
+
     std::regex keyword_regex("^is$|^isn't$|^isif$|^then$|^elseif$|^else$|^isifn't$|^elseifn't$|^then't$|^elsen't$|^or$|^orn't$|^and$|^andn't$");
     std::regex boolean_regex("^true$|^True$|^TRUE$|^yes$|^Yes$|^YES$|^false$|^False$|^FALSE$|^no$|^No$|^NO$|^Y$|^y$|^N$|^n$");
     std::regex null_regex("^null$|^Null$|^NULL$|^nil$|^Nil$|^NIL$");
     std::regex undefined_regex("^undefined$");
-    
+
     if (std::regex_match(idWithoutDollar, keyword_regex)) {
         return ParserToken{"keyword", id, start};
     } else if (std::regex_match(idWithoutDollar, boolean_regex)) {
@@ -363,9 +363,9 @@ void Lexer::tokenize() {
             addDollarBefore();
             tokens.push_back(readNumber());
             continue;
-        }            
+        }
 
-        if (ch == ',' || ch == '.' || ch == '[' || ch == ']' || 
+        if (ch == ',' || ch == '.' || ch == '[' || ch == ']' ||
             ch == '(' || ch == ')' || ch == '{' || ch == '}') {
             addDollarBefore();
             tokens.push_back(ParserToken{std::string(1, ch), std::string(1, ch), position});
@@ -391,8 +391,8 @@ void Lexer::tokenize() {
             continue;
         }
 
-        if (ch == '=' || ch == '?' || ch == '!' || ch == '<' || 
-            ch == '>' || ch == '|' || ch == '&' || ch == '+' || 
+        if (ch == '=' || ch == '?' || ch == '!' || ch == '<' ||
+            ch == '>' || ch == '|' || ch == '&' || ch == '+' ||
             ch == '*' || ch == '/' || ch == '%' || ch == '^') {
             addDollarBefore();
             tokens.push_back(ParserToken{std::string(1, ch), std::string(1, ch), position});
@@ -404,7 +404,7 @@ void Lexer::tokenize() {
         tokens.push_back(ParserToken{std::string(1, ch), std::string(1, ch), position});
         position++;
     }
-    
+
     addDollarBefore();
 }
 

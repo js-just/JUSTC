@@ -126,7 +126,7 @@ bool Value::toBoolean() const {
                 return result;
             };
             std::string lower = toLower(string_value);
-            if (lower == "false" || lower == "no" || lower == "n" || 
+            if (lower == "false" || lower == "no" || lower == "n" ||
                 lower == "null" || lower == "nil") {
                 return false;
             }
@@ -263,7 +263,7 @@ double parseNumber(const std::string& str) {
 }
 
 bool isValidLink(const std::string& str) {
-    return str.find("://") != std::string::npos || 
+    return str.find("://") != std::string::npos ||
            str.find("www.") != std::string::npos ||
            (str.find('.') != std::string::npos && str.find('/') != std::string::npos);
 }
@@ -275,23 +275,23 @@ long getCurrentTime() {
 
 }
 
-Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input) 
-    : tokens(tokens), input(input), position(0), outputMode("EVERYTHING"), allowJavaScript(true), 
-      globalScope(false), strictMode(false), hasLogFile(false), 
+Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input)
+    : tokens(tokens), input(input), position(0), outputMode("EVERYTHING"), allowJavaScript(true),
+      globalScope(false), strictMode(false), hasLogFile(false),
       doExecute(doExecute), runAsync(runAsync) {}
 
 std::string Parser::getCurrentTimestamp() {
     auto now = std::chrono::system_clock::now();
     auto time_t = std::chrono::system_clock::to_time_t(now);
-    
+
     std::tm timeinfo;
-    
+
     #ifdef _WIN32
         localtime_s(&timeinfo, &time_t);
     #else
         localtime_r(&time_t, &timeinfo);  // POSIX (Linux/macOS/Emscripten)
     #endif
-    
+
     char buffer[80];
     std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
     return std::string(buffer);
@@ -353,15 +353,15 @@ void Parser::skipCommas() {
 
 ParseResult Parser::parse(bool doExecute) {
     ParseResult result;
-    
+
     try {
         while (!isEnd()) {
             skipCommas();
             if (isEnd()) break;
-            
+
             if (match("keyword")) {
                 std::string keyword = currentToken().value;
-                
+
                 if (keyword == "TYPE") {
                     ast.push_back(parseTypeCommand());
                 } else if (keyword == "OUTPUT") {
@@ -387,18 +387,18 @@ ParseResult Parser::parse(bool doExecute) {
             } else {
                 throw std::runtime_error("Unexpected token \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
             }
-            
+
             skipCommas();
         }
-        
+
         buildDependencyGraph();
-        
+
         if (detectCycles()) {
             throw std::runtime_error("Circular dependency detected");
         }
-        
+
         evaluateAllVariables();
-        
+
         if (outputMode == "SPECIFIED") {
             if (outputVariables.empty()) {
                 throw std::runtime_error("OUTPUT SPECIFIED requires RETURN command with variables");
@@ -427,22 +427,22 @@ ParseResult Parser::parse(bool doExecute) {
                 throw std::runtime_error("RETURN command not allowed with OUTPUT DISABLED");
             }
         }
-        
+
         result.logs = logs;
         result.logFilePath = hasLogFile ? logFilePath : "";
         result.logFileContent = hasLogFile ? logFileContent : "";
-        
+
     } catch (const std::exception& e) {
         result.error = e.what();
         addLog("ERROR", e.what(), currentToken().start);
     }
-    
+
     return result;
 }
 
 Value Parser::convertToDecimal(const Value& value) {
-    if (value.type == DataType::HEXADECIMAL || 
-        value.type == DataType::BINARY || 
+    if (value.type == DataType::HEXADECIMAL ||
+        value.type == DataType::BINARY ||
         value.type == DataType::OCTAL) {
         Value result;
         result.type = DataType::NUMBER;
@@ -456,7 +456,7 @@ Value Parser::convertToDecimal(const Value& value) {
 ASTNode Parser::parseTypeCommand() {
     ASTNode node("TYPE_COMMAND", "", currentToken().start);
     advance();
-    
+
     if (match("keyword")) {
         std::string type = currentToken().value;
         if (type == "GLOBAL") {
@@ -469,14 +469,14 @@ ASTNode Parser::parseTypeCommand() {
         node.value = stringToValue(type);
         advance();
     }
-    
+
     return node;
 }
 
 ASTNode Parser::parseOutputCommand() {
     ASTNode node("OUTPUT_COMMAND", "", currentToken().start);
     advance();
-    
+
     if (match("keyword")) {
         std::string mode = currentToken().value;
         if (mode == "SPECIFIED" || mode == "EVERYTHING" || mode == "DISABLED") {
@@ -487,14 +487,14 @@ ASTNode Parser::parseOutputCommand() {
             throw std::runtime_error("Invalid OUTPUT mode: " + mode);
         }
     }
-    
+
     return node;
 }
 
 ASTNode Parser::parseReturnCommand() {
     ASTNode node("RETURN_COMMAND", "", currentToken().start);
     advance();
-    
+
     if (match("[")) {
         advance();
         while (!match("]") && !isEnd()) {
@@ -506,7 +506,7 @@ ASTNode Parser::parseReturnCommand() {
         }
         if (match("]")) advance();
     }
-    
+
     if (match("keyword", "AS")) {
         advance();
         if (match("[")) {
@@ -521,7 +521,7 @@ ASTNode Parser::parseReturnCommand() {
             if (match("]")) advance();
         }
     }
-    
+
     return node;
 }
 
@@ -529,20 +529,20 @@ ASTNode Parser::parseAllowCommand() {
     ASTNode node("ALLOW_COMMAND", "", currentToken().start);
     std::string command = currentToken().value;
     advance();
-    
+
     if (match("keyword", "JAVASCRIPT")) {
         allowJavaScript = (command == "ALLOW");
         node.value = booleanToValue(allowJavaScript);
         advance();
     }
-    
+
     return node;
 }
 
 ASTNode Parser::parseImportCommand() {
     ASTNode node("IMPORT_COMMAND", "", currentToken().start);
     advance();
-    
+
     // TODO: import logic
     if (match("keyword", "JUSTC")) {
         advance();
@@ -555,7 +555,7 @@ ASTNode Parser::parseImportCommand() {
             if (match(")")) advance();
         }
     }
-    
+
     return node;
 }
 
@@ -572,7 +572,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute) {
     size_t startPos = currentToken().start;
     ASTNode node("VARIABLE_DECLARATION", identifier, startPos);
     advance();
-    
+
     std::string assignOp;
     std::string typeDecl;
     if (match(":")) {
@@ -584,19 +584,19 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute) {
         node.typeDeclaration = Utility::typeDeclaration2dataType(typeDecl, Utility::position(position, input));
         advance();
     }
-    
+
     if (match("keyword", "is") || match("=")) {
         assignOp = currentToken().value;
         advance();
-        
+
         Value exprValue = parseExpression(doExecute);
         node.value = exprValue;
         extractReferences(exprValue, node.references);
-    } 
+    }
     else if (match("keyword", "isn't") || match("!=")) {
         assignOp = currentToken().value;
         advance();
-        
+
         Value exprValue = parseExpression(doExecute);
         exprValue = handleInequality(exprValue);
         node.value = exprValue;
@@ -622,9 +622,9 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute) {
         }
         throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got \"" + currentToken().value +"\".");
     }
-    
+
     variables[identifier] = Value();
-    
+
     return node;
 }
 
@@ -634,43 +634,43 @@ Value Parser::parseExpression(bool doExecute) {
 
 Value Parser::parseConditional(bool doExecute) {
     Value condition = parseLogicalOR(doExecute);
-    
+
     if (match("keyword", "then") || match("==")) {
         std::string thenOp = currentToken().value;
         advance();
-        
+
         Value thenValue = parseExpression(doExecute);
-        
+
         if (match("keyword", "else") || match("?=")) {
             std::string elseOp = currentToken().value;
             advance();
-            
+
             Value elseValue = parseExpression(doExecute);
-            
+
             return handleConditional(condition, thenValue, elseValue, thenOp, elseOp);
         } else {
             throw std::runtime_error("Expected 'else' after 'then'");
         }
     }
-    
+
     if (match("keyword", "elseif") || match("??")) {
         std::string elseifOp = currentToken().value;
         advance();
-        
+
         Value elseifCondition = parseExpression(doExecute);
-        
+
         if (match("keyword", "then") || match("==")) {
             std::string thenOp = currentToken().value;
             advance();
-            
+
             Value thenValue = parseExpression(doExecute);
-            
+
             if (match("keyword", "else") || match("?=")) {
                 std::string elseOp = currentToken().value;
                 advance();
-                
+
                 Value elseValue = parseExpression(doExecute);
-                
+
                 Value nestedConditional = handleConditional(elseifCondition, thenValue, elseValue, thenOp, elseOp);
                 return handleConditional(condition, thenValue, nestedConditional, thenOp, elseOp);
             } else {
@@ -680,108 +680,108 @@ Value Parser::parseConditional(bool doExecute) {
             throw std::runtime_error("Expected 'then' after 'elseif'");
         }
     }
-    
+
     return condition;
 }
 
 Value Parser::parseLogicalOR(bool doExecute) {
     Value left = parseLogicalAND(doExecute);
-    
+
     while (match("keyword", "or") || match("||") ||
            match("keyword", "orn't") || match("!|")) {
         std::string op = currentToken().value;
         advance();
-        
+
         Value right = parseLogicalAND(doExecute);
         left = evaluateExpression(left, op, right);
     }
-    
+
     return left;
 }
 
 Value Parser::parseLogicalAND(bool doExecute) {
     Value left = parseEquality(doExecute);
-    
+
     while (match("keyword", "and") || match("&") ||
            match("keyword", "andn't") || match("!&")) {
         std::string op = currentToken().value;
         advance();
-        
+
         Value right = parseEquality(doExecute);
         left = evaluateExpression(left, op, right);
     }
-    
+
     return left;
 }
 
 Value Parser::parseEquality(bool doExecute) {
     Value left = parseComparison(doExecute);
-    
+
     while (match("keyword", "is") || match("=") ||
            match("keyword", "isn't") || match("!=")) {
         std::string op = currentToken().value;
         advance();
-        
+
         Value right = parseComparison(doExecute);
         left = evaluateExpression(left, op, right);
     }
-    
+
     return left;
 }
 
 Value Parser::parseComparison(bool doExecute) {
     Value left = parseTerm(doExecute);
-    
+
     while (match("<") || match(">") || match("<=") || match(">=")) {
         std::string op = currentToken().value;
         advance();
-        
+
         Value right = parseTerm(doExecute);
         left = evaluateExpression(left, op, right);
     }
-    
+
     return left;
 }
 
 Value Parser::parseTerm(bool doExecute) {
     Value left = parseFactor(doExecute);
-    
+
     while (match("+") || match("minus") || match("..")) {
         std::string op = currentToken().value;
         advance();
-        
+
         Value right = parseFactor(doExecute);
         left = evaluateExpression(left, op, right);
     }
-    
+
     return left;
 }
 
 Value Parser::parseFactor(bool doExecute) {
     Value left = parsePower(doExecute);
-    
+
     while (match("*") || match("/") || match("%")) {
         std::string op = currentToken().value;
         advance();
-        
+
         Value right = parsePower(doExecute);
         left = evaluateExpression(left, op, right);
     }
-    
+
     return left;
 }
 
 Value Parser::parsePower(bool doExecute) {
     Value left = parseUnary(doExecute);
-    
+
     while (match("^")) {
         std::string op = currentToken().value;
         advance();
-        
+
         Value right = parseUnary(doExecute);
         left = evaluateExpression(left, op, right);
     }
-    
+
     return left;
 }
 
@@ -789,11 +789,11 @@ Value Parser::parseUnary(bool doExecute) {
     if (match("minus") || match("+") || match("!") || match("-")) {
         std::string op = currentToken().value;
         advance();
-        
+
         Value right = parseUnary(doExecute);
         return evaluateExpression(Value(), op, right);
     }
-    
+
     return parsePrimary(doExecute);
 }
 
@@ -842,9 +842,9 @@ Value Parser::parsePrimary(bool doExecute) {
                           [](unsigned char c) { return std::tolower(c); });
             return result;
         };
-        
+
         std::string tokenValue = currentToken().value;
-        bool b = (toLower(tokenValue) == "true" || 
+        bool b = (toLower(tokenValue) == "true" ||
                   toLower(tokenValue) == "yes" ||
                   toLower(tokenValue) == "y");
         advance();
@@ -859,23 +859,31 @@ Value Parser::parsePrimary(bool doExecute) {
     }
     else if (match("identifier")) {
         std::string varName = currentToken().value;
-        
-        if (varName == "$TIME" || varName == "$VERSION" || varName == "$LATEST" || 
-            varName == "$DBID" || varName == "$SHA" || varName == "$NAV" || 
-            varName == "$PAGES" || varName == "$CSS" || varName == "$PI" || 
+
+        if (varName == "$TIME" || varName == "$VERSION" || varName == "$LATEST" ||
+            varName == "$DBID" || varName == "$SHA" || varName == "$NAV" ||
+            varName == "$PAGES" || varName == "$CSS" || varName == "$PI" ||
             varName == "$BACKSLASH" || varName == "$JUST_VERSION") {
             advance();
             return executeFunction(varName.substr(1), {}, currentToken().start);
         }
-        
+
         if (peekToken().type == "(") {
             return parseFunctionCall(doExecute);
         }
-        
+
         Value result;
         result.type = DataType::VARIABLE;
         result.string_value = varName;
         advance();
+        while (match(".") && tokens[position + 1].type == "identifier") {
+            advance();
+            result.string_value += "." + currentToken().value;
+            advance();
+            if (isEnd()) {
+                throw std::runtime_error("Unexpected EOF");
+            }
+        }
         return result;
     }
     else if (match("keyword") && peekToken().type == "(") {
@@ -932,23 +940,23 @@ Value Parser::parseFunctionCall(bool doExecute) {
     std::string funcName = currentToken().value;
     size_t startPos = currentToken().start;
     advance();
-    
+
     if (!match("(")) {
         throw std::runtime_error("Expected \"(\" after function name at " + Utility::position(startPos, input) + ".");
     }
     advance();
-    
+
     std::vector<Value> args;
     while (!match(")") && !isEnd()) {
         args.push_back(parseExpression(doExecute));
         if (match(",")) advance();
     }
-    
+
     if (!match(")")) {
         throw std::runtime_error("Expected \")\" after function arguments at" + Utility::position(startPos, input) + ".");
     }
     advance();
-    
+
     return executeFunction(funcName, args, startPos);
 }
 
@@ -963,7 +971,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
             args.push_back(parseExpression(doExecute));
         }
         if (match(",")) advance();
-        
+
         if (command == "ECHO") {
             for (const auto& arg : args) {
                 std::string message = arg.toString();
@@ -994,7 +1002,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
         }
         return node;
     }
-    
+
     if (match("(")) {
         advance();
         while (!match(")") && !isEnd()) {
@@ -1003,7 +1011,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
         }
         if (match(")")) advance();
     }
-    
+
     if (doExecute) {
         if (command == "ECHO") {
             for (const auto& arg : args) {
@@ -1034,7 +1042,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
             }
         }
     }
-    
+
     return node;
 }
 
@@ -1066,7 +1074,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     else if (funcName == "VERSION") {
         return stringToValue(JUSTC_VERSION);
     }
-    
+
     // built-in
     if (funcName == "VALUE") return functionVALUE(args);
     if (funcName == "STRING") return functionSTRING(args);
@@ -1122,7 +1130,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "SIZE") return functionSTAT(args);
     if (funcName == "ENV") return functionENV(args);
     if (funcName == "CONFIG") return functionCONFIG(args);
-    
+
     // math
     if (funcName == "V") return functionV(args);
     if (funcName == "D") return functionD(args);
@@ -1137,7 +1145,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "ABSOLUTE") return functionABSOLUTE(args);
     if (funcName == "CEIL") return functionCEIL(args);
     if (funcName == "FLOOR") return functionFLOOR(args);
-    
+
     throw std::runtime_error("Unknown function: " + funcName);
 }
 
@@ -1172,7 +1180,7 @@ Value Parser::concatenateStrings(const Value& left, const Value& right) {
 }
 Value Parser::evaluateExpression(const Value& left, const std::string& op, const Value& right) {
     Value result;
-    
+
     if (op == "+") {
         if (
             (left.type == DataType::STRING  && right.type == DataType::STRING ) ||
@@ -1225,7 +1233,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     else if (op == "..") {
         result = concatenateStrings(left, right);
     }
-    
+
     else if (op == "=" || op == "is") {
         result = booleanToValue(left.toNumber() == right.toNumber());
     }
@@ -1244,7 +1252,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     else if (op == ">=" && Utility::checkNumbers(left, right)) {
         result = booleanToValue(left.toNumber() >= right.toNumber());
     }
-    
+
     else if (op == "&" || op == "and") {
         result = booleanToValue(left.toBoolean() && right.toBoolean());
     }
@@ -1264,13 +1272,13 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     else {
         throw std::runtime_error("Unexpected operator \"" + op + "\" at " + Utility::position(position, input) + ".");
     }
-    
+
     return result;
 }
 
 Value Parser::handleInequality(const Value& value) {
     Value result;
-    
+
     switch (value.type) {
         case DataType::NUMBER:
             result = booleanToValue(value.toNumber() > 0);
@@ -1286,18 +1294,18 @@ Value Parser::handleInequality(const Value& value) {
             result = booleanToValue(false);
             break;
     }
-    
+
     return result;
 }
 
-Value Parser::handleConditional(const Value& condition, const Value& thenVal, const Value& elseVal, 
+Value Parser::handleConditional(const Value& condition, const Value& thenVal, const Value& elseVal,
                                const std::string& thenOp, const std::string& elseOp) {
     bool cond = condition.toBoolean();
-    
+
     if (thenOp == "then't" || thenOp == "=!") {
         cond = !cond;
     }
-    
+
     if (cond) {
         return thenVal;
     } else {
@@ -1320,17 +1328,17 @@ bool Parser::detectCycles() {
     std::unordered_map<std::string, bool> visited;
     std::unordered_map<std::string, bool> recStack;
     std::vector<std::string> cyclePath;
-    
+
     for (const auto& pair : dependencies) {
         if (dfsCycleDetection(pair.first, visited, recStack, cyclePath)) {
             return true;
         }
     }
-    
+
     return false;
 }
 
-bool Parser::dfsCycleDetection(const std::string& node, 
+bool Parser::dfsCycleDetection(const std::string& node,
                               std::unordered_map<std::string, bool>& visited,
                               std::unordered_map<std::string, bool>& recStack,
                               std::vector<std::string>& cyclePath) {
@@ -1338,7 +1346,7 @@ bool Parser::dfsCycleDetection(const std::string& node,
         visited[node] = true;
         recStack[node] = true;
         cyclePath.push_back(node);
-        
+
         for (const auto& neighbor : dependencies[node]) {
             if (!visited[neighbor] && dfsCycleDetection(neighbor, visited, recStack, cyclePath)) {
                 return true;
@@ -1348,7 +1356,7 @@ bool Parser::dfsCycleDetection(const std::string& node,
             }
         }
     }
-    
+
     recStack[node] = false;
     if (!cyclePath.empty()) cyclePath.pop_back();
     return false;
@@ -1359,7 +1367,7 @@ Value Parser::resolveVariableValue(const std::string& varName, const bool unknow
     if (it != variables.end() && it->second.type != DataType::UNKNOWN) {
         return it->second;
     }
-    
+
     for (const auto& node : ast) {
         if (node.type == "VARIABLE_DECLARATION" && node.identifier == varName) {
             return evaluateASTNode(node);
@@ -1373,7 +1381,7 @@ Value Parser::resolveVariableValue(const std::string& varName, const bool unknow
         result.string_value = varName;
         return result;
     }
-    
+
     Value result;
     result.type = DataType::UNKNOWN;
     result.name = "unknown";
@@ -1391,7 +1399,7 @@ void Parser::evaluateAllVariables() {
 Value Parser::evaluateASTNode(const ASTNode& node) {
     if (node.type == "VARIABLE_DECLARATION") {
         Value result = node.value;
-        
+
         if (result.type == DataType::VARIABLE) {
             std::string refVar = result.string_value;
             if (refVar == node.identifier) {
@@ -1399,10 +1407,10 @@ Value Parser::evaluateASTNode(const ASTNode& node) {
             }
             return resolveVariableValue(refVar, true);
         }
-        
+
         return result;
     }
-    
+
     return node.value;
 }
 
@@ -1441,54 +1449,54 @@ Value Parser::functionVALUE(const std::vector<Value>& args) {
     if (args.size() != 1 || args[0].type != DataType::VARIABLE) {
         throw std::runtime_error("VALUE function requires one variable argument");
     }
-    
+
     std::string varName = args[0].string_value;
     return resolveVariableValue(varName, true);
 }
 
 Value Parser::functionSTRING(const std::vector<Value>& args) {
     if (args.empty()) return stringToValue("");
-    
+
     return stringToValue(args[0].toString());
 }
 
 Value Parser::functionLINK(const std::vector<Value>& args) {
     if (args.empty()) throw std::runtime_error("LINK function requires one argument");
-    
+
     std::string str = args[0].toString();
     if (!isValidLink(str)) {
         throw std::runtime_error("Invalid link: " + str);
     }
-    
+
     return linkToValue(str);
 }
 
 Value Parser::functionNUMBER(const std::vector<Value>& args) {
     if (args.empty()) return numberToValue(0);
-    
+
     return numberToValue(args[0].toNumber());
 }
 
 Value Parser::functionBINARY(const std::vector<Value>& args) {
     if (args.empty()) return binaryToValue("0");
-    
+
     double num = args[0].toNumber();
     std::string binary;
     int intNum = static_cast<int>(num);
-    
+
     if (intNum == 0) return binaryToValue("0");
-    
+
     while (intNum > 0) {
         binary = (intNum % 2 == 0 ? "0" : "1") + binary;
         intNum /= 2;
     }
-    
+
     return binaryToValue(binary);
 }
 
 Value Parser::functionOCTAL(const std::vector<Value>& args) {
     if (args.empty()) return octalToValue("0");
-    
+
     double num = args[0].toNumber();
     std::stringstream ss;
     ss << std::oct << static_cast<int>(num);
@@ -1497,7 +1505,7 @@ Value Parser::functionOCTAL(const std::vector<Value>& args) {
 
 Value Parser::functionHEXADECIMAL(const std::vector<Value>& args) {
     if (args.empty()) return hexToValue("0");
-    
+
     double num = args[0].toNumber();
     std::stringstream ss;
     ss << std::hex << static_cast<int>(num);
@@ -1506,13 +1514,13 @@ Value Parser::functionHEXADECIMAL(const std::vector<Value>& args) {
 
 Value Parser::functionTYPEID(const std::vector<Value>& args) {
     if (args.empty()) return numberToValue(static_cast<double>(DataType::UNKNOWN));
-    
+
     return numberToValue(static_cast<double>(args[0].type));
 }
 
 Value Parser::functionTYPEOF(const std::vector<Value>& args) {
     if (args.empty()) return stringToValue("unknown");
-    
+
     switch (args[0].type) {
         case DataType::JUSTC_OBJECT: return stringToValue("justc_object");
         case DataType::NUMBER: return stringToValue("number");
@@ -1548,10 +1556,10 @@ Value Parser::functionHTTPTEXT(size_t startPos, const std::vector<Value>& args) 
     } else if (args[0].type != DataType::LINK) {
         throw std::runtime_error("Expected TYPEOF( argument 0 )=\"Link\" at function HTTPTEXT at " + Utility::position(startPos, input) + ", got \"" + dataTypeToString(args[0].type) + "\".");
     }
-    
+
     std::string url = args[0].toString();
-    
-    Value result = Fetch::httpGet(url, "TEXT");    
+
+    Value result = Fetch::httpGet(url, "TEXT");
     if (result.type == DataType::STRING) {
         return result;
     } else {
@@ -1678,12 +1686,12 @@ Value Parser::pathToValue(const std::string& path) {
 Value Parser::hexToValue(const std::string& hexStr) {
     Value result;
     result.type = DataType::HEXADECIMAL;
-    
+
     std::string cleanHex = hexStr;
     if (!cleanHex.empty() && (cleanHex[0] == '#' || cleanHex[0] == 'x' || cleanHex[0] == 'X')) {
         cleanHex = cleanHex.substr(1);
     }
-    
+
     try {
         unsigned int num;
         std::stringstream ss;
@@ -1701,19 +1709,19 @@ Value Parser::hexToValue(const std::string& hexStr) {
 Value Parser::binaryToValue(const std::string& binStr) {
     Value result;
     result.type = DataType::BINARY;
-    
+
     std::string cleanBin = binStr;
     if (!cleanBin.empty() && (cleanBin[0] == 'b' || cleanBin[0] == 'B')) {
         cleanBin = cleanBin.substr(1);
     }
-    
+
     try {
         unsigned int num = std::stoi(cleanBin, nullptr, 2);
         result.number_value = static_cast<double>(num);
     } catch (...) {
         result.number_value = 0.0;
     }
-    
+
     result.name = Utility::double2binString(result.number_value);
     return result;
 }
@@ -1721,19 +1729,19 @@ Value Parser::binaryToValue(const std::string& binStr) {
 Value Parser::octalToValue(const std::string& octStr) {
     Value result;
     result.type = DataType::OCTAL;
-    
+
     std::string cleanOct = octStr;
     if (!cleanOct.empty() && (cleanOct[0] == 'o' || cleanOct[0] == 'O')) {
         cleanOct = cleanOct.substr(1);
     }
-    
+
     try {
         unsigned int num = std::stoi(cleanOct, nullptr, 8);
         result.number_value = static_cast<double>(num);
     } catch (...) {
         result.number_value = 0.0;
     }
-    
+
     result.name = Utility::double2octString(result.number_value);
     return result;
 }
@@ -1742,12 +1750,12 @@ void Parser::evaluateAllVariablesSync() {
     bool changed;
     int passes = 0;
     const int MAX_PASSES = 100;
-    
+
     do {
         changed = false;
         passes++;
         std::vector<std::string> vars;
-        
+
         for (auto& node : ast) {
             if (node.type == "VARIABLE_DECLARATION") {
                 std::string varName = node.identifier;
@@ -1757,18 +1765,18 @@ void Parser::evaluateAllVariablesSync() {
                     throw std::runtime_error("Attempt to redefine \"" + varName + "\" at " + Utility::position(node.startPos, input) + ".");
                 }
                 vars.push_back(varName);
-                
-                if (newValue.type != DataType::UNKNOWN && 
-                    (oldValue.type == DataType::UNKNOWN || 
+
+                if (newValue.type != DataType::UNKNOWN &&
+                    (oldValue.type == DataType::UNKNOWN ||
                      oldValue.toString() != newValue.toString())) {
                     variables[varName] = newValue;
                     changed = true;
                 }
             }
         }
-        
+
     } while (changed && passes < MAX_PASSES);
-    
+
     if (passes >= MAX_PASSES) {
         throw std::runtime_error("Cannot resolve variable dependencies - possible circular reference");
     }
@@ -1777,7 +1785,7 @@ void Parser::evaluateAllVariablesSync() {
 void Parser::evaluateAllVariablesAsync() {
 #ifndef __EMSCRIPTEN__
     std::unordered_map<std::string, std::future<Value>> futures;
-    
+
     for (auto& node : ast) {
         if (node.type == "VARIABLE_DECLARATION") {
             std::string varName = node.identifier;
@@ -1788,11 +1796,11 @@ void Parser::evaluateAllVariablesAsync() {
             }
         }
     }
-    
+
     for (auto it = futures.begin(); it != futures.end(); ++it) {
         variables[it->first] = it->second.get();
     }
-    
+
     evaluateAllVariablesSync();
 #else
     evaluateAllVariablesSync();

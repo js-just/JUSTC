@@ -48,13 +48,13 @@ std::string XmlSerializer::escapeXmlString(const std::string& str) {
             case '>': ss << "&gt;"; break;
             case '"': ss << "&quot;"; break;
             case '\'': ss << "&apos;"; break;
-            default: 
+            default:
                 if (static_cast<unsigned char>(c) >= 0x20 || c == '\n' || c == '\r' || c == '\t') {
                     ss << c;
                 }
                 break;
         }
-        
+
         if (i > 100000) {
             #ifdef __EMSCRIPTEN__
             EM_ASM({
@@ -97,7 +97,7 @@ std::string XmlSerializer::valueToXml(const Value& value) {
 std::string XmlSerializer::tokensToXml(const std::vector<ParserToken>& tokens) {
     std::stringstream xml;
     xml << "<tokens>";
-    
+
     for (const auto& token : tokens) {
         xml << "<token>";
         xml << "<type>" << escapeXmlString(token.type) << "</type>";
@@ -105,22 +105,22 @@ std::string XmlSerializer::tokensToXml(const std::vector<ParserToken>& tokens) {
         xml << "<start>" << token.start << "</start>";
         xml << "</token>";
     }
-    
+
     xml << "</tokens>";
     return xml.str();
 }
 
 std::string XmlSerializer::serialize(const ParseResult& result) {
     std::stringstream xml;
-    
+
     #ifdef __EMSCRIPTEN__
-    
+
     if (!result.error.empty()) {
         return "{\"error\":\"" + JsonSerializer::escapeJsonString(result.error) + "\"}";
     } else {
         std::stringstream json;
         json << "{";
-        
+
         std::stringstream valuesXml;
         valuesXml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
         valuesXml << "<justc version=\"" << escapeXmlString(JUSTC_VERSION) << "\">";
@@ -130,16 +130,16 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
             valuesXml << "</" << escapeXmlString(pair.first) << ">";
         }
         valuesXml << "</justc>";
-        
+
         json << "\"type\":\"xml\",\"return\":\"" << JsonSerializer::escapeJsonString(valuesXml.str()) << "\",";
         json << "\"logs\":" << JsonSerializer::serialize(result.logs) << ",";
-        
+
         // logfile object
         json << "\"logfile\":{";
         json << "\"file\":\"" << JsonSerializer::escapeJsonString(result.logFilePath) << "\",";
         json << "\"logs\":\"" << JsonSerializer::escapeJsonString(result.logFileContent) << "\"";
         json << "}";
-        
+
         json << "}";
         return json.str();
     }
@@ -148,13 +148,13 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
 
     xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
     xml << "<justc version=\"" << escapeXmlString(JUSTC_VERSION) << "\">";
-    
+
     for (const auto& pair : result.returnValues) {
         xml << "<" << escapeXmlString(pair.first) << ">";
         xml << valueToXml(pair.second);
         xml << "</" << escapeXmlString(pair.first) << ">";
     }
-    
+
     xml << "</justc>";
     return xml.str();
 

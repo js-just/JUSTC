@@ -45,7 +45,7 @@ add_library(justc_core
 
 add_executable(justc core/main.cpp)
 
-target_include_directories(justc_core PUBLIC 
+target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
@@ -63,7 +63,7 @@ install(TARGETS justc DESTINATION bin)
 
 if(WIN32)
     add_custom_command(TARGET justc POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 $<TARGET_FILE:justc> ${CMAKE_BINARY_DIR}
     )
 endif()

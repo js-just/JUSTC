@@ -94,14 +94,14 @@ std::pair<size_t, size_t> Utility::pos(const size_t& pos, const std::string& scr
     if (script.empty() || pos >= script.length()) {
         return {1, 1};
     }
-    
+
     size_t line = 1;
     size_t column = 1;
     size_t current_pos = 0;
-    
+
     while (current_pos < pos && current_pos < script.length()) {
         char current_char = script[current_pos];
-        
+
         if (current_char == '\n') {                                                     //      \n
             line++;
             column = 1;
@@ -121,7 +121,7 @@ std::pair<size_t, size_t> Utility::pos(const size_t& pos, const std::string& scr
             current_pos++;
         }
     }
-    
+
     return {line, column};
 }
 
@@ -150,11 +150,11 @@ DataType Utility::typeDeclaration2dataType(const std::string& typeDeclaration, c
         {"infinity", DataType::INFINITE},           {"inf", DataType::INFINITE},
         {"auto", DataType::UNKNOWN},
     };
-    
+
     auto it = typeMap.find(typeDeclaration);
     if (it != typeMap.end()) {
         return it->second;
     }
-    
+
     throw std::runtime_error("Invalid type declaration \"" + typeDeclaration + "\" at " + position + ".");
 }

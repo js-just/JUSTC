@@ -27,11 +27,11 @@ SOFTWARE.
 #include "keywords.h"
 
 const std::vector<std::string> keywords = {
-    "TYPE", "GLOBAL", "LOCAL", "STRICT", "ALL", "JSON", 
-    "HTTPJSON", "HTTPTEXT", "HTTPJUSTC", "JUSTC", 
-    "IMPORT", "EXPORT", "COPY", "REQUIRE", "ENV", 
-    "CONFIG", "RUN", "VALUE", "FILE", "SIZE", "STRING", 
-    "LINK", "STRINGNUM", "STRINGB64", "STRINGBIN", 
+    "TYPE", "GLOBAL", "LOCAL", "STRICT", "ALL", "JSON",
+    "HTTPJSON", "HTTPTEXT", "HTTPJUSTC", "JUSTC",
+    "IMPORT", "EXPORT", "COPY", "REQUIRE", "ENV",
+    "CONFIG", "RUN", "VALUE", "FILE", "SIZE", "STRING",
+    "LINK", "STRINGNUM", "STRINGB64", "STRINGBIN",
     "STRINGHEX", "TYPEID", "TYPEOF", "OUTPUT", "RETURN",
     "V", "D", "SQ", "CU", "P", "M", "S", "C", "T", "N",
     "ECHO", "LOGFILE", "LOG", "PARSEJUSTC", "PARSEJSON",
@@ -53,8 +53,8 @@ const std::unordered_map<std::string, std::string> smallKeywords = {
     {"S16", "STRINGHEX"}, {"ID", "TYPEID"}, {"OF", "TYPEOF"},
     {"OUT", "OUTPUT"}, {"RT", "RETURN"}, {"Q", "SQ"}, {"U", "CU"},
     {"PJ", "PARSEJUSTC"}, {"PJS", "PARSEJSON"}, {"SP", "SPECIFIED"},
-    {"EV", "EVERYTHING"}, {"N", "DISABLED"}, 
-    {"NUM", "NUMBER"}, {"SO", "STRINGOCT"}, {"B", "BINARY"}, 
+    {"EV", "EVERYTHING"}, {"N", "DISABLED"},
+    {"NUM", "NUMBER"}, {"SO", "STRINGOCT"}, {"B", "BINARY"},
     {"OC", "OCTAL"}, {"B64", "BASE64"}, {"HEX", "HEXADECIMAL"},
     {"PH", "PARSEHOCON"}, {"S32", "STRINGB32"}, {"B32", "BASE32"},
     {"AB", "ABSOLUTE"}, {"CE", "CEIL"}, {"FL", "FLOOR"}, {"AL", "ALLOW"},

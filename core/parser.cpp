@@ -608,11 +608,11 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute) {
         node.value = conditionalValue;
         extractReferences(conditionalValue, node.references);
     }
-    else if (
+    else if (position >= 2 && (
         tokens[position - 2].value == "ECHO" ||
         tokens[position - 2].value == "LOG"  ||
         tokens[position - 2].value == "LOGFILE"
-    ) {
+    )) {
         position -= 2;
         parseCommand(doExecute);
     }

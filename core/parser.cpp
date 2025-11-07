@@ -381,7 +381,7 @@ ParseResult Parser::parse(bool doExecute) {
                 ast.push_back(parseStatement(doExecute));
             } else if (match(".")) {
                 if (!isEnd()) {
-                    throw std::runtime_error("Unexpected token \"" + tokens[position + 1].value + "\" at " + Utility::position(position + 1, input) + ".");
+                    throw std::runtime_error("After end of script - Unexpected token \"" + tokens[position + 1].value + "\" at " + Utility::position(position + 1, input) + ".");
                 }
                 break;
             } else {

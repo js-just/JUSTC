@@ -51,7 +51,7 @@ echo "parserExecute:"
 justc $FILE.lexer.json $FILE.parsEr.json -r -E
 echo ""
 echo "stringify:"
-justc $FILE.json $FILE.json.justc -r -J
+justc $FILE.json.json $FILE.json.justc -r -J
 
 echo ""
 echo "reading outputs"

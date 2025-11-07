@@ -380,6 +380,7 @@ ParseResult Parser::parse(bool doExecute) {
             } else if (match("identifier")) {
                 ast.push_back(parseStatement(doExecute));
             } else if (match(".")) {
+                advance();
                 if (!isEnd()) {
                     throw std::runtime_error("After end of script - Unexpected token \"" + tokens[position + 1].value + "\" at " + Utility::position(position + 1, input) + ".");
                 }
@@ -390,6 +391,7 @@ ParseResult Parser::parse(bool doExecute) {
 
             skipCommas();
         }
+        position -= 1;
 
         buildDependencyGraph();
 

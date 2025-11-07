@@ -303,7 +303,7 @@ void Lexer::tokenize() {
             continue;
         }
 
-        if (ch == '.' && peek() == '.') {
+        if (ch == '.' && peek() == '.' && (position + 2) < input.length()) {
             addDollarBefore();
             tokens.push_back(ParserToken{"..", "..", position});
             position += 2;

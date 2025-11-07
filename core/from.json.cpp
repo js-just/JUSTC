@@ -28,7 +28,9 @@ SOFTWARE.
 #include <cstdlib>
 #include <string>
 #include <sstream>
+#ifndef __EMSCRIPTEN__
 #include <nlohmann/json.hpp>
+#endif
 
 namespace JsonParser {
 

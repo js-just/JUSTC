@@ -93,147 +93,38 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
     return resultStr;
 }
 
-#elif _WIN32
-// Windows (WinHTTP)
-
-#include <windows.h>
-#include <winhttp.h>
-#pragma comment(lib, "winhttp.lib")
+#else
+#include <cpr/cpr.h>
 
 std::string Fetch::executeHttpRequest(const std::string& url) {
-    HINTERNET hSession = NULL;
-    HINTERNET hConnect = NULL;
-    HINTERNET hRequest = NULL;
-    std::string result;
-
     try {
-        URL_COMPONENTS urlComp;
-        ZeroMemory(&urlComp, sizeof(urlComp));
-        urlComp.dwStructSize = sizeof(urlComp);
+        cpr::Response response = cpr::Get(
+            cpr::Url{url},
+            cpr::Header{
+                {"User-Agent", "JUSTC/1.0"},
+                {"Accept", "*/*"},
+                {"X-JUSTC", "JUSTC/1.0"}
+            },
+            cpr::Timeout{10000}
+        );
 
-        urlComp.dwSchemeLength = -1;
-        urlComp.dwHostNameLength = -1;
-        urlComp.dwUrlPathLength = -1;
-        urlComp.dwExtraInfoLength = -1;
-
-        if (!WinHttpCrackUrl(url.c_str(), url.length(), 0, &urlComp)) {
-            throw std::runtime_error("Failed to parse URL");
-        }
-
-        std::wstring hostName(urlComp.lpszHostName, urlComp.dwHostNameLength);
-        std::wstring urlPath(urlComp.lpszUrlPath, urlComp.dwUrlPathLength);
-
-        hSession = WinHttpOpen(L"JUSTC/1.0",
-                              WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-                              WINHTTP_NO_PROXY_NAME,
-                              WINHTTP_NO_PROXY_BYPASS, 0);
-
-        if (!hSession) {
-            throw std::runtime_error("Failed to create HTTP session");
-        }
-
-        hConnect = WinHttpConnect(hSession, hostName.c_str(),
-                                 urlComp.nPort, 0);
-
-        if (!hConnect) {
-            throw std::runtime_error("Failed to connect to host");
-        }
-
-        hRequest = WinHttpOpenRequest(hConnect, L"GET", urlPath.c_str(),
-                                     NULL, WINHTTP_NO_REFERER,
-                                     WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
-
-        if (!hRequest) {
-            throw std::runtime_error("Failed to create HTTP request");
-        }
-
-        if (!WinHttpSendRequest(hRequest,
-                               WINHTTP_NO_ADDITIONAL_HEADERS, 0,
-                               WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
-            throw std::runtime_error("Failed to send HTTP request");
-        }
-
-        if (!WinHttpReceiveResponse(hRequest, NULL)) {
-            throw std::runtime_error("Failed to receive HTTP response");
-        }
-
-        DWORD dwSize = 0;
-        DWORD dwDownloaded = 0;
-        char* pszOutBuffer;
-
-        do {
-            dwSize = 0;
-            if (!WinHttpQueryDataAvailable(hRequest, &dwSize)) {
-                throw std::runtime_error("Error in WinHttpQueryDataAvailable");
+        if (response.status_code >= 400) {
+            if (response.text.empty()) {
+                throw std::runtime_error("HTTP Request failed with status " + std::to_string(response.status_code));
+            } else {
+                std::cerr << "[JUSTC] HTTP Request succeeded, but with status " << response.status_code << std::endl;
             }
+        }
 
-            if (dwSize == 0) break;
+        if (response.error) {
+            throw std::runtime_error("HTTP Request failed: " + response.error.message);
+        }
 
-            pszOutBuffer = new char[dwSize + 1];
-            if (!pszOutBuffer) {
-                throw std::runtime_error("Out of memory");
-            }
-
-            ZeroMemory(pszOutBuffer, dwSize + 1);
-
-            if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer,
-                                dwSize, &dwDownloaded)) {
-                delete[] pszOutBuffer;
-                throw std::runtime_error("Error in WinHttpReadData");
-            }
-
-            result.append(pszOutBuffer, dwDownloaded);
-            delete[] pszOutBuffer;
-
-        } while (dwSize > 0);
+        return response.text;
 
     } catch (const std::exception& e) {
-        result = "HTTP Error: " + std::string(e.what());
+        return "HTTP Error: " + std::string(e.what());
     }
-
-    if (hRequest) WinHttpCloseHandle(hRequest);
-    if (hConnect) WinHttpCloseHandle(hConnect);
-    if (hSession) WinHttpCloseHandle(hSession);
-
-    return result;
-}
-
-#else
-// Linux/macOS (libcurl)
-
-#include <curl/curl.h>
-
-static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
-    ((std::string*)userp)->append((char*)contents, size * nmemb);
-    return size * nmemb;
-}
-
-std::string Fetch::executeHttpRequest(const std::string& url) {
-    CURL* curl;
-    CURLcode res;
-    std::string readBuffer;
-
-    curl = curl_easy_init();
-    if (curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "JUSTC/1.0");
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-
-        res = curl_easy_perform(curl);
-
-        if (res != CURLE_OK) {
-            readBuffer = "HTTP Error: " + std::string(curl_easy_strerror(res));
-        }
-
-        curl_easy_cleanup(curl);
-    } else {
-        readBuffer = "HTTP Error: Failed to initialize curl";
-    }
-
-    return readBuffer;
 }
 
 #endif

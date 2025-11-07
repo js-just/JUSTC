@@ -1,3 +1,25 @@
+# MIT License
+#
+# Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 cmake_minimum_required(VERSION 3.10)
 project(JUSTC LANGUAGES CXX)
 
@@ -19,14 +41,10 @@ if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
-find_package(CURL REQUIRED)
+find_package(cpr REQUIRED)
 
-if(CURL_FOUND)
-    message(STATUS "Found CURL: ${CURL_VERSION}")
-endif()
-
-if(WIN32)
-    set(WINHTTP_LIBRARIES "winhttp.lib")
+if(cpr_FOUND)
+    message(STATUS "Found CPR: ${cpr_VERSION}")
 endif()
 
 # set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
@@ -51,12 +69,10 @@ target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
-if(CURL_FOUND)
-    target_link_libraries(justc_core PRIVATE CURL::libcurl)
-elseif(WIN32)
-    target_link_libraries(justc_core PRIVATE ${WINHTTP_LIBRARIES})
+if(cpr_FOUND)
+    target_link_libraries(justc_core PRIVATE cpr::cpr)
 else()
-    message(WARNING "CURL library not found - HTTP functionality will be limited")
+    message(WARNING "CPR library not found")
 endif()
 
 target_link_libraries(justc PRIVATE justc_core)

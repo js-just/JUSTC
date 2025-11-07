@@ -876,19 +876,6 @@ Value Parser::parsePrimary(bool doExecute) {
         result.type = DataType::VARIABLE;
         result.string_value = varName;
         advance();
-        bool continue_() {
-            return (match(".") && tokens[position + 1].type == "identifier");
-        }
-        if (continue_()) {
-            while (continue_()) {
-                advance();
-                result.string_value += "." + currentToken().value;
-                advance();
-                if (isEnd()) {
-                    throw std::runtime_error("Unexpected EOF");
-                }
-            }
-        }
         return result;
     }
     else if (match("keyword") && peekToken().type == "(") {

@@ -27,6 +27,7 @@ SOFTWARE.
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include "lexer.h"
 #include "parser.h"
 #include "json.hpp"
@@ -36,12 +37,61 @@ SOFTWARE.
 #include <stdexcept>
 #include <tuple>
 
+class OutputRedirector {
+private:
+    std::streambuf* originalCout;
+    std::streambuf* originalCerr;
+    std::stringstream silentBuffer;
+    bool silent;
+    bool redirectErrors;
+
+public:
+    OutputRedirector(bool silentMode, bool redirectErrors = false)
+        : silent(silentMode), redirectErrors(redirectErrors) {
+        if (silent) {
+            originalCout = std::cout.rdbuf();
+            std::cout.rdbuf(silentBuffer.rdbuf());
+
+            if (redirectErrors) {
+                originalCerr = std::cerr.rdbuf();
+                std::cerr.rdbuf(silentBuffer.rdbuf());
+            }
+        }
+    }
+
+    ~OutputRedirector() {
+        restore();
+    }
+
+    void restore() {
+        if (silent) {
+            std::cout.rdbuf(originalCout);
+            if (redirectErrors) {
+                std::cerr.rdbuf(originalCerr);
+            }
+        }
+    }
+
+    void outputError(const std::string& error) {
+        if (silent) {
+            restore();
+            std::cerr << error << std::endl;
+            std::cout.rdbuf(silentBuffer.rdbuf());
+            if (redirectErrors) {
+                std::cerr.rdbuf(silentBuffer.rdbuf());
+            }
+        } else {
+            std::cerr << error << std::endl;
+        }
+    }
+};
+
 void printUsage() {
     std::cout << "" << std::endl;
     std::cout << "Just an Ultimate Site Tool Configuration language (JUSTC) v" + JUSTC_VERSION << std::endl;
     std::cout << "https://just.js.org/justc" << std::endl;
     std::cout << "" << std::endl;
-    std::cout << "Usage: justc   [ flags ( [ arguments ] ) ]   [ input.justc ] ( [ output.json ] )" << std::endl;
+    std::cout << "Usage: justc   [ flags ( [ arguments ] ) ]   [ input.justc | input.json ] ( [ output.json | output.justc | output.xml | output.yaml ] )" << std::endl;
     std::cout << "       justc <file.justc>               - Execute JUSTC file" << std::endl;
     std::cout << "       justc <file.justc> <file.json>   - Execute JUSTC file and output to JSON file" << std::endl;
     std::cout << "       justc -e \"<code>\"                - Execute JUSTC code" << std::endl;
@@ -52,11 +102,13 @@ void printUsage() {
     std::cout << "  -E, --execute                         - Execute JUSTC from lexer output tokens as JSON" << std::endl;
     std::cout << "  -h, --help                            - Print JUSTC command line options (this list)" << std::endl;
     std::cout << "  -j, --json                            - Output as JSON (default)" << std::endl;
+    std::cout << "  -J, --justc                           - Output as JUSTC, input should be JSON" << std::endl;
     std::cout << "  -l, --lexer                           - Run lexer only / Tokenize" << std::endl;
     std::cout << "  -P, --parser                          - Run parser only / Parse JUSTC (not execute) from lexer output tokens as JSON" << std::endl;
     std::cout << "  -p, --parse                           - Parse JUSTC (not execute) / No HTTP requests, some commands will not be executed" << std::endl;
     std::cout << "  -r, --result                          - Print result" << std::endl;
     std::cout << "  -s <commit sha>, --sha <commit sha>   - Set commit SHA" << std::endl;
+    std::cout << "  -S, --silent                          - Suppress all output except errors and results" << std::endl;
     std::cout << "  -v, --version                         - Print JUSTC version" << std::endl;
     std::cout << "  -x, --xml                             - Output as XML" << std::endl;
     std::cout << "  -y, --yaml                            - Output as YAML" << std::endl;
@@ -65,12 +117,20 @@ void printUsage() {
     std::cout << "\"Run lexer only\" means that JUSTC won't be executed and/or parsed, JUSTC will only be tokenized." << std::endl;
     std::cout << "" << std::endl;
 }
-void throwError(const std::string& error) {
+void throwError(const std::string& error, OutputRedirector* redirector = nullptr) {
     const char* githubActions = std::getenv("GITHUB_ACTIONS");
     if (githubActions && std::string(githubActions) == "true") {
-        std::cerr << "::error::" << error << std::endl;
+        if (redirector) {
+            redirector->outputError("::error::" + error);
+        } else {
+            std::cerr << "::error::" << error << std::endl;
+        }
     } else {
-        std::cerr << error << std::endl;
+        if (redirector) {
+            redirector->outputError(error);
+        } else {
+            std::cerr << error << std::endl;
+        }
     }
     std::exit(1);
 }
@@ -107,6 +167,7 @@ struct cmdFlags {
     bool gotFileOrCode = false;
     bool outputToFile = false;
     bool noInput = false;
+    bool silentMode = false;
 
     bool waitingForVersion = false;
     bool waitingForConfig = false;
@@ -137,6 +198,8 @@ int main(int argc, char* argv[]) {
         printUsage();
         return 1;
     }
+
+    OutputRedirector* outputRedirector = nullptr;
 
     try {
         cmdFlags flags;
@@ -185,7 +248,7 @@ int main(int argc, char* argv[]) {
                 flags.input = readFile(arg);
                 flags.gotFileOrCode = true;
             }
-            else if (arg == "--sha") {
+            else if (arg == "--sha" || arg == "-s") {
                 flags.waitingForCommitSHA = true;
             }
             else if (arg == "--version" || arg == "-v") {
@@ -215,6 +278,13 @@ int main(int argc, char* argv[]) {
             else if (arg == "--yaml" || arg == "-y") {
                 flags.outputMode = "yaml";
             }
+            else if (arg == "--justc" || arg == "-J") {
+                flags.mode = "stringify";
+                flags.outputMode = "justc";
+            }
+            else if (arg == "--silent" || arg == "-S") {
+                flags.silentMode = true;
+            }
 
             // hidden flags. IMPORTANT: DO NOT USE THESE FLAGS! THESE FLAGS ARE ONLY FOR JUST AN ULTIMATE SITE TOOL ENVIRONMENT.
             flags.waitingForVersion = false;
@@ -240,8 +310,12 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        if (flags.silentMode) {
+            outputRedirector = new OutputRedirector(true, false);
+        }
+
         if (flags.input.empty() && !flags.helpandorversionflag) {
-            throw std::runtime_error("No input provided");
+            throwError("No input provided", outputRedirector);
             return 1;
         } else if (flags.input.empty() && flags.helpandorversionflag) {
             flags.noInput = true;
@@ -260,6 +334,12 @@ int main(int argc, char* argv[]) {
                 auto parseResult = Parser::parseTokens(lexerResult, flags.mode == "parserExecute", flags.asynchronously, input);
                 json = outputString(flags, parseResult);
             }
+            else if (flags.mode == "stringify") {
+                json = JsonParser::stringify(flags.input);
+                if (flags.outputMode != "justc") {
+                    throwError("Cannot output JSON converted to JUSTC as \"" + flags.outputMode + "\".", outputRedirector);
+                }
+            }
             else {
                 auto lexerResult = Lexer::parse(flags.input);
                 auto parseResult = Parser::parseTokens(lexerResult.second, flags.executeJUSTC, flags.asynchronously, flags.input);
@@ -267,13 +347,28 @@ int main(int argc, char* argv[]) {
             }
 
             if (flags.outputToConsole) {
+                if (outputRedirector) {
+                    outputRedirector->restore();
+                }
                 std::cout << json << std::endl;
+                if (outputRedirector) {
+                    outputRedirector = new OutputRedirector(true, false);
+                }
             }
             if (flags.outputToFile) {
                 writeFile(flags.output, json);
             }
         }
+
+        if (outputRedirector) {
+            outputRedirector->restore();
+            delete outputRedirector;
+        }
     } catch (const std::exception& e) {
+        if (outputRedirector) {
+            outputRedirector->restore();
+            delete outputRedirector;
+        }
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }

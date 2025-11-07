@@ -27,6 +27,8 @@ SOFTWARE.
 #include "from.json.hpp"
 #include <cstdlib>
 #include <string>
+#include <sstream>
+#include <nlohmann/json.hpp>
 
 namespace JsonParser {
 
@@ -93,5 +95,33 @@ bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTok
 
     return !parserTokens.empty();
 }
+
+#ifndef __EMSCRIPTEN__
+std::string stringify(const std::string& input) {
+    nlohmann::json j = nlohmann::json::parse(input);
+    std::ostringstream output;
+
+    bool first = true;
+    for (auto& [name, value] : j.items()) {
+        if (!first) {
+            output << ",";
+        }
+        first = false;
+
+        output << name << "=";
+        if (value.is_string()) {
+            output << "\"" << value.get<std::string>() << "\"";
+        } else if (value.is_boolean()) {
+            output << (value.get<bool>() ? "y" : "n");
+        } else if (value.is_null()) {
+            output << "";
+        } else {
+            output << value;
+        }
+    }
+    output << ".";
+    return output.str();
+}
+#endif
 
 }

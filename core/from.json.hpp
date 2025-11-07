@@ -33,6 +33,9 @@ SOFTWARE.
 
 namespace JsonParser {
     bool parseJsonTokens(const char* tokensJson, std::vector<ParserToken>& parserTokens, std::string& input);
+    #ifndef __EMSCRIPTEN__
+    std::string stringify(const std::string& input);
+    #endif
 }
 
 #endif

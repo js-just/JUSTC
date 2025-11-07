@@ -31,6 +31,8 @@ endif()
 
 # set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
 
+include_directories(third-party/nlohmann)
+
 add_library(justc_core
     core/lexer.cpp
     core/parser.cpp

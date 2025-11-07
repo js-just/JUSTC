@@ -49,6 +49,9 @@ justc $FILE.lexer.json $FILE.parser.json -r -P
 echo ""
 echo "parserExecute:"
 justc $FILE.lexer.json $FILE.parsEr.json -r -E
+echo ""
+echo "stringify:"
+justc $FILE.json $FILE.json.justc -r -J
 
 echo ""
 echo "reading outputs"
@@ -57,11 +60,13 @@ RESULT2=$(cat $FILE.lexer.json)
 RESULT3=$(cat $FILE.parse.json)
 RESULT4=$(cat $FILE.parser.json)
 RESULT5=$(cat $FILE.parsEr.json)
+RESULT6=$(cat $FILE.json.justc)
 echo "Executed:           $RESULT"
 echo "Parsed (string):    $RESULT3"
 echo "Tokenized:          $RESULT2"
 echo "Parsed (tokens):    $RESULT4"
 echo "Parsed (tokens,-E): $RESULT5"
+echo "Stringified:        $RESULT6"
 
 echo ""
 echo "executing JUSTC to XML"

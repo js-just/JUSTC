@@ -37,7 +37,8 @@ Lexer::Lexer(const std::string& input) : input(input), position(0), dollarBefore
         throw std::invalid_argument("Invalid Input.");
     }
     initializeKeywords();
-    tokenize(input);
+    std::string inpt = input;
+    tokenize(inpt);
 }
 
 void Lexer::initializeKeywords() {

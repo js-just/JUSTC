@@ -97,7 +97,7 @@ else()
 endif()
 target_link_libraries(justc_core PRIVATE quickjs)
 
-target_link_libraries(justc PRIVATE justc_core)
+target_link_libraries(justc PRIVATE justc_core quickjs)
 
 install(TARGETS justc DESTINATION bin)
 

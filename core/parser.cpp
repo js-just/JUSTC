@@ -45,16 +45,18 @@ SOFTWARE.
 #include <emscripten/val.h>
 using namespace emscripten;
 std::string runJavaScript(const std::string& script, const std::string position) {
+    std::string output;
     try {
         val window = val::global("window");
         val result = window.call<val>("eval", script);
 
         if (result.typeOf().as<std::string>() != "undefined") {
-            return result.as<std::string>();
+            output = result.as<std::string>();
         }
     } catch (const std::exception& e) {
         throw std::runtime_error("JavaScript error at " + position + ":\n" + e.what());
     }
+    return output;
 }
 #else
 #include "run.js.hpp"
@@ -951,7 +953,7 @@ Value Parser::parsePrimary(bool doExecute) {
     else if (match("JavaScript")) {
         #ifdef __EMSCRIPTEN__
 
-        Value result = stringToValue(runJavaScript(currentToken().value, Utility::position(currentToken().startPos, input)));
+        Value result = stringToValue(runJavaScript(currentToken().value, Utility::position(currentToken().start, input)));
         advance();
         return result;
 
@@ -959,7 +961,7 @@ Value Parser::parsePrimary(bool doExecute) {
 
         std::pair<std::string, bool> jsresult = JavaScript::Eval(currentToken().value);
         if (jsresult.second) {
-            throw std::runtime_error("JavaScript error at " + Utility::position(currentToken().startPos, input) + ":\n" + jsresult.first);
+            throw std::runtime_error("JavaScript error at " + Utility::position(currentToken().start, input) + ":\n" + jsresult.first);
         }/* else {
             addLog("JAVASCRIPT", jsresult.first, currentToken().start);
             std::cout << jsresult.first << std::endl;

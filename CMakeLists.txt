@@ -41,6 +41,11 @@ if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
+include(FetchContent)
+FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
+                         GIT_TAG 3591f20e82338d0a21733045f59accd2d476d84f) # CPR 1.9.8
+FetchContent_MakeAvailable(cpr)
+
 find_package(cpr REQUIRED)
 
 if(cpr_FOUND)

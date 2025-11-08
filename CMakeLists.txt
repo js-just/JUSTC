@@ -41,7 +41,6 @@ if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
-set(crp_DIR third-party/dir/cpr)
 find_package(cpr REQUIRED)
 
 if(cpr_FOUND)
@@ -50,7 +49,7 @@ endif()
 
 # set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
 
-include_directories(third-party/include)
+include_directories(third-party)
 
 add_library(justc_core
     core/lexer.cpp

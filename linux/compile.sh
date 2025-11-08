@@ -40,3 +40,5 @@ fi
 if ! command -v justc &> /dev/null; then
     echo -e "::error::CMake error." && exit 1
 fi
+
+sudo ldconfig

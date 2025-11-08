@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-#include "import.hpp"
+#include "run.js.hpp"
 #include <string>
 #include <cstring>
 #include <sstream>

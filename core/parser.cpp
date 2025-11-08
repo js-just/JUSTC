@@ -44,14 +44,60 @@ SOFTWARE.
     #include <emscripten/bind.h>
     #include <emscripten/val.h>
     using namespace emscripten;
-    std::string runJavaScript(const std::string& script, const std::string position) {
-        std::string output;
+    Value runJavaScript(const std::string& script, const std::string position, const bool warning) {
+        Value output;
+        output.name = "{{" + script + "}}";
         try {
             val window = val::global("window");
             val result = window.call<val>("eval", script);
 
-            if (result.typeOf().as<std::string>() != "undefined") {
-                output = result.as<std::string>();
+            std::string result_type = result.typeOf().as<std::string>();
+            if (result.isNull() || result.isUndefined()) {
+
+                output.type = DataType::NULL_TYPE;
+                output.string_value = "null";
+
+            } else if (result_type == "string") {
+
+                output.type = DataType::STRING;
+                output.string_value = result.as<std::string>();
+
+            } else if (result_type == "number") {
+
+                output.type = DataType::NUMBER;
+                output.number_value = result.as<double>();
+
+            } else if (result_type == "boolean") {
+
+                output.type = DataType::BOOLEAN;
+                output.boolean_value = result.as<bool>();
+
+            } else if (result_type == "object") {
+
+                val JSON = val::global("JSON");
+                val json_string_val = JSON.call<val>("stringify", result);
+
+                if (result.isArray()) {
+                    output.type = DataType::JSON_ARRAY;
+                } else {
+                    output.type = DataType::JSON_OBJECT;
+                }
+                output.string_value = json_string_val.as<std::string>();
+
+            } else {
+
+                val String_global = val::global("String");
+                val coerced_string_val = String_global.call<val>("call", val::undefined(), result);
+
+                output.type = DataType::STRING;
+                output.string_value = coerced_string_val.as<std::string>();
+
+                if (warning) {
+                    EM_ASM({
+                        console.warn('[JUSTC] (' + UTF8ToString($0) + ') Unsupported JavaScript output type ("' + UTF8ToString($1) + '") was converted to a string at', UTF8ToString($2));
+                    }, getCurrentTimestamp().c_str(), output.string_value.c_str(), position.c_str());
+                }
+
             }
         } catch (const std::exception& e) {
             throw std::runtime_error("JavaScript error at " + position + ":\n" + e.what());
@@ -401,6 +447,29 @@ ParseResult Parser::parse(bool doExecute) {
                     throw std::runtime_error("After end of script - Unexpected token \"" + tokens[position + 1].value + "\" at " + Utility::position(position + 1, input) + ".");
                 }
                 break;
+            } else if (match("JavaScript")) {
+                if (doExecute) {
+                    #ifdef __EMSCRIPTEN__
+
+                    Value result = runJavaScript(currentToken().value, Utility::position(position, input), false);
+                    addLog("JAVASCRIPT", Utility::value2string(result), position);
+                    if (result.type != DataType::NULL_TYPE) {
+                        std::cout << Utility::value2string(result) << std::endl;
+                    }
+
+                    #else
+
+                    std::pair<std::string, bool> jsresult = JavaScript::Eval(currentToken().value);
+                    if (jsresult.second) {
+                        throw std::runtime_error("JavaScript error at " + Utility::position(position, input) + ":\n" + jsresult.first);
+                    } else {
+                        addLog("JAVASCRIPT", jsresult.first, position);
+                        std::cout << jsresult.first << std::endl;
+                    }
+
+                    #endif
+                }
+                advance();
             } else {
                 throw std::runtime_error("Unexpected token \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
             }
@@ -950,10 +1019,11 @@ Value Parser::parsePrimary(bool doExecute) {
         result.name = objectstr;
         return result;
     }
-    else if (match("JavaScript")) {
+    else if (match("JavaScript") && doExecute) {
         #ifdef __EMSCRIPTEN__
 
-        Value result = stringToValue(runJavaScript(currentToken().value, Utility::position(currentToken().start, input)));
+        Value result = runJavaScript(currentToken().value, Utility::position(currentToken().start, input), true);
+        addLog("JAVASCRIPT", Utility::value2string(result), currentToken().start);
         advance();
         return result;
 
@@ -962,14 +1032,21 @@ Value Parser::parsePrimary(bool doExecute) {
         std::pair<std::string, bool> jsresult = JavaScript::Eval(currentToken().value);
         if (jsresult.second) {
             throw std::runtime_error("JavaScript error at " + Utility::position(currentToken().start, input) + ":\n" + jsresult.first);
-        }/* else {
+        } else {
             addLog("JAVASCRIPT", jsresult.first, currentToken().start);
-            std::cout << jsresult.first << std::endl;
-        }*/
+        }
         advance();
         return stringToValue(jsresult.first);
 
         #endif
+    }
+    else if (match("JavaScript")) {
+        #ifdef __EMSCRIPTEN__
+        EM_ASM({
+            console.warn('[JUSTC] (' + UTF8ToString($2) + ') Running lexer and parser only - Cannot run JavaScript', '"' + UTF8ToString($1) + '"', 'at', $0);
+        }, Utility::position(startPos, input).c_str(), currentToken().value.c_str(), getCurrentTimestamp().c_str());
+        #endif
+        return Value.createNull();
     }
 
     throw std::runtime_error("Invalid or unexpected token \"" + currentToken().value + "\" at " + Utility::position(position, input) + ".");

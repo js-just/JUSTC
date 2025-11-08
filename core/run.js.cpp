@@ -27,6 +27,7 @@ SOFTWARE.
 #include "run.js.hpp"
 #include <string>
 #include <cstring>
+#include <vector>
 #include <sstream>
 #include <utility>
 #include <stdexcept>
@@ -47,7 +48,7 @@ void JavaScript::DefineConsole(JSRuntime *qjs_rt, JSContext *qjs_ctx) {
 
     std::vector<std::string> console_functions = {"log", "info", "warn", "error", "debug"};
     for (std::string funcName : console_functions) {
-        JS_SetPropertyStr(qjs_ctx, console_obj, funcName, JS_NewCFunction(qjs_ctx, Print, funcName, 1));
+        JS_SetPropertyStr(qjs_ctx, console_obj, funcName, JS_NewCFunction(qjs_ctx, Print, funcName.c_str(), 1));
     }
 
     JS_SetPropertyStr(qjs_ctx, global_obj, "console", console_obj);

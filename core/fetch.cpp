@@ -29,6 +29,7 @@ SOFTWARE.
 #include "parser.h"
 #include <iostream>
 #include <sstream>
+#include "version.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -43,15 +44,16 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
         return Asyncify.handleSleep(function(wakeUp) {
             try {
                 var url = UTF8ToString($0);
+                var version = UTF8ToString($1);
                 var isBrowser = (typeof window !== 'undefined') && (typeof navigator !== 'undefined');
 
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', url, false);
                 xhr.setRequestHeader('Accept', '*/*');
                 if (!isBrowser) {
-                    xhr.setRequestHeader('User-Agent', 'JUSTC/1.0');
+                    xhr.setRequestHeader('User-Agent', 'JUSTC/' + version);
                 }
-                xhr.setRequestHeader('X-JUSTC', 'JUSTC/1.0');
+                xhr.setRequestHeader('X-JUSTC', 'JUSTC/' + version);
 
                 xhr.onload = function() {
                     var response = xhr.responseText;
@@ -85,7 +87,7 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
                 throw new Error("HTTP Request failed: " + e);
             }
         });
-    }, url.c_str());
+    }, url.c_str(), JUSTC_VERSION.c_str());
 
     std::string resultStr(result);
     free(result);
@@ -101,9 +103,9 @@ std::string Fetch::executeHttpRequest(const std::string& url) {
         cpr::Response response = cpr::Get(
             cpr::Url{url},
             cpr::Header{
-                {"User-Agent", "JUSTC/1.0"},
+                {"User-Agent", "JUSTC/" + JUSTC_VERSION},
                 {"Accept", "*/*"},
-                {"X-JUSTC", "JUSTC/1.0"}
+                {"X-JUSTC", "JUSTC/" + JUSTC_VERSION}
             },
             cpr::Timeout{10000}
         );

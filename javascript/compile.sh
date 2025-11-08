@@ -59,7 +59,8 @@ web() {
         -s ENVIRONMENT='web,worker' \
         -s MODULARIZE=1 \
         -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
-        -s MAXIMUM_MEMORY=256MB
+        -s MAXIMUM_MEMORY=256MB \
+        --bind
     COMPILE_EXIT_CODE=$?
     set -e
 
@@ -94,7 +95,8 @@ node() {
         -s ENVIRONMENT='node' \
         -s MODULARIZE=1 \
         -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
-        -s MAXIMUM_MEMORY=256MB
+        -s MAXIMUM_MEMORY=256MB \
+        --bind
     COMPILE_EXIT_CODE=$?
     set -e
 

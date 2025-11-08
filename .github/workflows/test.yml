@@ -62,7 +62,8 @@ jobs:
             -s ASYNCIFY=1 \
             -s FETCH=1 \
             -s ASYNCIFY_IMPORTS=['emscripten_fetch','emscripten_fetch_close'] \
-            -Os
+            -Os \
+            --bind
             # -s MINIMAL_RUNTIME=2 \
 
             mv test/browser/justc.core.wasm test/browser/justc.wasm

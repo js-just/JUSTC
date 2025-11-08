@@ -55,7 +55,7 @@ void JavaScript::DefineConsole(JSRuntime *qjs_rt, JSContext *qjs_ctx) {
     JS_FreeValue(qjs_ctx, global_obj);
 }
 
-std::pair<std::string, bool> JavaScript::Eval(const std::string& script) {
+std::pair<std::string, bool> JavaScript::Eval(const std::string& script, const bool Console = false) {
     std::stringstream output;
     bool crashed = false;
     JSRuntime *rt = JS_NewRuntime();
@@ -63,7 +63,9 @@ std::pair<std::string, bool> JavaScript::Eval(const std::string& script) {
 
     if (!rt || !ctx) {
         throw std::runtime_error("Failed to initialize QuickJS runtime or context.");
-        return;
+    }
+    if (Console) {
+        DefineConsole(rt, ctx);
     }
 
     JSValue result = JS_Eval(ctx, script.c_str(), script.length(), "<input>", JS_EVAL_TYPE_GLOBAL);

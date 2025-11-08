@@ -32,12 +32,16 @@ SOFTWARE.
 #include <sstream>
 #include <utility>
 #include <stdexcept>
+extern "C" {
+    #include <quickjs.h>
+}
 
 class JavaScript {
     private:
         static JSValue Print(std::stringstream& output, JSContext *ctx, JSValueConst arg, int argc, JSValueConst *argv);
+        static void DefineConsole(JSRuntime *qjs_rt, JSContext *qjs_ctx);
     public:
-        static std::pair<std::string, bool> Eval(const std::string& script);
-}
+        static std::pair<std::string, bool> Eval(const std::string& script, const bool Console = false);
+};
 
 #endif

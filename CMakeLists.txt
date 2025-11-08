@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(JUSTC LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -48,8 +48,8 @@ FetchContent_MakeAvailable(cpr)
 
 find_package(cpr REQUIRED)
 
-if(cpr_FOUND)
-    message(STATUS "Found CPR: ${cpr_VERSION}")
+if(cpr_POPULATED)
+    message(STATUS "CPR successfully populated")
 endif()
 
 # set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
@@ -74,7 +74,7 @@ target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
-if(cpr_FOUND)
+if(cpr_POPULATED)
     target_link_libraries(justc_core PRIVATE cpr::cpr)
 else()
     message(WARNING "CPR library not found")

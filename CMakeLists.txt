@@ -43,9 +43,9 @@ endif()
 
 find_package(cpr QUIET)
 
+include(FetchContent)
 if(NOT cpr_FOUND)
     message(STATUS "CPR not found in system, building from source...")
-    include(FetchContent)
     FetchContent_Declare(cpr
         GIT_REPOSITORY https://github.com/libcpr/cpr.git
         GIT_TAG 3591f20e82338d0a21733045f59accd2d476d84f # CPR 1.9.8
@@ -62,6 +62,13 @@ if(NOT cpr_FOUND)
 else()
     message(STATUS "Found system CPR: ${cpr_VERSION}")
 endif()
+
+message(STATUS "Installing QuickJS CMake...")
+FetchContent_Declare(quickjscmake
+    GIT_REPOSITORY https://github.com/robloach/quickjs-cmake.git
+    GIT_TAG 2021.3.27
+)
+FetchContent_MakeAvailable(quickjscmake)
 
 include_directories(third-party)
 
@@ -88,6 +95,7 @@ if(CPR_BUILT_LOCALLY)
 else()
     target_link_libraries(justc_core PRIVATE cpr::cpr)
 endif()
+target_link_libraries(justc_core PRIVATE quickjs)
 
 target_link_libraries(justc PRIVATE justc_core)
 

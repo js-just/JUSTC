@@ -37,6 +37,38 @@ SOFTWARE.
 #include <stdexcept>
 #include <tuple>
 
+// test QuickJS
+extern "C" {
+    #include <quickjs.h>
+}
+void JavaScript(const std::string& script_code) {
+    JSRuntime *rt = JS_NewRuntime();
+    JSContext *ctx = JS_NewContext(rt);
+
+    if (!rt || !ctx) {
+        std::cerr << "Failed to initialize QuickJS runtime or context." << std::endl;
+        return;
+    }
+
+    JSValue result = JS_Eval(ctx, script_code.c_str(), script_code.length(), "<input>", JS_EVAL_TYPE_GLOBAL);
+
+    if (JS_IsException(result)) {
+        JSValue exception_val = JS_GetException(ctx);
+        const char* exception_str = JS_ToCString(ctx, exception_val);
+        std::cerr << "JavaScript Error: " << exception_str << std::endl;
+        JS_FreeCString(ctx, exception_str);
+        JS_FreeValue(ctx, exception_val);
+    } else {
+        const char* result_str = JS_ToCString(ctx, result);
+        std::cout << "JavaScript Result: " << result_str << std::endl;
+        JS_FreeCString(ctx, result_str);
+    }
+
+    JS_FreeValue(ctx, result);
+    JS_FreeContext(ctx);
+    JS_FreeRuntime(rt);
+}
+
 class OutputRedirector {
 private:
     std::streambuf* originalCout;
@@ -194,6 +226,8 @@ std::string outputString(cmdFlags flags, Args... args) {
     }
 }
 int main(int argc, char* argv[]) {
+    JavaScript("1 + 2 * 3");
+
     if (argc < 1) {
         printUsage();
         return 1;

@@ -41,20 +41,28 @@ if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
-include(FetchContent)
-FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
-                         GIT_TAG 3591f20e82338d0a21733045f59accd2d476d84f) # CPR 1.9.8
-FetchContent_MakeAvailable(cpr)
+find_package(cpr QUIET)
 
-if(cpr_POPULATED)
-    message(STATUS "CPR successfully populated")
+if(NOT cpr_FOUND)
+    message(STATUS "CPR not found in system, building from source...")
+    include(FetchContent)
+    FetchContent_Declare(cpr
+        GIT_REPOSITORY https://github.com/libcpr/cpr.git
+        GIT_TAG 3591f20e82338d0a21733045f59accd2d476d84f # CPR 1.9.8
+    )
+
+    set(BUILD_CPR_TESTS OFF CACHE BOOL "Disable CPR tests")
+    set(CPR_BUILD_TESTS OFF CACHE BOOL "Disable CPR tests")
+
+    FetchContent_MakeAvailable(cpr)
+    set(CPR_BUILT_LOCALLY TRUE)
+else()
+    message(STATUS "Found system CPR: ${cpr_VERSION}")
 endif()
-
-# set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
 
 include_directories(third-party)
 
-add_library(justc_core
+add_library(justc_core STATIC
     core/lexer.cpp
     core/parser.cpp
     core/keywords.cpp
@@ -72,14 +80,15 @@ target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
-if(cpr_POPULATED)
-    target_link_libraries(justc_core PRIVATE cpr::cpr)
+if(CPR_BUILT_LOCALLY)
+    target_link_libraries(justc_core PRIVATE cpr)
 else()
-    message(WARNING "CPR library not found")
+    target_link_libraries(justc_core PRIVATE cpr::cpr)
 endif()
 
 target_link_libraries(justc PRIVATE justc_core)
 
+install(TARGETS justc_core DESTINATION lib)
 install(TARGETS justc DESTINATION bin)
 
 if(WIN32)

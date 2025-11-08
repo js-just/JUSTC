@@ -95,7 +95,7 @@ SOFTWARE.
                 if (warning) {
                     EM_ASM({
                         console.warn('[JUSTC] (' + UTF8ToString($0) + ') Unsupported JavaScript output type ("' + UTF8ToString($1) + '") was converted to a string at', UTF8ToString($2));
-                    }, getCurrentTimestamp().c_str(), output.string_value.c_str(), position.c_str());
+                    }, Parser::getCurrentTimestamp().c_str(), output.string_value.c_str(), position.c_str());
                 }
 
             }
@@ -1044,9 +1044,10 @@ Value Parser::parsePrimary(bool doExecute) {
         #ifdef __EMSCRIPTEN__
         EM_ASM({
             console.warn('[JUSTC] (' + UTF8ToString($2) + ') Running lexer and parser only - Cannot run JavaScript', '"' + UTF8ToString($1) + '"', 'at', $0);
-        }, Utility::position(startPos, input).c_str(), currentToken().value.c_str(), getCurrentTimestamp().c_str());
+        }, Utility::position(currentToken().start, input).c_str(), currentToken().value.c_str(), getCurrentTimestamp().c_str());
         #endif
-        return Value.createNull();
+        advance();
+        return Value::createNull();
     }
 
     throw std::runtime_error("Invalid or unexpected token \"" + currentToken().value + "\" at " + Utility::position(position, input) + ".");

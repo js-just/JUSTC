@@ -54,6 +54,9 @@ if(NOT cpr_FOUND)
     set(BUILD_CPR_TESTS OFF CACHE BOOL "Disable CPR tests")
     set(CPR_BUILD_TESTS OFF CACHE BOOL "Disable CPR tests")
 
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries")
+    set(CPR_BUILD_TESTS OFF CACHE BOOL "Disable CPR tests")
+
     FetchContent_MakeAvailable(cpr)
     set(CPR_BUILT_LOCALLY TRUE)
 else()
@@ -88,7 +91,6 @@ endif()
 
 target_link_libraries(justc PRIVATE justc_core)
 
-install(TARGETS justc_core DESTINATION lib)
 install(TARGETS justc DESTINATION bin)
 
 if(WIN32)

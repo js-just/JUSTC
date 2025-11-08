@@ -244,6 +244,7 @@ private:
     void evaluateAllVariables();
     void evaluateAllVariablesSync();
     void evaluateAllVariablesAsync();
+    std::runtime_error typeDeclarationError(const DataType left, const DataType right, const ASTNode node);
     Value applyTypeDeclaration(const Value value, const ASTNode node);
     Value evaluateASTNode(const ASTNode& node);
     void extractReferences(const Value& value, std::vector<std::string>& references);

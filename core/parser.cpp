@@ -136,10 +136,6 @@ bool Value::toBoolean() const {
         case DataType::LINK:
         case DataType::PATH:
         case DataType::VARIABLE:
-            return true;
-        case DataType::NULL_TYPE:
-        case DataType::NOT_A_NUMBER:
-            return false;
         case DataType::INFINITE:
             return true;
         default:
@@ -1449,7 +1445,7 @@ Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
                     result.boolean_value = (value.number_value > 0);
                     break;
                 case DataType::STRING:
-                    result.boolean_value = value::toBoolean();
+                    result.boolean_value = value.toBoolean();
                     break;
                 case DataType::NULL_TYPE:
                     result.boolean_value = false;

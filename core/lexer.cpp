@@ -30,6 +30,9 @@ SOFTWARE.
 #include <cctype>
 #include <algorithm>
 #include <regex>
+#include <string>
+#include <cstring>
+#include <sstream>
 #include "utility.h"
 
 Lexer::Lexer(const std::string& input) : input(input), position(0), dollarBefore(false) {
@@ -362,6 +365,27 @@ void Lexer::tokenize() {
         if (isDigit(ch)) {
             addDollarBefore();
             tokens.push_back(readNumber());
+            continue;
+        }
+
+        if (ch == '{' && peek() == '{') {
+            addDollarBefore();
+            std::stringstream JavaScript;
+            size_t brackets = 2;
+            size_t startPos = position;
+            position += 2;
+            while(position < input.length() && brackets > 0) {
+                JavaScript << input[position];
+                if (input[position] == '{') {
+                    brackets++;
+                } else if (input[position] == '}') {
+                    brackets--;
+                }
+                position++;
+            }
+            std::string JavaScript_str = JavaScript.str();
+            std::string result = JavaScript_str.substr(0, JavaScript_str.size() - 2); // remove "}}" at the end
+            tokens.push_back(ParserToken{"JavaScript", result, startPos});
             continue;
         }
 

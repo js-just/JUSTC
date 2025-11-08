@@ -82,6 +82,7 @@ add_library(justc_core STATIC
     core/to.xml.cpp
     core/to.yaml.cpp
     core/utility.cpp
+    core/run.js.cpp
 )
 
 add_executable(justc core/main.cpp)

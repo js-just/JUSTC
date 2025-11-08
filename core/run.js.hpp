@@ -32,9 +32,6 @@ SOFTWARE.
 #include <sstream>
 #include <utility>
 #include <stdexcept>
-extern "C" {
-    #include <quickjs.h>
-}
 
 class JavaScript {
     private:

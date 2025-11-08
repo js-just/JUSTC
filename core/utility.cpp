@@ -175,7 +175,7 @@ Value Utility::convert(const Value value, const DataType type) {
             result.name = double2octString(value.number_value);
             break;
         default: // warning: 15 enumeration values not handled in switch: 'UNKNOWN', 'JUSTC_OBJECT', 'STRING'... [-Wswitch]
-            throw std::runtime_error("JUSTC/core/utility.cpp error: Incorrect usage.")
+            throw std::runtime_error("JUSTC/core/utility.cpp error: Incorrect usage.");
     }
     return result;
 }

@@ -40,26 +40,26 @@ SOFTWARE.
 #include <vector>
 
 #ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#include <emscripten/bind.h>
-#include <emscripten/val.h>
-using namespace emscripten;
-std::string runJavaScript(const std::string& script, const std::string position) {
-    std::string output;
-    try {
-        val window = val::global("window");
-        val result = window.call<val>("eval", script);
+    #include <emscripten.h>
+    #include <emscripten/bind.h>
+    #include <emscripten/val.h>
+    using namespace emscripten;
+    std::string runJavaScript(const std::string& script, const std::string position) {
+        std::string output;
+        try {
+            val window = val::global("window");
+            val result = window.call<val>("eval", script);
 
-        if (result.typeOf().as<std::string>() != "undefined") {
-            output = result.as<std::string>();
+            if (result.typeOf().as<std::string>() != "undefined") {
+                output = result.as<std::string>();
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error("JavaScript error at " + position + ":\n" + e.what());
         }
-    } catch (const std::exception& e) {
-        throw std::runtime_error("JavaScript error at " + position + ":\n" + e.what());
+        return output;
     }
-    return output;
-}
 #else
-#include "run.js.hpp"
+    #include "run.js.hpp"
 #endif
 
 std::string Value::toString() const {

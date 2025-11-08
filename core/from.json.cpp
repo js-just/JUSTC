@@ -104,7 +104,9 @@ std::string stringify(const std::string& input) {
     std::ostringstream output;
 
     bool first = true;
-    for (auto& [name, value] : j.items()) {
+    for (auto& item : j.items()) {
+        std::string name = item.key();
+        auto& value = item.value();
         if (!first) {
             output << ",";
         }

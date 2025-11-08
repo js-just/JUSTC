@@ -126,11 +126,12 @@ bool Value::toBoolean() const {
                 return result;
             };
             std::string lower = toLower(string_value);
-            if (lower == "false" || lower == "no" || lower == "n" ||
-                lower == "null" || lower == "nil") {
-                return false;
+            if (lower == "true" || lower == "yes" || lower == "y" ||
+                   lower == "+" ||  lower == "1"  || lower == "!0"
+            ) {
+                return true;
             }
-            return true;
+            return false;
         }
         case DataType::LINK:
         case DataType::PATH:
@@ -1398,6 +1399,76 @@ void Parser::evaluateAllVariables() {
     }
 }
 
+std::runtime_error Parser::typeDeclarationError(const DataType left, const DataType right, const ASTNode node) {
+    return std::runtime_error("Type declaration error: Cannot convert " + dataTypeToString(left) + " to " + dataTypeToString(right) + " at " + Utility::position(node.startPos, input) + ".");
+}
+
+Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
+    DataType typeDeclaration = node.typeDeclaration;
+    Value result = value;
+    if (typeDeclaration == result.type) return result;
+    switch (typeDeclaration) {
+        case DataType::UNKNOWN:
+            break;
+        case DataType::NUMBER:
+        case DataType::HEXADECIMAL:
+        case DataType::OCTAL:
+        case DataType::BINARY:
+            switch (result.type) {
+                case DataType::NUMBER:
+                case DataType::HEXADECIMAL:
+                case DataType::OCTAL:
+                case DataType::BINARY:
+                    result = Utility::convert(result, typeDeclaration);
+                    break;
+                default:
+                    throw typeDeclarationError(result.type, typeDeclaration, node);
+                    break;
+            }
+            break;
+        case DataType::STRING:
+            result.type = DataType::STRING;
+            result.string_value = Utility::value2string(value);
+            break;
+        case DataType::LINK:
+            if (result.type == DataType::STRING) {
+                if (isValidLink(result.string_value)) {
+                    result.type = DataType::LINK;
+                } else {
+                    throw std::runtime_error("Type declaration error: Invalid link: " + result.string_value);
+                }
+            }
+            break;
+        case DataType::BOOLEAN:
+            result.type = DataType::BOOLEAN;
+            switch (result.type) {
+                case DataType::NUMBER:
+                case DataType::HEXADECIMAL:
+                case DataType::OCTAL:
+                case DataType::BINARY:
+                    result.boolean_value = (value.number_value > 0);
+                    break;
+                case DataType::STRING:
+                    result.boolean_value = value::toBoolean();
+                    break;
+                case DataType::NULL_TYPE:
+                    result.boolean_value = false;
+                    break;
+                case DataType::INFINITE:
+                    result.boolean_value = true;
+                    break;
+                default:
+                    throw typeDeclarationError(result.type, typeDeclaration, node);
+                    break;
+            }
+            break;
+        default:
+            throw typeDeclarationError(result.type, typeDeclaration, node);
+            break;
+    }
+    return result;
+}
+
 Value Parser::evaluateASTNode(const ASTNode& node) {
     if (node.type == "VARIABLE_DECLARATION") {
         Value result = node.value;
@@ -1407,10 +1478,11 @@ Value Parser::evaluateASTNode(const ASTNode& node) {
             if (refVar == node.identifier) {
                 throw std::runtime_error("Variable cannot reference itself: " + node.identifier);
             }
-            return resolveVariableValue(refVar, true);
+            Value varval = resolveVariableValue(refVar, true);
+            return applyTypeDeclaration(varval, node);
         }
 
-        return result;
+        return applyTypeDeclaration(result, node);
     }
 
     return node.value;

@@ -37,49 +37,49 @@ SOFTWARE.
 #include "version.h"
 
 enum class DataType {
-    JUSTC_OBJECT = 0,
-    NUMBER = 1,
-    STRING = 2,
-    LINK = 3,
-    BOOLEAN = 4,
-    JSON_OBJECT = 5,
-    JSON_ARRAY = 6,
-    NULL_TYPE = 7,
-    HEXADECIMAL = 9,
-    BINARY = 11,
-    PATH = 12,
-    ERROR = 13,
-    VARIABLE = 14,
-    FUNCTION = 15,
+    JUSTC_OBJECT =  0,
+    NUMBER       =  1,
+    STRING       =  2,
+    LINK         =  3,
+    BOOLEAN      =  4,
+    JSON_OBJECT  =  5,
+    JSON_ARRAY   =  6,
+    NULL_TYPE    =  7,
+    HEXADECIMAL  =  9,
+    BINARY       = 11,
+    PATH         = 12,
+    ERROR        = 13,
+    VARIABLE     = 14,
+    FUNCTION     = 15,
     NOT_A_NUMBER = 17,
-    INFINITE = 18,
+    INFINITE     = 18,
     SYNTAX_ERROR = 19,
-    OCTAL = 20,
-    UNKNOWN = -1
+    OCTAL        = 20,
+    UNKNOWN      =-1
 };
 
 inline std::string dataTypeToString(DataType type) {
     switch (type) {
         case DataType::JUSTC_OBJECT: return "Object";
-        case DataType::NUMBER: return "Number";
-        case DataType::STRING: return "String";
-        case DataType::LINK: return "Link";
-        case DataType::BOOLEAN: return "Boolean";
-        case DataType::JSON_OBJECT: return "JSON Object";
-        case DataType::JSON_ARRAY: return "JSON Array";
-        case DataType::NULL_TYPE: return "null";
-        case DataType::HEXADECIMAL: return "Hexadecimal number";
-        case DataType::BINARY: return "Binary number";
-        case DataType::PATH: return "Path";
-        case DataType::ERROR: return "Error";
-        case DataType::VARIABLE: return "Variable";
-        case DataType::FUNCTION: return "Function";
+        case DataType::NUMBER:       return "Number";
+        case DataType::STRING:       return "String";
+        case DataType::LINK:         return "Link";
+        case DataType::BOOLEAN:      return "Boolean";
+        case DataType::JSON_OBJECT:  return "JSON Object";
+        case DataType::JSON_ARRAY:   return "JSON Array";
+        case DataType::NULL_TYPE:    return "null";
+        case DataType::HEXADECIMAL:  return "Hexadecimal number";
+        case DataType::BINARY:       return "Binary number";
+        case DataType::PATH:         return "Path";
+        case DataType::ERROR:        return "Error";
+        case DataType::VARIABLE:     return "Variable";
+        case DataType::FUNCTION:     return "Function";
         case DataType::NOT_A_NUMBER: return "NaN";
-        case DataType::INFINITE: return "Infinity";
+        case DataType::INFINITE:     return "Infinity";
         case DataType::SYNTAX_ERROR: return "Syntax Error";
-        case DataType::OCTAL: return "Octal number";
-        case DataType::UNKNOWN: return "unknown";
-        default: return "unknown";
+        case DataType::OCTAL:        return "Octal number";
+        case DataType::UNKNOWN:      return "unknown";
+        default:                     return "unknown";
     }
 };
 
@@ -244,6 +244,7 @@ private:
     void evaluateAllVariables();
     void evaluateAllVariablesSync();
     void evaluateAllVariablesAsync();
+    Value applyTypeDeclaration(const Value value, const ASTNode node);
     Value evaluateASTNode(const ASTNode& node);
     void extractReferences(const Value& value, std::vector<std::string>& references);
 

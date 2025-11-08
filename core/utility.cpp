@@ -134,21 +134,21 @@ std::string Utility::position(const size_t& pos_, const std::string& script) {
 
 DataType Utility::typeDeclaration2dataType(const std::string& typeDeclaration, const std::string& position) {
     static const std::unordered_map<std::string, DataType> typeMap = {
-        {"number", DataType::NUMBER},               {"num", DataType::NUMBER},
-        {"string", DataType::STRING},               {"str", DataType::STRING},
-        {"boolean", DataType::BOOLEAN},             {"bool", DataType::BOOLEAN},
-        {"null", DataType::NULL_TYPE},              {"nil", DataType::NULL_TYPE},
-        {"link", DataType::LINK},
-        {"path", DataType::PATH},
-        {"binary", DataType::BINARY},               {"bin", DataType::BINARY},
-        {"octal", DataType::OCTAL},                 {"oct", DataType::OCTAL},
-        {"hexadecimal", DataType::HEXADECIMAL},     {"hex", DataType::HEXADECIMAL},
-        {"object", DataType::JUSTC_OBJECT},         {"obj", DataType::JUSTC_OBJECT},
-        {"json", DataType::JSON_OBJECT},
-        {"array", DataType::JSON_ARRAY},
-        {"nan", DataType::NOT_A_NUMBER},
-        {"infinity", DataType::INFINITE},           {"inf", DataType::INFINITE},
-        {"auto", DataType::UNKNOWN},
+        { "number",      DataType::NUMBER       },     { "num",  DataType::NUMBER       },
+        { "string",      DataType::STRING       },     { "str",  DataType::STRING       },
+        { "boolean",     DataType::BOOLEAN      },     { "bool", DataType::BOOLEAN      },
+        { "null",        DataType::NULL_TYPE    },     { "nil",  DataType::NULL_TYPE    },
+        { "link",        DataType::LINK         },
+        { "path",        DataType::PATH         },
+        { "binary",      DataType::BINARY       },     { "bin",  DataType::BINARY       },
+        { "octal",       DataType::OCTAL        },     { "oct",  DataType::OCTAL        },
+        { "hexadecimal", DataType::HEXADECIMAL  },     { "hex",  DataType::HEXADECIMAL  },
+        { "object",      DataType::JUSTC_OBJECT },     { "obj",  DataType::JUSTC_OBJECT },
+        { "json",        DataType::JSON_OBJECT  },
+        { "array",       DataType::JSON_ARRAY   },
+        { "nan",         DataType::NOT_A_NUMBER },
+        { "infinity",    DataType::INFINITE     },     { "inf",  DataType::INFINITE     },
+        { "auto",        DataType::UNKNOWN      },
     };
 
     auto it = typeMap.find(typeDeclaration);
@@ -157,4 +157,23 @@ DataType Utility::typeDeclaration2dataType(const std::string& typeDeclaration, c
     }
 
     throw std::runtime_error("Invalid type declaration \"" + typeDeclaration + "\" at " + position + ".");
+}
+
+Value Utility::convert(const Value value, const DataType type) {
+    Value result = value;
+    result.type = type;
+    switch (type) {
+        case DataType::NUMBER:
+            break;
+        case DataType::BINARY:
+            result.name = double2binString(value.number_value);
+            break;
+        case DataType::HEXADECIMAL:
+            result.name = double2hexString(value.number_value);
+            break;
+        case DataType::OCTAL:
+            result.name = double2octString(value.number_value);
+            break;
+    }
+    return result;
 }

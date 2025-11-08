@@ -41,6 +41,7 @@ public:
     static std::pair<size_t, size_t> pos(const size_t& pos, const std::string& script);
     static std::string position(const size_t& pos_, const std::string& script);
     static DataType typeDeclaration2dataType(const std::string& typeDeclaration, const std::string& position);
+    static Value convert(const Value value, const DataType type);
 };
 
 #endif

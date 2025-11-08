@@ -43,10 +43,10 @@ std::string XmlSerializer::escapeXmlString(const std::string& str) {
     for (size_t i = 0; i < str.length(); i++) {
         char c = str[i];
         switch (c) {
-            case '&': ss << "&amp;"; break;
-            case '<': ss << "&lt;"; break;
-            case '>': ss << "&gt;"; break;
-            case '"': ss << "&quot;"; break;
+            case  '&': ss << "&amp;";  break;
+            case  '<': ss << "&lt;";   break;
+            case  '>': ss << "&gt;";   break;
+            case  '"': ss << "&quot;"; break;
             case '\'': ss << "&apos;"; break;
             default:
                 if (static_cast<unsigned char>(c) >= 0x20 || c == '\n' || c == '\r' || c == '\t') {

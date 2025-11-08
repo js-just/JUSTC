@@ -43,35 +43,35 @@ const std::vector<std::string> keywords = {
 };
 
 const std::unordered_map<std::string, std::string> smallKeywords = {
-    {"T", "TYPE"}, {"G", "GLOBAL"}, {"L", "LOCAL"}, {"SC", "STRICT"},
-    {"A", "ALL"}, {"JS", "JSON"}, {"JC", "JUSTC"}, {"I", "IMPORT"},
-    {"EX", "EXPORT"}, {"CP", "COPY"}, {"RQ", "REQUIRE"}, {"E", "ENV"},
-    {"HJS", "HTTPJSON"}, {"HT", "HTTPTEXT"}, {"HJ", "HTTPJUSTC"},
-    {"HH", "HTTPHOCON"}, {"CO", "CONFIG"}, {"R", "RUN"}, {"O", "VALUE"},
-    {"F", "FILE"}, {"SZ", "SIZE"}, {"ST", "STRING"}, {"SL", "LINK"},
-    {"SN", "STRINGNUM"}, {"S64", "STRINGB64"}, {"S02", "STRINGBIN"},
-    {"S16", "STRINGHEX"}, {"ID", "TYPEID"}, {"OF", "TYPEOF"},
-    {"OUT", "OUTPUT"}, {"RT", "RETURN"}, {"Q", "SQ"}, {"U", "CU"},
-    {"PJ", "PARSEJUSTC"}, {"PJS", "PARSEJSON"}, {"SP", "SPECIFIED"},
-    {"EV", "EVERYTHING"}, {"N", "DISABLED"},
-    {"NUM", "NUMBER"}, {"SO", "STRINGOCT"}, {"B", "BINARY"},
-    {"OC", "OCTAL"}, {"B64", "BASE64"}, {"HEX", "HEXADECIMAL"},
-    {"PH", "PARSEHOCON"}, {"S32", "STRINGB32"}, {"B32", "BASE32"},
-    {"AB", "ABSOLUTE"}, {"CE", "CEIL"}, {"FL", "FLOOR"}, {"AL", "ALLOW"},
-    {"DL", "DISALLOW"}, {"J", "JAVASCRIPT"},
-
-    {"HJC", "HTTPJUSTC"}, {"CF", "CONFIG"},
-    {"S10", "STRINGNUM"}, {"SNUM", "STRINGNUM"}, {"TID", "TYPEID"},
-    {"TO", "TYPEOF"}, {"PUT", "RETURN"}, {"PJC", "PARSEJUSTC"},
-    {"SPEC", "SPECIFIED"}, {"EVERY", "EVERYTHING"}, {"DIS", "DISABLED"},
-    {"SOCT", "STRINGOCT"}, {"S08", "STRINGOCT"}, {"BIN", "BINARY"},
-    {"OCT", "OCTAL"}, {"HEXDEC", "HEXADECIMAL"}, {"B02", "BINARY"},
-    {"B08", "OCTAL"}, {"B10", "NUMBER"}, {"B16", "HEXADECIMAL"},
-    {"ABS", "ABSOLUTE"}
+    {"T",    "TYPE"},       {"G",      "GLOBAL"},      {"L",   "LOCAL"},
+    {"A",    "ALL"},        {"JS",     "JSON"},        {"JC",  "JUSTC"},
+    {"EX",   "EXPORT"},     {"CP",     "COPY"},        {"RQ",  "REQUIRE"},
+    {"HJS",  "HTTPJSON"},   {"HT",     "HTTPTEXT"},    {"HJ",  "HTTPJUSTC"},
+    {"HH",   "HTTPHOCON"},  {"CO",     "CONFIG"},      {"R",   "RUN"},
+    {"F",    "FILE"},       {"SZ",     "SIZE"},        {"ST",  "STRING"},
+    {"SN",   "STRINGNUM"},  {"S64",    "STRINGB64"},   {"S02", "STRINGBIN"},
+    {"S16",  "STRINGHEX"},  {"ID",     "TYPEID"},      {"OF",  "TYPEOF"},
+    {"OUT",  "OUTPUT"},     {"RT",     "RETURN"},      {"Q",   "SQ"},
+    {"PJ",   "PARSEJUSTC"}, {"PJS",    "PARSEJSON"},   {"SP",  "SPECIFIED"},
+    {"EV",   "EVERYTHING"}, {"N",      "DISABLED"},    {"SC",  "STRICT"},
+    {"NUM",  "NUMBER"},     {"SO",     "STRINGOCT"},   {"B",   "BINARY"},
+    {"OC",   "OCTAL"},      {"B64",    "BASE64"},      {"HEX", "HEXADECIMAL"},
+    {"PH",   "PARSEHOCON"}, {"S32",    "STRINGB32"},   {"B32", "BASE32"},
+    {"AB",   "ABSOLUTE"},   {"CE",     "CEIL"},        {"FL",  "FLOOR"},
+    {"DL",   "DISALLOW"},   {"J",      "JAVASCRIPT"},  {"I",   "IMPORT"},
+    {"U",    "CU"},         {"AL",     "ALLOW"},
+    {"HJC",  "HTTPJUSTC"},  {"CF",     "CONFIG"},      {"E",   "ENV"},
+    {"S10",  "STRINGNUM"},  {"SNUM",   "STRINGNUM"},   {"TID", "TYPEID"},
+    {"TO",   "TYPEOF"},     {"PUT",    "RETURN"},      {"PJC", "PARSEJUSTC"},
+    {"SPEC", "SPECIFIED"},  {"EVERY",  "EVERYTHING"},  {"DIS", "DISABLED"},
+    {"SOCT", "STRINGOCT"},  {"S08",    "STRINGOCT"},   {"BIN", "BINARY"},
+    {"OCT",  "OCTAL"},      {"HEXDEC", "HEXADECIMAL"}, {"B02", "BINARY"},
+    {"B08",  "OCTAL"},      {"B10",    "NUMBER"},      {"B16", "HEXADECIMAL"},
+    {"ABS",  "ABSOLUTE"},   {"O",      "VALUE"},       {"SL",  "LINK"},
 };
 
 const std::unordered_map<std::string, std::string> bigKeywords = {
-    {"SQRT", "V"}, {"ROOT", "V"}, {"DOUBLE", "D"}, {"SQUARE", "SQ"},
-    {"CUBE", "CU"}, {"NEGATIVE", "N"}, {"SIN", "S"}, {"COS", "C"},
-    {"TAN", "T"}, {"SINE", "S"}, {"COSINE", "C"}, {"TANGENT", "T"}
+    {"SQRT", "V"},  {"ROOT", "V"},     {"DOUBLE", "D"}, {"SQUARE", "SQ"},
+    {"CUBE", "CU"}, {"NEGATIVE", "N"}, {"SIN", "S"},    {"COS", "C"},
+    {"TAN", "T"},   {"SINE", "S"},     {"COSINE", "C"}, {"TANGENT", "T"}
 };

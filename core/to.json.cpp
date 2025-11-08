@@ -42,13 +42,13 @@ std::string JsonSerializer::escapeJsonString(const std::string& str) {
     for (size_t i = 0; i < str.length(); i++) {
         char c = str[i];
         switch (c) {
-            case '"': ss << "\\\""; break;
+            case  '"': ss << "\\\""; break;
             case '\\': ss << "\\\\"; break;
-            case '\b': ss << "\\b"; break;
-            case '\f': ss << "\\f"; break;
-            case '\n': ss << "\\n"; break;
-            case '\r': ss << "\\r"; break;
-            case '\t': ss << "\\t"; break;
+            case '\b': ss << "\\b";  break;
+            case '\f': ss << "\\f";  break;
+            case '\n': ss << "\\n";  break;
+            case '\r': ss << "\\r";  break;
+            case '\t': ss << "\\t";  break;
             default:
                 if (static_cast<unsigned char>(c) < 0x20 || static_cast<unsigned char>(c) == 0x7F) {
                     char buf[7];

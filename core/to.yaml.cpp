@@ -44,9 +44,10 @@ std::string YamlSerializer::escapeYamlString(const std::string& str) {
     for (size_t i = 0; i < str.length(); i++) {
         char c = str[i];
         if (c == '\"' || c == '\\' || c == '\0' || c == '\n' || c == '\r' || c == '\t' ||
-            c == '[' || c == ']' || c == '{' || c == '}' || c == ',' || c == ':' ||
-            c == '#' || c == '&' || c == '*' || c == '!' || c == '|' || c == '>' ||
-            c == '\'' || c == '%' || c == '@' || c == '`') {
+            c ==  '[' || c ==  ']' || c ==  '{' || c ==  '}' || c ==  ',' || c ==  ':' ||
+            c ==  '#' || c ==  '&' || c ==  '*' || c ==  '!' || c ==  '|' || c ==  '>' ||
+            c == '\'' || c ==  '%' || c ==  '@' || c ==  '`'
+        ) {
             needsQuoting = true;
             break;
         }

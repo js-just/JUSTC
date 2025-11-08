@@ -38,10 +38,10 @@ extern "C" {
 
 class JavaScript {
     private:
-        static JSValue Print(std::stringstream& output, JSContext *ctx, JSValueConst arg, int argc, JSValueConst *argv);
-        static void DefineConsole(JSRuntime *qjs_rt, JSContext *qjs_ctx);
+        static JSValue Print(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv);
+        static void DefineConsole(JSRuntime *qjs_rt, JSContext *qjs_ctx, void* userdata);
     public:
-        static std::pair<std::string, bool> Eval(const std::string& script, const bool Console = false);
+        static std::pair<std::string, bool> Eval(const std::string& script, bool Console = false);
 };
 
 #endif

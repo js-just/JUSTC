@@ -40,7 +40,7 @@ std::string Import::ReadFile(const std::string path, const std::string position)
     #ifndef __EMSCRIPTEN__
         std::ifstream file(path);
         if (!file.is_open()) {
-            throwError("Import error: Unable to read the file \"" + path + "\" at " + position + ".");
+            throw std::runtime_error("Import error: Unable to read the file \"" + path + "\" at " + position + ".");
         }
         return std::string((std::istreambuf_iterator<char>(file)),
                             std::istreambuf_iterator<char>());

@@ -38,14 +38,12 @@ SOFTWARE.
 
 std::string Import::ReadFile(const std::string path, const std::string position) {
     #ifndef __EMSCRIPTEN__
-        std::string readFile(const std::string& path) {
         std::ifstream file(path);
         if (!file.is_open()) {
             throwError("Import error: Unable to read the file \"" + path + "\" at " + position + ".");
         }
         return std::string((std::istreambuf_iterator<char>(file)),
                             std::istreambuf_iterator<char>());
-        }
     #else
         return Utility::value2string(Fetch::httpGet(path));
     #endif

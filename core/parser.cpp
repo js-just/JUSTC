@@ -45,6 +45,9 @@ SOFTWARE.
     #include <emscripten/bind.h>
     #include <emscripten/val.h>
     using namespace emscripten;
+    extern "C" {
+        int emscripten_asm_const_int(const char* code, ...);
+    }
     Value runJavaScript(const std::string& script, const std::string position, const bool warning) {
         Value output;
         output.name = "{{" + script + "}}";

@@ -36,6 +36,6 @@ class Import {
         static std::string ReadFile(const std::string path, const std::string position);
     public:
         static ParseResult JUSTC(const std::string path, const std::string position, const bool doExecute, const bool asynchronously);
-}
+};
 
 #endif

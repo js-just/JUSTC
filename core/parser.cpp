@@ -42,9 +42,7 @@ SOFTWARE.
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"
-
-    #include <emscripten/val.h>
-    #include <emscripten/bind.h>
+    #include <emscripten.h>
 
     using namespace emscripten;
 

@@ -134,9 +134,9 @@ srcfile=$JSOUT_DIR/src/index.json
 echo "[" > $srcfile
 for file in $SOURCE_FILES; do
     echo "\"$file\"," >> $srcfile
-    cp $file $JSOUT_DIR/src/$file.txt
+    cp $file $JSOUT_DIR/src/$file
 done
-head -c-1 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
+head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
 echo "]" >> $srcfile
 
 mv javascript/test.html $JSOUT_DIR/test.html

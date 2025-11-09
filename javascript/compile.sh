@@ -59,10 +59,10 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS='[\"_lexer\",\"_parser\",\"_parse\",\"_free_
 -s MAXIMUM_MEMORY=256MB \
 --bind"
 
-WEB_FLAGS="-s ENVIRONMENT='web,worker'"
+WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"
 
-NODE_FLAGS="-s ENVIRONMENT='node'"
+NODE_FLAGS="-s ENVIRONMENT=node"
 NODE_OUTPUT="javascript_output/$SAFE_DIR/justc.node.js"
 
 JSOUT_DIR="javascript_output/$SAFE_DIR"

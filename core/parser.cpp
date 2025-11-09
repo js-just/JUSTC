@@ -642,7 +642,7 @@ ASTNode Parser::parseImportCommand() {
                 path = currentToken().value;
                 advance();
             } else throw std::runtime_error("Expected <path>, got <" + currentToken().type + "> at " + Utility::position(position, input));
-            if (match(")")) {advance()}
+            if (match(")")) {advance();}
             else throw std::runtime_error("Expected \")\", got \"" + currentToken().value + "\" at " + Utility::position(position, input));
             // if (match("keyword", "REQUIRE") || match("keyword", "EXECUTE"));
 

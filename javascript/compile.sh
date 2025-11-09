@@ -129,6 +129,16 @@ for file in justc justc.node; do
     rm $JSOUT_DIR/$file.tmp
 done
 
+mkdir -p $JSOUT_DIR/src
+srcfile=$JSOUT_DIR/src/index.json
+echo "[" > $srcfile
+for file in $SOURCE_FILES; do
+    echo "\"$file\"," >> $srcfile
+    cp $file $JSOUT_DIR/src/$file.txt
+done
+head -c-1 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
+echo "]" >> $srcfile
+
 mv javascript/test.html $JSOUT_DIR/test.html
 mv javascript/test.justc $JSOUT_DIR/test.justc
 

@@ -776,7 +776,7 @@ SOFTWARE.
                 JUSTC.ErrorIfEnabled('$'+JUSTC.Errors.redefine);
             },
             configurable: false
-        })
+        });
     } else if (isModule) {
         module.exports = JUSTC.CreateAsyncExports()
     } else if (isAMD) {

@@ -508,6 +508,7 @@ ParseResult Parser::parse(bool doExecute) {
         result.logs = logs;
         result.logFilePath = hasLogFile ? logFilePath : "";
         result.logFileContent = hasLogFile ? logFileContent : "";
+        result.importLogs = importLogs;
 
     } catch (const std::exception& e) {
         result.error = e.what();
@@ -656,7 +657,6 @@ ASTNode Parser::parseImportCommand() {
                 std::string _type = importLog[2];
                 addImportLog(_path, _script, _type);
             }
-
         } else {
             throw std::runtime_error("Expected \"(\", got \"" + currentToken().value + "\" at " + Utility::position(position, input));
         }

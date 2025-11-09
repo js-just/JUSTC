@@ -89,11 +89,11 @@ struct Value {
     union {
         double number_value;
         bool boolean_value;
-        std::unordered_map<std::string, Value> object_value;
     };
     std::string string_value;
     std::shared_ptr<void> complex_value;
     std::string name;
+    std::unordered_map<std::string, Value> object_value;
 
     Value() : type(DataType::UNKNOWN), number_value(0), name("unknown") {}
     Value(DataType t) : type(t), number_value(0), name(dataTypeToString(t)) {}

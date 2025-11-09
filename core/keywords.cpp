@@ -27,9 +27,9 @@ SOFTWARE.
 #include "keywords.h"
 
 const std::vector<std::string> keywords = {
-    "TYPE", "GLOBAL", "LOCAL", "STRICT", "ALL", "JSON",
+    "TYPE", "GLOBAL", "LOCAL", "STRICT", "JSON",
     "HTTPJSON", "HTTPTEXT", "HTTPJUSTC", "JUSTC",
-    "IMPORT", "EXPORT", "COPY", "REQUIRE", "ENV",
+    "IMPORT", "EXPORT", "EXPORTS", "REQUIRE", "ENV",
     "CONFIG", "RUN", "VALUE", "FILE", "SIZE", "STRING",
     "LINK", "STRINGNUM", "STRINGB64", "STRINGBIN",
     "STRINGHEX", "TYPEID", "TYPEOF", "OUTPUT", "RETURN",
@@ -39,19 +39,19 @@ const std::vector<std::string> keywords = {
     "STRINGOCT", "NUMBER", "BINARY", "OCTAL", "BASE64",
     "HEXADECIMAL", "PARSEHOCON", "HTTPHOCON", "BASE32",
     "STRINGB32", "ABSOLUTE", "CEIL", "FLOOR", "ALLOW",
-    "DISALLOW", "JAVASCRIPT"
+    "DISALLOW", "JAVASCRIPT", "SAFE",
 };
 
 const std::unordered_map<std::string, std::string> smallKeywords = {
     {"T",    "TYPE"},       {"G",      "GLOBAL"},      {"L",   "LOCAL"},
     {"A",    "ALL"},        {"JS",     "JSON"},        {"JC",  "JUSTC"},
-    {"EX",   "EXPORT"},     {"CP",     "COPY"},        {"RQ",  "REQUIRE"},
+    {"EX",   "EXPORT"},     {"ES",     "EXPORTS"},     {"RQ",  "REQUIRE"},
     {"HJS",  "HTTPJSON"},   {"HT",     "HTTPTEXT"},    {"HJ",  "HTTPJUSTC"},
-    {"HH",   "HTTPHOCON"},  {"CO",     "CONFIG"},      {"R",   "RUN"},
+    {"HH",   "HTTPHOCON"},  {"CO",     "CONFIG"},      {"SF",  "SAFE"},
     {"F",    "FILE"},       {"SZ",     "SIZE"},        {"ST",  "STRING"},
     {"SN",   "STRINGNUM"},  {"S64",    "STRINGB64"},   {"S02", "STRINGBIN"},
     {"S16",  "STRINGHEX"},  {"ID",     "TYPEID"},      {"OF",  "TYPEOF"},
-    {"OUT",  "OUTPUT"},     {"RT",     "RETURN"},      {"Q",   "SQ"},
+    {"OUT",  "OUTPUT"},     {"R",     "RETURN"},       {"Q",   "SQ"},
     {"PJ",   "PARSEJUSTC"}, {"PJS",    "PARSEJSON"},   {"SP",  "SPECIFIED"},
     {"EV",   "EVERYTHING"}, {"N",      "DISABLED"},    {"SC",  "STRICT"},
     {"NUM",  "NUMBER"},     {"SO",     "STRINGOCT"},   {"B",   "BINARY"},

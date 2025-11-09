@@ -179,3 +179,11 @@ Value Utility::convert(const Value value, const DataType type) {
     }
     return result;
 }
+
+Value Utility::ParseResult2Value(const ParseResult parseresult) {
+    Value result;
+    result.type = DataType::JUSTC_OBJECT;
+    result.object_value = parseresult.returnValues;
+    result.name = "(Object)";
+    return result;
+}

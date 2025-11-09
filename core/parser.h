@@ -89,6 +89,7 @@ struct Value {
     union {
         double number_value;
         bool boolean_value;
+        std::unordered_map<std::string, Value> object_value;
     };
     std::string string_value;
     std::shared_ptr<void> complex_value;

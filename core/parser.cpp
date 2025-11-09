@@ -38,6 +38,7 @@ SOFTWARE.
 #include "version.h"
 #include "utility.h"
 #include <vector>
+#include "import.hpp"
 
 #ifdef __EMSCRIPTEN__
     #include <emscripten.h>
@@ -635,11 +636,25 @@ ASTNode Parser::parseImportCommand() {
         advance();
         if (match("(")) {
             advance();
+            std::string path;
+            bool mode = true; // true = "export", false = "return"
             if (match("string") || match("path")) {
-                std::string path = currentToken().value;
+                path = currentToken().value;
                 advance();
+            } else throw std::runtime_error("Expected <path>, got <" + currentToken().type + "> at " + Utility::position(position, input));
+            if (match(")")) {advance()}
+            else throw std::runtime_error("Expected \")\", got \"" + currentToken().value + "\" at " + Utility::position(position, input));
+            // if (match("keyword", "REQUIRE") || match("keyword", "EXECUTE"));
+
+            ParseResult imports = Import::JUSTC(path, Utility::position(position, input), true, true);
+            for (const auto& pair : imports.returnValues) {
+                ASTNode node = ASTNode("VARIABLE_DECLARATION", pair.first, position);
+                node.value = pair.second;
+                ast.push_back(node);
             }
-            if (match(")")) advance();
+
+        } else {
+            throw std::runtime_error("Expected \"(\", got \"" + currentToken().value + "\" at " + Utility::position(position, input));
         }
     }
 

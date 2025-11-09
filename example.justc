@@ -12,11 +12,14 @@ octalnum is o100,                                               -- octal number
 base32num is @FF,                                               -- BASE 32 number
 undef is undefined,                                             -- undefined
 json is JSON{"a": "b"},                                         -- json
-JUSTC(path/to/file.justc) COPY[var1, var2],                     -- import some variables from another justc file (from EXPORT command) (TYPE STRICT = error)
-JUSTC(path/to/file.justc) ALL,                                  -- import all variables from another justc file  (from EXPORT command) (TYPE STRICT = error)
-JUSTC(path/to/file.justc) REQUIRE[var7, var8],                  -- import some variables from another justc file (from RETURN command)
-JUSTC(path/to/file.justc) RUN,                                  -- import all variables from another justc file  (from RETURN command)
-IMPORT JUSTC(path/to/file.justc),                               -- import all variables from another justc file                        (TYPE STRICT = error)
+IMPORT JUSTC(path/to/file.justc) EXPORTS[var1, var2],           -- import some variables from another justc file (from EXPORT command) (TYPE STRICT = error) (executes if executing)
+IMPORT JUSTC(path/to/file.justc) EXPORTS[var1, var2] SAFE,      -- import some variables from another justc file (from EXPORT command) (TYPE STRICT = error) (only parse, SAFE means do not execute)
+IMPORT JUSTC(path/to/file.justc) REQUIRE[var7, var8],           -- import some variables from another justc file (from RETURN command)                       (executes if executing)
+IMPORT JUSTC(path/to/file.justc) REQUIRE[var7, var8] SAFE,      -- import some variables from another justc file (from RETURN command)                       (only parse, SAFE means do not execute)
+IMPORT JUSTC(path/to/file.justc),                               -- import all variables from another justc file  (from EXPORT command) (TYPE STRICT = error) (executes if executing)
+IMPORT JUSTC(path/to/file.justc) SAFE,                          -- import all variables from another justc file  (from EXPORT command) (TYPE STRICT = error) (only parse, SAFE means do not execute)
+IMPORT JUSTC(path/to/file.justc) EXECUTE,                       -- import all variables from another justc file  (from RETURN command)                       (executes if executing)
+IMPORT JUSTC(path/to/file.justc) EXECUTE SAFE,                  -- import all variables from another justc file  (from RETURN command)                       (only parse, SAFE means do not execute)
 EXPORT [var1, var2],                                            -- export variables to be imported.
 jsonfile is JSON(path/to/file.json),                            -- get json from file
 env is ENV(envname),                                            -- env variable that can be set in just.config.js file (string | number | boolean)

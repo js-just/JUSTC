@@ -622,9 +622,16 @@ ASTNode Parser::parseImportCommand() {
             advance();
             std::string path;
             bool mode = true; // true = "export", false = "return"
-            if (match("string") || match("path")) {
+            if (match("string") || match("path") || match("identifier")) {
                 path = currentToken().value;
                 advance();
+                while (match("/") || match("path") || match("string") || match("identifier") || match(".")) {
+                    if (isEnd()) {
+                        throw std::runtime_error("Unexpected EOF.");
+                    }
+                    path += currentToken().value;
+                    advance();
+                }
             } else throw std::runtime_error("Expected <path>, got <" + currentToken().type + "> at " + Utility::position(position, input));
             if (match(")")) {advance();}
             else throw std::runtime_error("Expected \")\", got \"" + currentToken().value + "\" at " + Utility::position(position, input));

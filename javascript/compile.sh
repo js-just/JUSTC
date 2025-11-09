@@ -36,31 +36,43 @@ tar -xzf wabt-1.0.34-ubuntu.tar.gz
 sudo cp wabt-1.0.34/bin/* /usr/local/bin/
 rm -rf wabt-1.0.34 wabt-1.0.34-ubuntu.tar.gz
 
+SOURCE_FILES="core/js.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp core/to.xml.cpp core/to.yaml.cpp core/utility.cpp core/import.cpp"
+
+COMMON_FLAGS="-s EXPORTED_FUNCTIONS='[\"_lexer\",\"_parser\",\"_parse\",\"_free_string\",\"_malloc\",\"_free\",\"_version\"]' \
+-s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\",\"UTF8ToString\",\"stringToUTF8\"]' \
+-s MODULARIZE=1 \
+-s ALLOW_MEMORY_GROWTH=1 \
+-s INVOKE_RUN=0 \
+-std=c++11 \
+-s DISABLE_EXCEPTION_CATCHING=0 \
+-s EXPORT_NAME='__justc__' \
+-s ASSERTIONS=0 \
+-s ASYNCIFY=1 \
+-s FETCH=1 \
+-s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close'] \
+-O3 \
+-flto \
+-s TOTAL_STACK=8MB \
+-s TOTAL_MEMORY=32MB \
+-s MODULARIZE=1 \
+-s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
+-s MAXIMUM_MEMORY=256MB \
+--bind"
+
+WEB_FLAGS="-s ENVIRONMENT='web,worker'"
+WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"
+
+NODE_FLAGS="-s ENVIRONMENT='node'"
+NODE_OUTPUT="javascript_output/$SAFE_DIR/justc.node.js"
+
+JSOUT_DIR="javascript_output/$SAFE_DIR"
+
 web() {
     set +e
-    emcc core/js.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp core/to.xml.cpp core/to.yaml.cpp core/utility.cpp core/import.cpp \
-        -o javascript/$SAFE_DIR/justc.core.js \
-        -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free","_version"]' \
-        -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8"]' \
-        -s MODULARIZE=1 \
-        -s ALLOW_MEMORY_GROWTH=1 \
-        -s INVOKE_RUN=0 \
-        -std=c++11 \
-        -s DISABLE_EXCEPTION_CATCHING=0 \
-        -s EXPORT_NAME='__justc__' \
-        -s ASSERTIONS=0 \
-        -s ASYNCIFY=1 \
-        -s FETCH=1 \
-        -s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close'] \
-        -O3 \
-        -flto \
-        -s TOTAL_STACK=8MB \
-        -s TOTAL_MEMORY=32MB \
-        -s ENVIRONMENT='web,worker' \
-        -s MODULARIZE=1 \
-        -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
-        -s MAXIMUM_MEMORY=256MB \
-        --bind
+    emcc $SOURCE_FILES \
+        -o $WEB_OUTPUT \
+        $COMMON_FLAGS \
+        $WEB_FLAGS
     COMPILE_EXIT_CODE=$?
     set -e
 
@@ -70,33 +82,13 @@ web() {
     fi
 }
 
-JSOUT_DIR="javascript_output/$SAFE_DIR"
-
 node() {
+    mkdir -p $JSOUT_DIR
     set +e
-    emcc core/js.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp core/to.xml.cpp core/to.yaml.cpp core/utility.cpp core/import.cpp \
-        -o $JSOUT_DIR/justc.node.js \
-        -s EXPORTED_FUNCTIONS='["_lexer","_parser","_parse","_free_string","_malloc","_free","_version"]' \
-        -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8"]' \
-        -s MODULARIZE=1 \
-        -s ALLOW_MEMORY_GROWTH=1 \
-        -s INVOKE_RUN=0 \
-        -std=c++11 \
-        -s DISABLE_EXCEPTION_CATCHING=0 \
-        -s EXPORT_NAME='__justc__' \
-        -s ASSERTIONS=0 \
-        -s ASYNCIFY=1 \
-        -s FETCH=1 \
-        -s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close'] \
-        -O3 \
-        -flto \
-        -s TOTAL_STACK=8MB \
-        -s TOTAL_MEMORY=32MB \
-        -s ENVIRONMENT='node' \
-        -s MODULARIZE=1 \
-        -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
-        -s MAXIMUM_MEMORY=256MB \
-        --bind
+    emcc $SOURCE_FILES \
+        -o $NODE_OUTPUT \
+        $COMMON_FLAGS \
+        $NODE_FLAGS
     COMPILE_EXIT_CODE=$?
     set -e
 
@@ -107,7 +99,6 @@ node() {
 }
 
 web
-mkdir javascript_output && mkdir $JSOUT_DIR && \
 node
 
 mv javascript/$SAFE_DIR/justc.core.wasm $JSOUT_DIR/justc.wasm
@@ -135,12 +126,8 @@ for file in justc justc.node; do
         tail -n +2 "$JSOUT_DIR/$file.wat"
     } > $JSOUT_DIR/$file.tmp
     wat2wasm $JSOUT_DIR/$file.tmp --enable-annotations -o $JSOUT_DIR/$file.wasm
-    rm $JSOUT_DIR/$file.wat $JSOUT_DIR/$file.tmp
+    rm $JSOUT_DIR/$file.tmp
 done
-
-ls -la $JSOUT_DIR/
-file $JSOUT_DIR/justc.core.wasm
-hexdump -C $JSOUT_DIR/justc.core.wasm | head -20
 
 mv javascript/test.html $JSOUT_DIR/test.html
 mv javascript/test.justc $JSOUT_DIR/test.justc
@@ -152,3 +139,7 @@ mv javascript/npm.json $JSOUT_DIR/package.json
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"
 done
+
+ls -la $JSOUT_DIR/
+file $JSOUT_DIR/justc.core.wasm
+hexdump -C $JSOUT_DIR/justc.core.wasm | head -20

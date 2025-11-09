@@ -42,8 +42,10 @@ SOFTWARE.
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"
-    #include <emscripten/bind.h>
+
     #include <emscripten/val.h>
+    #include <emscripten/bind.h>
+
     using namespace emscripten;
 
     Value runJavaScript(const std::string& script, const std::string position, const bool warning) {
@@ -55,49 +57,34 @@ SOFTWARE.
 
             std::string result_type = result.typeOf().as<std::string>();
             if (result.isNull() || result.isUndefined()) {
-
                 output.type = DataType::NULL_TYPE;
                 output.string_value = "null";
-
             } else if (result_type == "string") {
-
                 output.type = DataType::STRING;
                 output.string_value = result.as<std::string>();
-
             } else if (result_type == "number") {
-
                 output.type = DataType::NUMBER;
                 output.number_value = result.as<double>();
-
             } else if (result_type == "boolean") {
-
                 output.type = DataType::BOOLEAN;
                 output.boolean_value = result.as<bool>();
-
             } else if (result_type == "object") {
-
                 val JSON = val::global("JSON");
                 val json_string_val = JSON.call<val>("stringify", result);
-
                 if (result.isArray()) {
                     output.type = DataType::JSON_ARRAY;
                 } else {
                     output.type = DataType::JSON_OBJECT;
                 }
                 output.string_value = json_string_val.as<std::string>();
-
             } else {
-
                 val String_global = val::global("String");
                 val coerced_string_val = String_global.call<val>("call", val::undefined(), result);
-
                 output.type = DataType::STRING;
                 output.string_value = coerced_string_val.as<std::string>();
-
                 if (warning) {
                     warn_unsupported_js_type(Parser::getCurrentTimestamp().c_str(), output.string_value.c_str(), position.c_str());
                 }
-
             }
         } catch (const std::exception& e) {
             throw std::runtime_error("JavaScript error at " + position + ":\n" + e.what());

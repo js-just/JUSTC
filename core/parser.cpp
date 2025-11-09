@@ -50,8 +50,8 @@ SOFTWARE.
         Value output;
         output.name = "{{" + script + "}}";
         try {
-            val window = val::global("window");
-            val result = window.call<val>("eval", script);
+            emscripten::val window = emscripten::val::global("window");
+            emscripten::val result = window.call<emscripten::val>("eval", script);
 
             std::string result_type = result.typeOf().as<std::string>();
             if (result.isNull() || result.isUndefined()) {
@@ -67,8 +67,8 @@ SOFTWARE.
                 output.type = DataType::BOOLEAN;
                 output.boolean_value = result.as<bool>();
             } else if (result_type == "object") {
-                val JSON = val::global("JSON");
-                val json_string_val = JSON.call<val>("stringify", result);
+                emscripten::val JSON = emscripten::val::global("JSON");
+                emscripten::val json_string_val = JSON.call<emscripten::val>("stringify", result);
                 if (result.isArray()) {
                     output.type = DataType::JSON_ARRAY;
                 } else {
@@ -76,8 +76,8 @@ SOFTWARE.
                 }
                 output.string_value = json_string_val.as<std::string>();
             } else {
-                val String_global = val::global("String");
-                val coerced_string_val = String_global.call<val>("call", val::undefined(), result);
+                emscripten::val String_global = emscripten::val::global("String");
+                emscripten::val coerced_string_val = String_global.call<emscripten::val>("call", emscripten::val::undefined(), result);
                 output.type = DataType::STRING;
                 output.string_value = coerced_string_val.as<std::string>();
                 if (warning) {

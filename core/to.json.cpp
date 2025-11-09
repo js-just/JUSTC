@@ -149,7 +149,11 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
         json << "\"logfile\":{";
         json << "\"file\":\"" << escapeJsonString(result.logFilePath) << "\",";
         json << "\"logs\":\"" << escapeJsonString(result.logFileContent) << "\"";
-        json << "}";
+        json << "},";
+
+        // import logs array
+        json << "\"imported\":";
+        json << serialize(result.importLogs);
     }
 
     #else
@@ -191,6 +195,32 @@ std::string JsonSerializer::serialize(const std::vector<LogEntry>& logs) {
         json << "}";
 
         if (i < logs.size() - 1) {
+            json << ",";
+        }
+    }
+
+    json << "]";
+    return json.str();
+}
+
+std::string JsonSerializer::serialize(const std::vector<std::vector<std::string>>& importLogs) {
+    std::stringstream json;
+    json << "[";
+
+    for (size_t i = 0; i < importLogs.size(); i++) {
+        const auto& log = importLogs[i];
+
+        json << "[";
+        for (size_t j = 0; j < log.size(); j++) {
+            const std::string importLog = log[j];
+            json << "\"" + escapeJsonString(importLog) + "\"";
+            if (j < log.size() - 1) {
+                json << ",";
+            }
+        }
+        json << "]";
+
+        if (i < importLogs.size() - 1) {
             json << ",";
         }
     }

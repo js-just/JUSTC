@@ -138,7 +138,11 @@ std::string XmlSerializer::serialize(const ParseResult& result) {
         json << "\"logfile\":{";
         json << "\"file\":\"" << JsonSerializer::escapeJsonString(result.logFilePath) << "\",";
         json << "\"logs\":\"" << JsonSerializer::escapeJsonString(result.logFileContent) << "\"";
-        json << "}";
+        json << "},";
+
+        // import logs array
+        json << "\"imported\":";
+        json << JsonSerializer::serialize(result.importLogs);
 
         json << "}";
         return json.str();

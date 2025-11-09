@@ -35,6 +35,7 @@ SOFTWARE.
 #include <cstring>
 #include <sstream>
 #include "utility.h"
+#include <utility>
 
 std::string Import::ReadFile(const std::string path, const std::string position) {
     #ifndef __EMSCRIPTEN__
@@ -49,8 +50,8 @@ std::string Import::ReadFile(const std::string path, const std::string position)
     #endif
 }
 
-ParseResult Import::JUSTC(const std::string path, const std::string position, const bool doExecute, const bool asynchronously) {
+std::pair<ParseResult, std::string> Import::JUSTC(const std::string path, const std::string position, const bool doExecute, const bool asynchronously) {
     std::string File = ReadFile(path, position);
     auto lexerResult = Lexer::parse(File);
-    return Parser::parseTokens(lexerResult.second, doExecute, asynchronously, lexerResult.first);
+    return {Parser::parseTokens(lexerResult.second, doExecute, asynchronously, lexerResult.first), File};
 }

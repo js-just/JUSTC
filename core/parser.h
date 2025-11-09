@@ -130,6 +130,7 @@ struct ParseResult {
     std::string logFilePath;
     std::string logFileContent;
     std::string error;
+    std::vector<std::vector<std::string>> importLogs;
 
     ParseResult() : logFilePath(""), logFileContent(""), error("") {}
 };
@@ -198,10 +199,13 @@ private:
         return result;
     }
 
+    std::vector<std::vector<std::string>> importLogs;
+
     // logs
     void addLog(const std::string& type, const std::string& message, size_t position = 0);
     void setLogFile(const std::string& path);
     void appendToLogFile(const std::string& content);
+    void addImportLog(const std::string& path, const std::string& script, const std::string& type);
 
     Value astNodeToValue(const ASTNode& node);
 

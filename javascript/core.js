@@ -76,6 +76,7 @@ SOFTWARE.
     const ERR = Error;
     const CONSOLE = console;
     const MAP = Map;
+    const BLOB = isBrowser ? Blob : null;
 
     JUSTC.VERSION = null;
     JUSTC.GetVersion = function() {
@@ -105,7 +106,7 @@ SOFTWARE.
     };
 
     if (isBrowser) {
-        JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR, MAP);
+        JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR, MAP, BLOB);
         JUSTC.Checks.sysObj(json_, CONSOLE);
         JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
         JUSTC.Checks.sysFunc(
@@ -398,6 +399,55 @@ SOFTWARE.
         'json', 'xml', 'yaml'
     ];
 
+    JUSTC.VFS = isBrowser ? class VirtualFileSystem {
+        constructor() {
+            this.files = new MAP();
+        }
+
+        createFile(filename, content, options = {}) {
+            const {
+                mimeType = 'text/plain',
+                language = 'text',
+                syntaxHighlighting = true
+            } = options;
+
+            this.files.set(filename, { content, mimeType, language });
+
+            if (syntaxHighlighting) {
+                this._registerFileInDevTools(filename, content, language);
+            }
+
+            return filename;
+        }
+
+        _registerFileInDevTools(filename, content, language) {
+            const blob = new BLOB([content], { type: 'text/plain' });
+            const url = __URL__.createObjectURL(blob);
+
+            const script = DOCUMENT.createElement('script');
+            script.textContent = `//# sourceMappingURL=data:application/json;base64,${btoa(JSON.stringify({
+                version: 3,
+                file: filename,
+                sources: [filename],
+                sourcesContent: [content],
+                mappings: ""
+            }))}`;
+
+            DOCUMENT.head.appendChild(script);
+            DOCUMENT.head.removeChild(script);
+            __URL__.revokeObjectURL(url);
+        }
+
+        getFile(filename) {
+            return this.files.get(filename);
+        }
+
+        listFiles() {
+            return ARRAY.from(this.files.keys());
+        }
+    } : undefined;
+    JUSTC.CurrentVFS = isBrowser ? new JUSTC.VFS() : undefined;
+
     JUSTC.Check = (code) => {
         if (JUSTC.CheckInput(code)) throw new JUSTC.Error(JUSTC.Errors.wrongInputType);
         JUSTC.CheckWASM();
@@ -435,6 +485,15 @@ SOFTWARE.
         };
         return await Promise.all(await Promise.all(JUSTC.Taskify(bool, outputMode, args.slice(start, end))))
     };
+    JUSTC.RegisterImports = function(imports) {
+        if (isBrowser && imports && ARRAY.isArray(imports) && imports.length > 0) setTimeout(() => {
+            try {
+                for (const [url, content, type] of imports) {
+                    JUSTC.CurrentVFS.createFile(url, content, {mimeType: type});
+                }
+            } catch (_) {}
+        }, 0);
+    };
     JUSTC.Output = {
         parse: isBrowser || !JUSTC.Experiments ? function(code, outputMode = JUSTC.DefaultOutputMode) {
             JUSTC.Check(code);
@@ -444,6 +503,7 @@ SOFTWARE.
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
+                JUSTC.RegisterImports(result.imported);
                 return result.return || {};
             }
         } : async function(...code) {
@@ -457,6 +517,7 @@ SOFTWARE.
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
+                JUSTC.RegisterImports(result.imported);
                 JUSTC.DisplayLogs(result);
                 return result.return || {};
             }

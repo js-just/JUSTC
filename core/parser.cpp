@@ -352,14 +352,19 @@ void Parser::addLog(const std::string& type, const std::string& message, size_t 
         appendToLogFile("[" + time + "] " + message);
     }
 }
-
 void Parser::setLogFile(const std::string& path) {
     logFilePath = path;
     hasLogFile = true;
 }
-
 void Parser::appendToLogFile(const std::string& content) {
     logFileContent += content + "\n";
+}
+void Parser::addImportLog(const std::string& path, const std::string& script, const std::string& type) {
+    std::vector<std::string> log;
+    log.push_back(path);
+    log.push_back(script);
+    log.push_back(type);
+    importLogs.push_back(log);
 }
 
 ParserToken Parser::currentToken() const {
@@ -637,11 +642,19 @@ ASTNode Parser::parseImportCommand() {
             else throw std::runtime_error("Expected \")\", got \"" + currentToken().value + "\" at " + Utility::position(position, input));
             // if (match("keyword", "REQUIRE") || match("keyword", "EXECUTE"));
 
-            ParseResult imports = Import::JUSTC(path, Utility::position(position, input), true, true);
-            for (const auto& pair : imports.returnValues) {
+            std::pair<ParseResult, std::string> imports = Import::JUSTC(path, Utility::position(position, input), true, true);
+            addImportLog(path, imports.second, "JUSTC");
+            for (const auto& pair : imports.first.returnValues) {
                 ASTNode node = ASTNode("VARIABLE_DECLARATION", pair.first, position);
                 node.value = pair.second;
                 ast.push_back(node);
+            }
+            for (size_t i = 0; i < imports.first.importLogs.size(); i++) {
+                std::vector<std::string> importLog = imports.first.importLogs[i];
+                std::string _path = importLog[0];
+                std::string _script = importLog[1];
+                std::string _type = importLog[2];
+                addImportLog(_path, _script, _type);
             }
 
         } else {

@@ -44,8 +44,6 @@ SOFTWARE.
     #include "parser.emscripten.h"
     #include <emscripten.h>
 
-    using namespace emscripten;
-
     Value runJavaScript(const std::string& script, const std::string position, const bool warning) {
         Value output;
         output.name = "{{" + script + "}}";

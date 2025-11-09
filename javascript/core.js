@@ -517,7 +517,6 @@ SOFTWARE.
             if (result.error) {
                 throw new JUSTC.Error(result.error);
             } else {
-                console.debug("AST:",result);
                 JUSTC.RegisterImports(result.imported);
                 JUSTC.DisplayLogs(result);
                 return result.return || {};

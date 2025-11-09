@@ -41,19 +41,11 @@ SOFTWARE.
 #include "import.hpp"
 
 #ifdef __EMSCRIPTEN__
-    #include <emscripten.h>
+    #include "parser.emscripten.h"
     #include <emscripten/bind.h>
     #include <emscripten/val.h>
     using namespace emscripten;
-    EM_JS(void, warn_unsupported_js_type, (const char* timestamp, const char* value, const char* position), {
-        console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Unsupported JavaScript output type ("' + UTF8ToString(value) + '") was converted to a string at', UTF8ToString(position));
-    });
-    EM_JS(void, warn_js_disabled, (const char* position, const char* token_value, const char* timestamp), {
-        console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Running lexer and parser only - Cannot run JavaScript', '"' + UTF8ToString(token_value) + '"', 'at', UTF8ToString(position));
-    });
-    EM_JS(void, warn_http_disabled, (const char* position, const char* url, const char* timestamp), {
-        console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Running lexer and parser only - Cannot fetch', '"' + UTF8ToString(url) + '"', 'at', UTF8ToString(position), '\nUse JUSTC.execute for HTTP requests.');
-    });
+
     Value runJavaScript(const std::string& script, const std::string position, const bool warning) {
         Value output;
         output.name = "{{" + script + "}}";

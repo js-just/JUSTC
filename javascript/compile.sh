@@ -129,7 +129,7 @@ for file in justc justc.node; do
     rm $JSOUT_DIR/$file.tmp
 done
 
-mkdir -p $JSOUT_DIR/src
+mkdir -p $JSOUT_DIR/src/core
 srcfile=$JSOUT_DIR/src/index.json
 echo "[" > $srcfile
 for file in $SOURCE_FILES; do

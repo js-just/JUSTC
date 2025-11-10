@@ -378,9 +378,9 @@ void Lexer::tokenize() {
             position += 2;
             while(position < input.length() && brackets > 0) {
                 JavaScript << input[position];
-                if (input[position] == '{' && peek() == '{') {
+                if (input[position] == '{') {
                     brackets++;
-                } else if (input[position] == '}' && peek() == '}' && str == 0 && comment == 0) {
+                } else if (input[position] == '}' && str == 0 && comment == 0) {
                     brackets--;
                 } else if (input[position] == '\'' && str == 0 && comment == 0) {
                     str = 1;
@@ -421,9 +421,9 @@ void Lexer::tokenize() {
             position += 2;
             while(position < input.length() && brackets > 0) {
                 Lua << input[position];
-                if (input[position] == '{' && peek() == '{') {
+                if (input[position] == '<' && peek() == '<') {
                     brackets++;
-                } else if (input[position] == '}' && peek() == '}' && str == 0 && comment == 0) {
+                } else if (input[position] == '>' && peek() == '>' && str == 0 && comment == 0) {
                     brackets--;
                 } else if (input[position] == '\'' && str == 0 && comment == 0) {
                     str = 1;
@@ -437,9 +437,9 @@ void Lexer::tokenize() {
                     str = 3;
                 } else if (input[position] == ']' && peek() == ']' && str == 3 && input[position - 1] != '\\' && comment == 0) {
                     str = 0;
-                } else if (input[position] == '[' && peek() == '=' && tokens[position + 2] == '[' && str == 0 && comment == 0) {
+                } else if (input[position] == '[' && peek() == '=' && input[position + 2] == '[' && str == 0 && comment == 0) {
                     str = 4;
-                } else if (input[position] == ']' && peek() == '=' && tokens[position + 2] == ']' && str == 4 && input[position - 1] != '\\' && comment == 0) {
+                } else if (input[position] == ']' && peek() == '=' && input[position + 2] == ']' && str == 4 && input[position - 1] != '\\' && comment == 0) {
                     str = 0;
                 } else if (input[position] == '-' && peek() == '-' && str == 0 && comment == 0) {
                     comment = 1;

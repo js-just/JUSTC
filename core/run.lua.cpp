@@ -1,7 +1,7 @@
 #include "run.lua.hpp"
 #include <iostream>
 
-Lua::Lua() {
+RunLua::RunLua() {
     L = luaL_newstate();
     if (L) {
         luaL_openlibs(L);
@@ -9,13 +9,13 @@ Lua::Lua() {
     }
 }
 
-Lua::~Lua() {
+RunLua::~RunLua() {
     if (L) {
         lua_close(L);
     }
 }
 
-bool Lua::executeScript(const std::string& script) {
+bool RunLua::executeScript(const std::string& script) {
     if (!L) return false;
 
     int result = luaL_dostring(L, script.c_str());
@@ -27,7 +27,7 @@ bool Lua::executeScript(const std::string& script) {
     return true;
 }
 
-bool Lua::executeFile(const std::string& filename) {
+bool RunLua::executeFile(const std::string& filename) {
     if (!L) return false;
 
     int result = luaL_dofile(L, filename.c_str());
@@ -39,13 +39,13 @@ bool Lua::executeFile(const std::string& filename) {
     return true;
 }
 
-void Lua::registerFunction(const std::string& name, lua_CFunction func) {
+void RunLua::registerFunction(const std::string& name, lua_CFunction func) {
     if (L) {
         lua_register(L, name.c_str(), func);
     }
 }
 
-void Lua::initJUSTC() {
+void RunLua::initJUSTC() {
     registerFunction("justc_version", [](lua_State* L) -> int {
         luacpp11::push(L, "1.0.0");
         return 1;

@@ -8,10 +8,10 @@ extern "C" {
 
 #include "../third-party/progschj/luacpp11.hpp"
 
-class Lua {
+class RunLua {
 public:
-    Lua();
-    ~Lua();
+    RunLua();
+    ~RunLua();
 
     bool executeScript(const std::string& script);
     bool executeFile(const std::string& filename);

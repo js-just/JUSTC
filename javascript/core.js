@@ -132,7 +132,7 @@ SOFTWARE.
             alert('6.2: System objects check passed');
             JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
             alert('6.3: Global objects check passed');
-            JUSTC.Checks.sysFunc(
+            if (!isSafari) JUSTC.Checks.sysFunc(
                 OBJECT.entries, OBJECT.defineProperty, OBJECT.freeze,
                 json_.parse, json_.stringify,
                 ARRAY.isArray, ARRAY.from,
@@ -866,7 +866,7 @@ SOFTWARE.
                 })
             };
             try {
-                const sources = await(await FETCH()).json();
+                const sources = await(await FETCH(DOCUMENT.currentScript.src.slice(0,-8)+'src/')).json();
                 const CurrentVFS = new JUSTC.VFS();
                 if (!ARRAY.isArray(sources)) return;
                 for (const source of sources) {

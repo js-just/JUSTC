@@ -6,7 +6,7 @@ extern "C" {
     #include "lualib.h"
 }
 
-#include "third-party/progschj/luacpp11.hpp"
+#include "../third-party/progschj/luacpp11.hpp"
 
 class Lua {
 public:

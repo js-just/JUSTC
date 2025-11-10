@@ -467,7 +467,7 @@ ParseResult Parser::parse(bool doExecute) {
                 advance();
             } else if (match("Lua")) {
                 RunLua runLua;
-                runLua::executeScript(currentToken().value);
+                runLua.executeScript(currentToken().value);
                 advance();
             } else {
                 throw std::runtime_error("Unexpected token \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");

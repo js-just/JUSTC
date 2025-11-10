@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(JUSTC LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(ProcessorCount)
@@ -76,15 +76,8 @@ FetchContent_Declare(luacpp
     GIT_TAG 4d27b7bcf0f82ad9d8d11fb353f5debd0af710df # LuaCpp 0.3.0
 )
 
-set(CMAKE_CXX_STANDARD 17)
 FetchContent_MakeAvailable(luacpp)
-target_include_directories(luacpp_static PUBLIC
-    ${luacpp_SOURCE_DIR}/Source
-    ${luacpp_SOURCE_DIR}/Source/Engine
-    ${luacpp_SOURCE_DIR}/Source/Registry
-)
 
-set(CMAKE_CXX_STANDARD 11)
 include_directories(third-party)
 add_library(justc_core STATIC
     core/lexer.cpp

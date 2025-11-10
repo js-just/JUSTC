@@ -60,7 +60,6 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 --bind \
 -I./third-party \
 -I./lua-5.4.4/src \
--Werror \
 -Wcast-function-type \
 -g"
 

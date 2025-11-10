@@ -26,6 +26,9 @@ SOFTWARE.
 
 #pragma once
 
+#include <string>
+#include <cstring>
+
 extern "C" {
     #include <lua.h>
     #include <lualib.h>

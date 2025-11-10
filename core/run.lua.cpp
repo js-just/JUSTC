@@ -27,6 +27,8 @@ SOFTWARE.
 #include "run.lua.hpp"
 #include <iostream>
 #include "version.h"
+#include <string>
+#include <cstring>
 
 RunLua::RunLua() {
     L = luaL_newstate();

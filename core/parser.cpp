@@ -615,7 +615,7 @@ ASTNode Parser::parseAllowCommand() {
     if (match("keyword", "JAVASCRIPT")) {
         if (!canAllowJS && command == "ALLOW") {
             #ifdef __EMSCRIPTEN__
-            warn_cant_enable_js(Utility::position(currentToken().start, input).c_str(), getCurrentTimestamp().c_str(), scriptName, scriptType);
+            warn_cant_enable_js(Utility::position(currentToken().start, input).c_str(), getCurrentTimestamp().c_str(), scriptName.c_str(), scriptType.c_str());
             #endif
             addLog("WARN", "Attempt to allow JavaScript at <import ", currentToken().start);
         } else allowJavaScript = (command == "ALLOW");

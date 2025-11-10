@@ -26,6 +26,7 @@ SOFTWARE.
 
 (()=>{
     "use strict";
+    alert('1: Script started');
 
     const JUSTC = {};
     JUSTC.Checks = {
@@ -46,11 +47,35 @@ SOFTWARE.
     const isAMD     =   typeof define === 'function' && define.amd;
     const isModule  = typeof module === 'object' && module.exports;
     const isBrowser =                          !isAMD && !isModule;
+    alert(`2: Environment detected - isAMD: ${isAMD}, isModule: ${isModule}, isBrowser: ${isBrowser}`);
 
     if (!isBrowser && typeof require === 'function') {
         try {
             JUSTC.NodeWASM = require('./justc.node.js')
         } catch (_) {}
+    }
+
+    try {
+        const globalThis_ = isBrowser ? []["filter"]["constructor"]("return globalThis")() || []["filter"]["constructor"]("return this")() || globalThis : globalThis || self || (isAMD ? {__justc__} : this) || {__justc__};
+        alert('3: globalThis_ accessed successfully');
+        if (!isBrowser) globalThis_.window = {};
+        const OBJECT = Object;
+        const json_ = JSON;
+        const ARRAY = Array;
+        const DOCUMENT = isBrowser ? document : null;
+        const __URL__ = URL;
+        const STRING = String;
+        const ERR = Error;
+        const CONSOLE = console;
+        const MAP = Map;
+        const BLOB = isBrowser ? Blob : null;
+        const FETCH = fetch;
+
+        const isSafari = isBrowser ? /^((?!chrome|android).)*safari/i.test(globalThis_.navigator.userAgent) : false;
+        alert(`4: Core objects initialized, isSafari: ${isSafari}`);
+    } catch (error) {
+        alert(`ERROR at core objects: ${error}`);
+        throw error;
     }
 
     const globalThis_ = isBrowser ? []["filter"]["constructor"]("return globalThis")() || []["filter"]["constructor"]("return this")() || globalThis : globalThis || self || (isAMD ? {__justc__} : this) || {__justc__};
@@ -68,6 +93,7 @@ SOFTWARE.
     const FETCH = fetch;
 
     const isSafari = isBrowser ? /^((?!chrome|android).)*safari/i.test(globalThis_.navigator.userAgent) : false;
+    alert(`4: Core objects initialized, isSafari: ${isSafari}`);
 
     JUSTC.VERSION = null;
     JUSTC.GetVersion = function() {
@@ -96,25 +122,39 @@ SOFTWARE.
         redefine: 'JUSTC cannot be redefined.',
     };
 
+    alert('5: JUSTC basic setup complete');
+
     if (isBrowser) {
-        JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR, MAP, BLOB, FETCH);
-        JUSTC.Checks.sysObj(json_, CONSOLE);
-        JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
-        JUSTC.Checks.sysFunc(
-            OBJECT.entries, OBJECT.defineProperty, OBJECT.freeze,
-            json_.parse, json_.stringify,
-            ARRAY.isArray, ARRAY.from,
-            __URL__.parse,
-            CONSOLE.log, CONSOLE.info, CONSOLE.error, CONSOLE.warn, CONSOLE.group, CONSOLE.groupEnd
-        );
-        JUSTC.Checks.sysFunc(DOCUMENT.createElement);
-        JUSTC.Checks.sysObj(
-            DOCUMENT.head,
-            globalThis_.window
-        );
-        JUSTC.Checks.sysFunc(
-            DOCUMENT.head.appendChild, DOCUMENT.head.removeChild
-        );
+        try {
+            JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR, MAP, BLOB, FETCH);
+            alert('6.1: System functions check passed');
+            JUSTC.Checks.sysObj(json_, CONSOLE);
+            alert('6.2: System objects check passed');
+            JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
+            alert('6.3: Global objects check passed');
+            JUSTC.Checks.sysFunc(
+                OBJECT.entries, OBJECT.defineProperty, OBJECT.freeze,
+                json_.parse, json_.stringify,
+                ARRAY.isArray, ARRAY.from,
+                __URL__.parse,
+                CONSOLE.log, CONSOLE.info, CONSOLE.error, CONSOLE.warn, CONSOLE.group, CONSOLE.groupEnd
+            );
+            alert('6.4: Object methods check passed');
+            JUSTC.Checks.sysFunc(DOCUMENT.createElement);
+            alert('6.5: Document methods check passed');
+            JUSTC.Checks.sysObj(
+                DOCUMENT.head,
+                globalThis_.window
+            );
+            alert('6.6: DOM objects check passed');
+            JUSTC.Checks.sysFunc(
+                DOCUMENT.head.appendChild, DOCUMENT.head.removeChild
+            );
+            alert('6.7: DOM methods check passed');
+        } catch (error) {
+            alert(`ERROR in browser checks: ${error}`);
+            throw error;
+        }
     }
 
     JUSTC.JUSTC = globalThis_.__justc__;
@@ -125,8 +165,16 @@ SOFTWARE.
     JUSTC.Silent = false;
     JUSTC.Experiments = false;
 
-    if (!isBrowser && !JUSTC.JUSTC && !JUSTC.WASM && JUSTC.NodeWASM) {JUSTC.JUSTC = JUSTC.NodeWASM}
-    else if (isBrowser && !JUSTC.JUSTC && !JUSTC.WASM) throw new JUSTC.Error(JUSTC.Errors.environment);
+    alert(`7: JUSTC.JUSTC = ${JUSTC.JUSTC}`);
+
+    if (!isBrowser && !JUSTC.JUSTC && !JUSTC.WASM && JUSTC.NodeWASM) {
+        JUSTC.JUSTC = JUSTC.NodeWASM;
+        alert('8: Using NodeWASM');
+    }
+    else if (isBrowser && !JUSTC.JUSTC && !JUSTC.WASM) {
+        alert('ERROR: No WASM module found in browser');
+        throw new JUSTC.Error(JUSTC.Errors.environment);
+    }
 
     JUSTC.Console = function(type, ...args) {
         if (!JUSTC.Silent) {
@@ -141,6 +189,7 @@ SOFTWARE.
 
     JUSTC.Core = {};
     JUSTC.CoreScript = function(code, name) {
+        alert(`9: CoreScript called for ${name}`);
         try {
             const resultptr = JUSTC.WASM.ccall(
                 name,
@@ -157,11 +206,16 @@ SOFTWARE.
             );
             return json_.parse(resultjson);
         } catch (error) {
+            alert(`ERROR in CoreScript: ${error}`);
             throw new JUSTC.Error(JUSTC.Errors[name + 'Error'], error);
         }
     };
     JUSTC.Core.Lexer = function Lexer(code) {
-        if (!JUSTC.WASM) throw new JUSTC.Error(JUSTC.Errors.initWasm);
+        alert('10: Lexer called');
+        if (!JUSTC.WASM) {
+            alert('ERROR: WASM not initialized in Lexer');
+            throw new JUSTC.Error(JUSTC.Errors.initWasm);
+        }
         if (!code || typeof code != 'string' || code.length < 1) throw new JUSTC.Error(JUSTC.Errors.wrongInputType);
         const result = JUSTC.CoreScript(code, 'lexer');
         if (result.error) {
@@ -171,7 +225,11 @@ SOFTWARE.
         }
     };
     JUSTC.Core.Parser = function Parser(code) {
-        if (!JUSTC.WASM) throw new JUSTC.Error(JUSTC.Errors.initWasm);
+        alert('11: Parser called');
+        if (!JUSTC.WASM) {
+            alert('ERROR: WASM not initialized in Parser');
+            throw new JUSTC.Error(JUSTC.Errors.initWasm);
+        }
         if (!code || typeof code != 'object') throw new JUSTC.Error(JUSTC.Errors.lexerInput);
         const result = JUSTC.CoreScript(JSON.stringify(code), 'parser');
         if (result.error) {
@@ -245,27 +303,36 @@ SOFTWARE.
         }
     };
 
+    alert('12: Private functions defined');
+
     JUSTC.Initialize = async function() {
+        alert('13: Initialize called');
         try {
             JUSTC.WASM = await JUSTC.JUSTC();
+            alert('14: WASM initialized successfully');
             if (JUSTC.CoreLogsEnabled) {
                 JUSTC.Console("log", "JUSTC WebAssembly module initialized.");
             }
             JUSTC.JUSTC = null;
             delete JUSTC.JUSTC;
         } catch (error) {
+            alert(`ERROR in Initialize: ${error}`);
             JUSTC.Console("error", JUSTC.Errors.wasmFailed, error);
         }
     };
     JUSTC.InitWASM = async function InitializeJUSTC(attempt = 0) {
+        alert(`15: InitWASM called, attempt ${attempt}`);
         while (!JUSTC.WASM) {
             attempt++;
+            alert(`15.${attempt}: Initializing WASM, attempt ${attempt}`);
             await JUSTC.Initialize();
             if (attempt > 10) {
+                alert('ERROR: WASM initialization failed after 10 attempts');
                 throw new JUSTC.Error(JUSTC.Errors.wasmInitFailed);
             }
         };
         if (JUSTC.WASM) {
+            alert('16: WASM available, updating private functions');
             for (const [unused, prfunc] of OBJECT.entries(JUSTC.PrivateFunctions.All)) {
                 if (prfunc.NeedsWASM && !JUSTC.PrivateFunctions.Available.includes(prfunc.Name)) {
                     JUSTC.PrivateFunctions.Available.push(prfunc.Name);
@@ -301,6 +368,7 @@ SOFTWARE.
     };
 
     JUSTC.Parse = function(code, execute = false, outputMode = JUSTC.DefaultOutputMode) {
+        alert('17: Parse called');
         try {
             const resultPtr = JUSTC.WASM.ccall(
                 'parse',
@@ -316,11 +384,13 @@ SOFTWARE.
 
             return result
         } catch (error) {
+            alert(`ERROR in Parse: ${error}`);
             CONSOLE.error(JUSTC.Errors.executionError, error);
             throw error;
         }
     };
     JUSTC.AsyncParse = async function(code, execute, outputMode = JUSTC.DefaultOutputMode) {
+        alert('18: AsyncParse called');
         return new Promise((resolve, reject) => {
             try {
                 setTimeout(() => {
@@ -339,6 +409,7 @@ SOFTWARE.
 
                         resolve(result)
                     } catch (error) {
+                        alert(`ERROR in AsyncParse setTimeout: ${error}`);
                         console.error(JUSTC.Errors.executionError, error);
                         reject(new JUSTC.Error(JUSTC.Errors.executionError, error))
                     }
@@ -351,6 +422,7 @@ SOFTWARE.
 
     JUSTC.CheckWASM = function() {
         if (!JUSTC.WASM) {
+            alert('ERROR: CheckWASM failed - WASM not initialized');
             throw new JUSTC.Error(JUSTC.Errors.initWasm);
         }
     };
@@ -487,6 +559,7 @@ SOFTWARE.
     };
     JUSTC.Output = {
         parse: isBrowser || !JUSTC.Experiments ? function(code, outputMode = JUSTC.DefaultOutputMode) {
+            alert('19: Output.parse called');
             JUSTC.Check(code);
             if (!JUSTC.OutputModes.includes(outputMode)) throw new JUSTC.Error(JUSTC.Errors.outputMode);
 
@@ -501,6 +574,7 @@ SOFTWARE.
             return await JUSTC.AsyncOutput(false, code)
         },
         execute: isBrowser || !JUSTC.Experiments ? function(code, outputMode = JUSTC.DefaultOutputMode) {
+            alert('20: Output.execute called');
             JUSTC.Check(code);
             if (!JUSTC.OutputModes.includes(outputMode)) throw new JUSTC.Error(JUSTC.Errors.outputMode);
 
@@ -516,6 +590,7 @@ SOFTWARE.
             return await JUSTC.AsyncOutput(true, code)
         },
         initialize: async function() {
+            alert('21: Output.initialize called');
             await JUSTC.InitWASM();
         },
         stringify: function(JavaScriptObjectNotation) {
@@ -534,6 +609,7 @@ SOFTWARE.
             return 'JUSTC'
         },
         get ["version"]() {
+            alert('22: Public.version getter called');
             JUSTC.CheckWASM();
             const resultptr = JUSTC.WASM.ccall("version", "number");
             const result = JUSTC.WASM.UTF8ToString(resultptr);
@@ -623,14 +699,22 @@ SOFTWARE.
         return exports;
     };
 
+    alert('23: Starting final setup');
+
     if (isBrowser) {
-        if ("JUSTC" in globalThis_.window || "$JUSTC" in globalThis_.window) throw new JUSTC.Error(JUSTC.Errors.environment);
+        alert('24: Browser environment setup');
+        if ("JUSTC" in globalThis_.window || "$JUSTC" in globalThis_.window) {
+            alert('ERROR: JUSTC or $JUSTC already in window');
+            throw new JUSTC.Error(JUSTC.Errors.environment);
+        }
         OBJECT.defineProperty(globalThis_.window, 'JUSTC', {
             get: function() {
+                alert('25: window.JUSTC getter called');
                 JUSTC.InitWASM();
                 return OBJECT.freeze(JUSTC.Public);
             },
             set: function(command) {
+                alert(`26: window.JUSTC setter called with: ${command}`);
                 if (typeof command === 'string' && command.length > 0) {
                     const vars = {
                         "version": "Public.version",
@@ -761,14 +845,17 @@ SOFTWARE.
         });
         OBJECT.defineProperty(globalThis_.window, '$JUSTC', {
             get: function() {
+                alert('27: window.$JUSTC getter called');
                 return JUSTC.Output.execute;
             },
             set: function() {
+                alert('ERROR: Trying to set $JUSTC');
                 JUSTC.ErrorIfEnabled('$'+JUSTC.Errors.redefine);
             },
             configurable: false
         });
         if (!isSafari) setTimeout(async()=>{
+            alert('28: Starting VFS registration');
             const RegisterSource = async function(url, vfs) {
                 const text = await(await FETCH(url)).text();
                 vfs.createFile(url, text, {
@@ -786,15 +873,24 @@ SOFTWARE.
                     if (typeof source != 'string') continue;
                     await RegisterSource(source, CurrentVFS);
                 }
-            } catch (_) {}
+                alert('29: VFS registration completed');
+            } catch (error) {
+                alert(`ERROR in VFS registration: ${error}`);
+            }
         },0);
+        alert('30: Browser setup completed');
     } else if (isModule) {
+        alert('31: Module environment');
         module.exports = JUSTC.CreateAsyncExports()
     } else if (isAMD) {
+        alert('32: AMD environment');
         define(['require'], function(require) {
             return JUSTC.CreateAsyncExports()
         })
     } else {
+        alert('ERROR: Unsupported environment');
         throw new JUSTC.Error('Unsupported environment.')
     }
+
+    alert('33: Script execution completed successfully');
 })()

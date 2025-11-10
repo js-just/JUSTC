@@ -472,7 +472,7 @@ ParseResult Parser::parse(bool doExecute) {
                         throw std::runtime_error("Lua error at " + Utility::position(currentToken().start, input));
                     }
                 } catch (const std::exception& e) {
-                    throw std::runtime_error("Lua error: " + e.what() + "\nat " + Utility::position(currentToken().start, input));
+                    throw std::runtime_error(std::string("Lua error: ") + std::string(e.what()) + "\nat " + Utility::position(currentToken().start, input));
                 }
             } else {
                 throw std::runtime_error("Unexpected token \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");

@@ -37,6 +37,10 @@ SOFTWARE.
 #include <stdexcept>
 #include <tuple>
 
+// test lua
+#include "run.lua.hpp"
+Lua::executeScript("print(\"Lua\")")
+
 class OutputRedirector {
 private:
     std::streambuf* originalCout;

@@ -36,7 +36,7 @@ tar -xzf wabt-1.0.34-ubuntu.tar.gz
 sudo cp wabt-1.0.34/bin/* /usr/local/bin/
 rm -rf wabt-1.0.34 wabt-1.0.34-ubuntu.tar.gz
 
-SOURCE_FILES="core/js.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp core/to.xml.cpp core/to.yaml.cpp core/utility.cpp core/import.cpp"
+SOURCE_FILES="core/js.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp core/to.xml.cpp core/to.yaml.cpp core/utility.cpp core/import.cpp core/run.lua.cpp"
 
 COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_string\",\"_malloc\",\"_free\",\"_version\"] \
 -s EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"UTF8ToString\",\"stringToUTF8\"] \
@@ -57,7 +57,9 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MODULARIZE=1 \
 -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
 -s MAXIMUM_MEMORY=256MB \
---bind"
+--bind \
+-I./third-party \
+-I./lua-5.4.4/src"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"
@@ -67,9 +69,44 @@ NODE_OUTPUT="javascript_output/$SAFE_DIR/justc.node.js"
 
 JSOUT_DIR="javascript_output/$SAFE_DIR"
 
+install_lua() {
+    wget -q https://www.lua.org/ftp/lua-5.4.4.tar.gz
+    tar -xzf lua-5.4.4.tar.gz
+    cd lua-5.4.4
+
+    cat > src/Makefile.emscripten << 'EOF'
+CC = emcc
+AR = emar
+RANLIB = emranlib
+CFLAGS = -O2 -Wall -Wextra -DLUA_COMPAT_5_3 -DLUA_ANSI -fPIC
+LDFLAGS = -shared
+
+CORE_O = lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o lundump.o lvm.o lzio.o
+LIB_O = lauxlib.o lbaselib.o lcorolib.o ldblib.o liolib.o lmathlib.o loadlib.o loslib.o lstrlib.o ltablib.o lutf8lib.o linit.o
+
+LUA_A = liblua.a
+
+all: $(LUA_A)
+
+$(LUA_A): $(CORE_O) $(LIB_O)
+	$(AR) rcu $@ $?
+	$(RANLIB) $@
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f *.o *.a
+EOF
+
+    cd src
+    make -f Makefile.emscripten -j4
+    cd ../..
+}
+
 web() {
     set +e
-    emcc $SOURCE_FILES \
+    emcc $SOURCE_FILES ./lua-5.4.4/src/liblua.a \
         -o $WEB_OUTPUT \
         $COMMON_FLAGS \
         $WEB_FLAGS
@@ -85,7 +122,7 @@ web() {
 node() {
     mkdir -p $JSOUT_DIR
     set +e
-    emcc $SOURCE_FILES \
+    emcc $SOURCE_FILES ./lua-5.4.4/src/liblua.a \
         -o $NODE_OUTPUT \
         $COMMON_FLAGS \
         $NODE_FLAGS
@@ -98,7 +135,8 @@ node() {
     fi
 }
 
-web
+install_lua && \
+web && \
 node
 
 mv javascript/$SAFE_DIR/justc.core.wasm $JSOUT_DIR/justc.wasm
@@ -133,7 +171,7 @@ mkdir -p $JSOUT_DIR/JUSTC/core
 mkdir -p $JSOUT_DIR/JUSTC/javascript
 srcfile=$JSOUT_DIR/JUSTC/index.json
 echo "[" > $srcfile
-SOURCE_FILES+=" core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h"
+SOURCE_FILES+=" core/main.cpp core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h core/run.js.cpp core/run.js.hpp core/run.lua.hpp"
 for file in $SOURCE_FILES; do
     echo "\"$file\"," >> $srcfile
     cp $file $JSOUT_DIR/JUSTC/$file

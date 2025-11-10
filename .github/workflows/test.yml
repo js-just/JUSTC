@@ -89,5 +89,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Cache Lua
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/lua
+          key: ${{ runner.os }}-lua-544-${{ hashFiles('lua-5.4.4.tar.gz') }}
+          restore-keys: |
+            ${{ runner.os }}-lua-544-
+            ${{ runner.os }}-lua-
       - name: CMake
         run: bash test/linux/justc.sh

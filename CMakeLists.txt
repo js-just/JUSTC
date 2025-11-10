@@ -41,6 +41,7 @@ if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
+find_package(Lua REQUIRED)
 find_package(cpr QUIET)
 
 include(FetchContent)
@@ -90,6 +91,7 @@ add_executable(justc core/main.cpp)
 
 target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
+    ${LUA_INCLUDE_DIR}
 )
 
 if(CPR_BUILT_LOCALLY)
@@ -98,8 +100,9 @@ else()
     target_link_libraries(justc_core PRIVATE cpr::cpr)
 endif()
 target_link_libraries(justc_core PRIVATE quickjs)
+target_link_libraries(justc_core PRIVATE ${LUA_LIBRARIES})
 
-target_link_libraries(justc PRIVATE justc_core quickjs)
+target_link_libraries(justc PRIVATE justc_core quickjs ${LUA_LIBRARIES})
 
 install(TARGETS justc DESTINATION bin)
 

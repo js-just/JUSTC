@@ -57,9 +57,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MODULARIZE=1 \
 -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
 -s MAXIMUM_MEMORY=256MB \
---bind \
--I./luacpp/include \
--I./lua-5.4.4/src"
+--bind"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"
@@ -69,24 +67,9 @@ NODE_OUTPUT="javascript_output/$SAFE_DIR/justc.node.js"
 
 JSOUT_DIR="javascript_output/$SAFE_DIR"
 
-luacpp() {
-    wget -q https://www.lua.org/ftp/lua-5.4.4.tar.gz
-    tar -xzf lua-5.4.4.tar.gz
-    cd lua-5.4.4
-    sed -i 's/CC= gcc/CC= emcc/g' src/Makefile
-    sed -i 's/AR= ar/AR= emar/g' src/Makefile
-    sed -i 's/RANLIB= ranlib/RANLIB= emranlib/g' src/Makefile
-    make linux -j4
-    cd ..
-
-    git clone https://github.com/jordanvrtanoski/luacpp.git
-    cp -r luacpp/include/LuaCpp ./include/
-}
-LUACPP_SOURCES="luacpp/src/LuaContext.cpp luacpp/src/LuaFunction.cpp luacpp/src/LuaTable.cpp luacpp/src/LuaVariable.cpp"
-
 web() {
     set +e
-    emcc $SOURCE_FILES $LUACPP_SOURCES \
+    emcc $SOURCE_FILES \
         -o $WEB_OUTPUT \
         $COMMON_FLAGS \
         $WEB_FLAGS
@@ -102,7 +85,7 @@ web() {
 node() {
     mkdir -p $JSOUT_DIR
     set +e
-    emcc $SOURCE_FILES $LUACPP_SOURCES \
+    emcc $SOURCE_FILES \
         -o $NODE_OUTPUT \
         $COMMON_FLAGS \
         $NODE_FLAGS
@@ -115,7 +98,6 @@ node() {
     fi
 }
 
-luacpp
 web
 node
 

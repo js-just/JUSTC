@@ -37,18 +37,6 @@ SOFTWARE.
 #include <stdexcept>
 #include <tuple>
 
-//test luacpp
-#include <LuaCpp/LuaFunction.hpp>
-#include <LuaCpp/LuaTable.hpp>
-void runLuaScript(const std::string& script) {
-    try {
-        luaContext.CompileString(script);
-    } catch (const std::exception& e) {
-        std::cerr << "Lua error: " << e.what() << std::endl;
-    }
-}
-runLuaScript("print(\"lua\")")
-
 class OutputRedirector {
 private:
     std::streambuf* originalCout;

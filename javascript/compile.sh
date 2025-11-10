@@ -50,18 +50,24 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s ASYNCIFY=1 \
 -s FETCH=1 \
 -s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close'] \
--O0 \
+-O3 \
 -flto \
 -s TOTAL_STACK=8MB \
--s TOTAL_MEMORY=32MB \
+-s TOTAL_MEMORY=64MB \
 -s MODULARIZE=1 \
 -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
--s MAXIMUM_MEMORY=256MB \
+-s MAXIMUM_MEMORY=512MB \
 --bind \
 -I./third-party \
 -I./lua-5.4.4/src \
--Wcast-function-type \
--g"
+-s DEMANGLE_SUPPORT=1 \
+-s STACK_OVERFLOW_CHECK=2 \
+-s SAFE_HEAP=1 \
+-s INITIAL_MEMORY=67108864 \
+-s DEFAULT_TO_CXX=1 \
+-fexceptions \
+-s EXCEPTION_DEBUG=1 \
+-s DISABLE_DEPRECATED_FIND=0"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"
@@ -85,7 +91,7 @@ install_lua() {
 CC = emcc
 AR = emar
 RANLIB = emranlib
-CFLAGS = -O2 -Wall -Wextra -DLUA_COMPAT_5_3 -DLUA_ANSI -fPIC
+CFLAGS = -O2 -Wall -Wextra -DLUA_COMPAT_5_3 -DLUA_ANSI -fPIC -fexceptions
 LDFLAGS = -shared
 
 CORE_O = lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o lundump.o lvm.o lzio.o

@@ -175,7 +175,7 @@ SOFTWARE.
     JUSTC.Core.Parser = function Parser(code) {
         if (!JUSTC.WASM) throw new JUSTC.Error(JUSTC.Errors.initWasm);
         if (!code || typeof code != 'object') throw new JUSTC.Error(JUSTC.Errors.lexerInput);
-        const result = JUSTC.CoreScript(JSON.stringify(code), 'parser');
+        const result = JUSTC.CoreScript(json_.stringify(code), 'parser');
         if (result.error) {
             throw new JUSTC.Error((result.parser ? JUSTC.Errors.parseError : (JUSTC.Errors.executionError + " ")) + result.error);
         } else {
@@ -418,7 +418,7 @@ SOFTWARE.
             const url = __URL__.createObjectURL(blob);
 
             const script = DOCUMENT.createElement('script');
-            script.textContent = `//# sourceMappingURL=data:application/json;base64,${btoa(JSON.stringify({
+            script.textContent = `//# sourceMappingURL=data:application/json;base64,${btoa(json_.stringify({
                 version: 3,
                 file: filename,
                 sources: [filename],
@@ -781,7 +781,7 @@ SOFTWARE.
                 })
             };
             try {
-                const urlprefix = SCRIPT.src.slice(0,-8)+'src/';
+                const urlprefix = SCRIPT.src.slice(0,-8)+'JUSTC/';
                 const sources = await(await FETCH(urlprefix)).json();
                 const CurrentVFS = new JUSTC.VFS();
                 if (!ARRAY.isArray(sources)) return;

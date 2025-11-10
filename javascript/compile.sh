@@ -81,6 +81,41 @@ web() {
         exit 1
     fi
 }
+escapeJsonString() {
+    local str="$1"
+    local length=${#str}
+    local result=""
+    local i=0
+
+    while (( i < length )); do
+        local c="${str:i:1}"
+        case "$c" in
+            '"') result+='\\"' ;;
+            '\\') result+='\\\\' ;;
+            $'\b') result+='\\b' ;;
+            $'\f') result+='\\f' ;;
+            $'\n') result+='\\n' ;;
+            $'\r') result+='\\r' ;;
+            $'\t') result+='\\t' ;;
+            *)
+                LC_CTYPE=C printf -v ord '%d' "'$c"
+                if (( ord < 0x20 || ord == 0x7F )); then
+                    printf -v hex '\\u%04x' "$ord"
+                    result+="$hex"
+                else
+                    result+="$c"
+                fi
+                ;;
+        esac
+
+        if (( i > 100000 )); then
+            break
+        fi
+        ((i++))
+    done
+
+    echo $result
+}
 
 node() {
     mkdir -p $JSOUT_DIR
@@ -129,15 +164,23 @@ for file in justc justc.node; do
     rm $JSOUT_DIR/$file.tmp
 done
 
-mkdir -p $JSOUT_DIR/src/core
-srcfile=$JSOUT_DIR/src/index.json
+mkdir -p $JSOUT_DIR/JUSTC/core
+srcfile=$JSOUT_DIR/JUSTC/index.json
 echo "[" > $srcfile
+SOURCE_FILES+=" core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h"
 for file in $SOURCE_FILES; do
     echo "\"$file\"," >> $srcfile
-    cp $file $JSOUT_DIR/src/$file
+    cp $file $JSOUT_DIR/JUSTC/$file
 done
 head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
 echo "]" >> $srcfile
+cp javascript/core.txt $JSOUT_DIR/JUSTC/javascript/core.js
+cp javascript/index.d.txt $JSOUT_DIR/JUSTC/javascript/core.d.ts
+OUTPUT_URL="https://just.js.org/justc/$SAFE_DIR"
+SOURCE_CONTENT1=$(escapeJsonString $(cat javascript/core.txt))
+SOURCE_CONTENT2=$(escapeJsonString $(cat javascript/index.d.txt))
+echo "{\"version\":3,\"file\":\"$OUTPUT_URL/justc.js\",\"sources\":[\"$OUTPUT_URL/JUSTC/javascript/core.js\",\"$OUTPUT_URL/JUSTC/javascript/core.d.ts\"],\"sourcesContent\":[\"$SOURCE_CONTENT1\",\"$SOURCE_CONTENT2\"],\"mappings\":\"\"}" > $JSOUT_DIR/justc.js.map
+printf "%s\n// #sourceMappingURL=$OUTPUT_URL/justc.js.map" "$(cat $JSOUT_DIR/justc.js)" > temp.js && mv temp.js "$JSOUT_DIR/justc.js"
 
 mv javascript/test.html $JSOUT_DIR/test.html
 mv javascript/test.justc $JSOUT_DIR/test.justc

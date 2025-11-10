@@ -58,7 +58,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
 -s MAXIMUM_MEMORY=256MB \
 --bind \
--I./luacpp/include \
+-I./luacpp/Source \
 -I./lua-5.4.4/src"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
@@ -73,20 +73,62 @@ luacpp() {
     wget -q https://www.lua.org/ftp/lua-5.4.4.tar.gz
     tar -xzf lua-5.4.4.tar.gz
     cd lua-5.4.4
-    sed -i 's/CC= gcc/CC= emcc/g' src/Makefile
-    sed -i 's/AR= ar/AR= emar/g' src/Makefile
-    sed -i 's/RANLIB= ranlib/RANLIB= emranlib/g' src/Makefile
-    make linux -j4
-    cd ..
+
+    cat > src/Makefile.emscripten << 'EOF'
+CC = emcc
+AR = emar
+RANLIB = emranlib
+CFLAGS = -O2 -Wall -Wextra -DLUA_COMPAT_5_3 -DLUA_ANSI -fPIC
+LDFLAGS = -shared
+
+CORE_O = lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o lundump.o lvm.o lzio.o
+LIB_O = lauxlib.o lbaselib.o lcorolib.o ldblib.o liolib.o lmathlib.o loadlib.o loslib.o lstrlib.o ltablib.o lutf8lib.o linit.o
+
+LUA_A = liblua.a
+
+all: $(LUA_A)
+
+$(LUA_A): $(CORE_O) $(LIB_O)
+	$(AR) rcu $@ $?
+	$(RANLIB) $@
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f *.o *.a
+EOF
+
+    cd src
+    make -f Makefile.emscripten
+    cd ../..
 
     git clone https://github.com/jordanvrtanoski/luacpp.git
-    cp -r luacpp/include/LuaCpp ./include/
+
+    mkdir -p include/LuaCpp
 }
-LUACPP_SOURCES="luacpp/src/LuaContext.cpp luacpp/src/LuaFunction.cpp luacpp/src/LuaTable.cpp luacpp/src/LuaVariable.cpp"
+LUACPP_SOURCES="
+luacpp/Source/LuaContext.cpp
+luacpp/Source/LuaVersion.cpp
+luacpp/Source/Engine/LuaState.cpp
+luacpp/Source/Engine/LuaType.cpp
+luacpp/Source/Engine/LuaTNil.cpp
+luacpp/Source/Engine/LuaTString.cpp
+luacpp/Source/Engine/LuaTNumber.cpp
+luacpp/Source/Engine/LuaTBoolean.cpp
+luacpp/Source/Engine/LuaTTable.cpp
+luacpp/Source/Engine/LuaTUserData.cpp
+luacpp/Source/Registry/LuaRegistry.cpp
+luacpp/Source/Registry/LuaCodeSnippet.cpp
+luacpp/Source/Registry/LuaCompiler.cpp
+luacpp/Source/Registry/LuaCFunction.cpp
+luacpp/Source/Registry/LuaLibrary.cpp
+luacpp/Source/LuaMetaObject.cpp
+"
 
 web() {
     set +e
-    emcc $SOURCE_FILES $LUACPP_SOURCES \
+    emcc $SOURCE_FILES $LUACPP_SOURCES ./lua-5.4.4/src/liblua.a \
         -o $WEB_OUTPUT \
         $COMMON_FLAGS \
         $WEB_FLAGS
@@ -102,7 +144,7 @@ web() {
 node() {
     mkdir -p $JSOUT_DIR
     set +e
-    emcc $SOURCE_FILES $LUACPP_SOURCES \
+    emcc $SOURCE_FILES $LUACPP_SOURCES ./lua-5.4.4/src/liblua.a \
         -o $NODE_OUTPUT \
         $COMMON_FLAGS \
         $NODE_FLAGS

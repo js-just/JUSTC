@@ -75,10 +75,16 @@ FetchContent_Declare(luacpp
     GIT_REPOSITORY https://github.com/jordanvrtanoski/luacpp.git
     GIT_TAG 4d27b7bcf0f82ad9d8d11fb353f5debd0af710df # LuaCpp 0.3.0
 )
-set(LUA_BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared Lua libraries" FORCE)
-set(LUA_USE_DL OFF CACHE BOOL "Use dynamic loading" FORCE)
-FetchContent_MakeAvailable(luacpp)
 
+set(CMAKE_CXX_STANDARD 17)
+FetchContent_MakeAvailable(luacpp)
+target_include_directories(luacpp_static PUBLIC
+    ${luacpp_SOURCE_DIR}/Source
+    ${luacpp_SOURCE_DIR}/Source/Engine
+    ${luacpp_SOURCE_DIR}/Source/Registry
+)
+
+set(CMAKE_CXX_STANDARD 11)
 include_directories(third-party)
 add_library(justc_core STATIC
     core/lexer.cpp
@@ -106,9 +112,9 @@ else()
     target_link_libraries(justc_core PRIVATE cpr::cpr)
 endif()
 target_link_libraries(justc_core PRIVATE quickjs)
-target_link_libraries(justc_core PRIVATE luacpp)
+target_link_libraries(justc_core PRIVATE luacpp_static)
 
-target_link_libraries(justc PRIVATE justc_core quickjs luacpp)
+target_link_libraries(justc PRIVATE justc_core quickjs luacpp_static)
 
 install(TARGETS justc DESTINATION bin)
 

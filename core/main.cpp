@@ -38,8 +38,8 @@ SOFTWARE.
 #include <tuple>
 
 //test luacpp
-#include <LuaCpp/LuaFunction.hpp>
-#include <LuaCpp/LuaTable.hpp>
+#include "LuaCpp/LuaContext.hpp"
+#include "LuaCpp/LuaMetaObject.hpp"
 void runLuaScript(const std::string& script) {
     try {
         luaContext.CompileString(script);

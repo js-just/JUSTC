@@ -75,7 +75,7 @@ void RunLua::registerFunction(const std::string& name, lua_CFunction func) {
 }
 
 int justc_version_lua(lua_State* L) {
-    lua_pushstring(L, JUSTC_VERSION);
+    lua_pushstring(L, JUSTC_VERSION.c_str());
     return 1;
 }
 

@@ -165,6 +165,7 @@ for file in justc justc.node; do
 done
 
 mkdir -p $JSOUT_DIR/JUSTC/core
+mkdir -p $JSOUT_DIR/JUSTC/javascript
 srcfile=$JSOUT_DIR/JUSTC/index.json
 echo "[" > $srcfile
 SOURCE_FILES+=" core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h"

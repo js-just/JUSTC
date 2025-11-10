@@ -85,6 +85,7 @@ add_library(justc_core STATIC
     core/utility.cpp
     core/run.js.cpp
     core/import.cpp
+    core/run.lua.cpp
 )
 
 add_executable(justc core/main.cpp)

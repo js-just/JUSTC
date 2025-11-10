@@ -65,8 +65,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s INITIAL_MEMORY=67108864 \
 -s DEFAULT_TO_CXX=1 \
 -fexceptions \
--s EXCEPTION_DEBUG=1 \
--s DISABLE_DEPRECATED_FIND=0"
+-s EXCEPTION_DEBUG=1"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"

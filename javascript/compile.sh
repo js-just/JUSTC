@@ -59,7 +59,8 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MAXIMUM_MEMORY=256MB \
 --bind \
 -I./third-party \
--I./lua-5.4.4/src"
+-I./lua-5.4.4/src \
+-s DEMANGLE_SUPPORT=1"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"

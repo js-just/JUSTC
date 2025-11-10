@@ -777,7 +777,7 @@ SOFTWARE.
                               url.endsWith('.h')   ? 'text/x-chdr'   :
                               'text/x-csrc'
                 })
-            }
+            };
             try {
                 const sources = await(await FETCH()).json();
                 const CurrentVFS = new JUSTC.VFS();

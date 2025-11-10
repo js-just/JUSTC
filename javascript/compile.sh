@@ -70,6 +70,11 @@ NODE_OUTPUT="javascript_output/$SAFE_DIR/justc.node.js"
 JSOUT_DIR="javascript_output/$SAFE_DIR"
 
 install_lua() {
+    if [ -f "lua-5.4.4/src/liblua.a" ]; then
+        echo "Lua already built, skipping installation."
+        return
+    fi
+
     wget -q https://www.lua.org/ftp/lua-5.4.4.tar.gz
     tar -xzf lua-5.4.4.tar.gz
     cd lua-5.4.4

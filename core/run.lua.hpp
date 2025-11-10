@@ -1,9 +1,9 @@
 #pragma once
 
 extern "C" {
-    #include "lua.h"
-    #include "lauxlib.h"
-    #include "lualib.h"
+    #include <lua.hpp>
+    #include <lualib.h>
+    #include <lauxlib.h>
 }
 
 #include "../third-party/progschj/luacpp11.hpp"

@@ -37,9 +37,6 @@ SOFTWARE.
 #include <stdexcept>
 #include <tuple>
 
-// test lua
-#include "run.lua.hpp"
-
 class OutputRedirector {
 private:
     std::streambuf* originalCout;
@@ -197,7 +194,6 @@ std::string outputString(cmdFlags flags, Args... args) {
     }
 }
 int main(int argc, char* argv[]) {
-    Lua::executeScript("print(\"Lua\")");
     if (argc < 1) {
         printUsage();
         return 1;

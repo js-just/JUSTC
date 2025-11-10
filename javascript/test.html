@@ -10,7 +10,7 @@
         <hr>
         <button onclick="pars()">Parse</button><button onclick="init()">Initialize</button>
         <script src="justc.core.js"></script>
-        <script src="justc.js"></script>
+        <!--script src="justc.js"></script-->
         <script>
             function code() {
                 return prompt("Enter JUSTC Code");
@@ -32,6 +32,12 @@
                 run("parse");
             }
             async function init() {
+                try {
+                    await eval(await fetch('justc.js'));
+                } catch (err) {
+                    alert("JUSTC error: "+err);
+                    return;
+                }
                 try {
                     await JUSTC.initialize();
                     alert("Initialized.");

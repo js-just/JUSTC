@@ -60,18 +60,6 @@ SOFTWARE.
     const ARRAY = Array;
     const DOCUMENT = isBrowser ? document : null;
     const __URL__ = URL;
-    const FETCH = function customFetch(url) {
-        let done = false;
-        let output;
-        const fetch_ = fetch;
-        JUSTC.Checks.sysFunc(fetch_);
-        fetch_(url).then(r => r.text()).then((t)=>{
-            done = true;
-            output = t;
-        });
-        while (!done) {};
-        return output;
-    };
     const STRING = String;
     const ERR = Error;
     const CONSOLE = console;

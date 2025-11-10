@@ -66,8 +66,10 @@ SOFTWARE.
     const MAP = Map;
     const BLOB = isBrowser ? Blob : null;
     const FETCH = fetch;
+    const SCRIPT = isBrowser ? DOCUMENT.currentScript : null;
 
     const isSafari = isBrowser ? /^((?!chrome|android).)*safari/i.test(globalThis_.navigator.userAgent) : false;
+    if (isBrowser && !SCRIPT) throw new JUSTC.Error(JUSTC.Errors.environment);
 
     JUSTC.VERSION = null;
     JUSTC.GetVersion = function() {
@@ -100,7 +102,7 @@ SOFTWARE.
         JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR, MAP, BLOB, FETCH);
         JUSTC.Checks.sysObj(json_, CONSOLE);
         JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
-        JUSTC.Checks.sysFunc(
+        if (!isSafari) JUSTC.Checks.sysFunc(
             OBJECT.entries, OBJECT.defineProperty, OBJECT.freeze,
             json_.parse, json_.stringify,
             ARRAY.isArray, ARRAY.from,
@@ -779,7 +781,7 @@ SOFTWARE.
                 })
             };
             try {
-                const sources = await(await FETCH()).json();
+                const sources = await(await FETCH(SCRIPT.src.slice(0,-8)+'src/')).json();
                 const CurrentVFS = new JUSTC.VFS();
                 if (!ARRAY.isArray(sources)) return;
                 for (const source of sources) {

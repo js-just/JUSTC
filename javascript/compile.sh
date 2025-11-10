@@ -60,7 +60,6 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 --bind \
 -I./third-party \
 -I./lua-5.4.4/src \
--s DEMANGLE_SUPPORT=1 \
 -s STACK_OVERFLOW_CHECK=2 \
 -s SAFE_HEAP=1 \
 -s INITIAL_MEMORY=67108864 \

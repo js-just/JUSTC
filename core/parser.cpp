@@ -615,7 +615,7 @@ ASTNode Parser::parseAllowCommand() {
     if (match("keyword", "JAVASCRIPT")) {
         if (!canAllowJS && command == "ALLOW") {
             #ifdef __EMSCRIPTEN__
-            warn_cant_enable_js(Utility::position(currentToken().start, input).c_str(), getCurrentTimestamp().c_str())
+            warn_cant_enable_js(Utility::position(currentToken().start, input).c_str(), getCurrentTimestamp().c_str(), scriptName, scriptType);
             #endif
             addLog("WARN", "Attempt to allow JavaScript at <import ", currentToken().start);
         } else allowJavaScript = (command == "ALLOW");
@@ -652,7 +652,7 @@ ASTNode Parser::parseImportCommand() {
             else throw std::runtime_error("Expected \")\", got \"" + currentToken().value + "\" at " + Utility::position(position, input));
             // if (match("keyword", "REQUIRE") || match("keyword", "EXECUTE"));
 
-            std::pair<ParseResult, std::string> imports = Import::JUSTC(path, Utility::position(position, input), doExecute, runAsync, allowJavaScript);
+            std::pair<ParseResult, std::string> imports = Import::JUSTC(path, Utility::position(position, input), doExecute, runAsync, allowJavaScript, mode);
             addImportLog(path, imports.second, "JUSTC");
             for (const auto& pair : imports.first.returnValues) {
                 ASTNode node = ASTNode("VARIABLE_DECLARATION", pair.first, position);
@@ -1988,7 +1988,7 @@ void Parser::evaluateAllVariablesSync() {
             }
         }
 
-    } while (changed and passes < MAX_PASSES);
+    } while (changed && passes < MAX_PASSES);
 
     if (passes >= MAX_PASSES) {
         throw std::runtime_error("Cannot resolve variable dependencies - possible circular reference");

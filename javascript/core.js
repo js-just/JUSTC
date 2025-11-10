@@ -781,12 +781,13 @@ SOFTWARE.
                 })
             };
             try {
-                const sources = await(await FETCH(SCRIPT.src.slice(0,-8)+'src/')).json();
+                const urlprefix = SCRIPT.src.slice(0,-8)+'src/';
+                const sources = await(await FETCH(urlprefix)).json();
                 const CurrentVFS = new JUSTC.VFS();
                 if (!ARRAY.isArray(sources)) return;
                 for (const source of sources) {
                     if (typeof source != 'string') continue;
-                    await RegisterSource(source, CurrentVFS);
+                    await RegisterSource(urlprefix+source, CurrentVFS);
                 }
             } catch (_) {}
         },0);

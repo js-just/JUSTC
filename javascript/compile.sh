@@ -46,11 +46,11 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -std=c++11 \
 -s DISABLE_EXCEPTION_CATCHING=0 \
 -s EXPORT_NAME='__justc__' \
--s ASSERTIONS=0 \
+-s ASSERTIONS=2 \
 -s ASYNCIFY=1 \
 -s FETCH=1 \
 -s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close'] \
--O3 \
+-O0 \
 -flto \
 -s TOTAL_STACK=8MB \
 -s TOTAL_MEMORY=32MB \
@@ -59,7 +59,10 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MAXIMUM_MEMORY=256MB \
 --bind \
 -I./third-party \
--I./lua-5.4.4/src"
+-I./lua-5.4.4/src \
+-Werror \
+-Wcast-function-type \
+-g"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"

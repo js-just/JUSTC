@@ -469,7 +469,7 @@ ParseResult Parser::parse(bool doExecute) {
                 try {
                     RunLua runLua;
                     if (!runLua.executeScript(currentToken().value)) {
-                        throw std::runtime_error("Lua error: " + e.what() + "\nat " + Utility::position(currentToken().start, input));
+                        throw std::runtime_error("Lua error at " + Utility::position(currentToken().start, input));
                     }
                 } catch (const std::exception& e) {
                     throw std::runtime_error("Lua error: " + e.what() + "\nat " + Utility::position(currentToken().start, input));

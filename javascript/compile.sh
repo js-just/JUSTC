@@ -43,7 +43,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MODULARIZE=1 \
 -s ALLOW_MEMORY_GROWTH=1 \
 -s INVOKE_RUN=0 \
--std=c++17 \
+-std=c++11 \
 -s DISABLE_EXCEPTION_CATCHING=0 \
 -s EXPORT_NAME='__justc__' \
 -s ASSERTIONS=0 \
@@ -100,10 +100,12 @@ clean:
 EOF
 
     cd src
-    make -f Makefile.emscripten -j4
+    make -f Makefile.emscripten
     cd ../..
 
     git clone https://github.com/jordanvrtanoski/luacpp.git
+
+    mkdir -p include/LuaCpp
 }
 LUACPP_SOURCES="
 luacpp/Source/LuaContext.cpp

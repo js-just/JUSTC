@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-(async()=>{
+(()=>{
     "use strict";
 
     const JUSTC = {};
@@ -65,6 +65,9 @@ SOFTWARE.
     const CONSOLE = console;
     const MAP = Map;
     const BLOB = isBrowser ? Blob : null;
+    const FETCH = fetch;
+
+    const isSafari = isBrowser ? /^((?!chrome|android).)*safari/i.test(globalThis_.navigator.userAgent) : false;
 
     JUSTC.VERSION = null;
     JUSTC.GetVersion = function() {
@@ -94,7 +97,7 @@ SOFTWARE.
     };
 
     if (isBrowser) {
-        JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR, MAP, BLOB);
+        JUSTC.Checks.sysFunc(OBJECT, ARRAY, __URL__, STRING, ERR, MAP, BLOB, FETCH);
         JUSTC.Checks.sysObj(json_, CONSOLE);
         JUSTC.Checks.sysObj(globalThis_, DOCUMENT);
         JUSTC.Checks.sysFunc(
@@ -434,7 +437,7 @@ SOFTWARE.
             return ARRAY.from(this.files.keys());
         }
     } : undefined;
-    JUSTC.CurrentVFS = isBrowser ? new JUSTC.VFS() : undefined;
+    JUSTC.CurrentVFS = isBrowser && !isSafari ? new JUSTC.VFS() : undefined;
 
     JUSTC.Check = (code) => {
         if (JUSTC.CheckInput(code)) throw new JUSTC.Error(JUSTC.Errors.wrongInputType);
@@ -474,7 +477,7 @@ SOFTWARE.
         return await Promise.all(await Promise.all(JUSTC.Taskify(bool, outputMode, args.slice(start, end))))
     };
     JUSTC.RegisterImports = function(imports) {
-        if (isBrowser && imports && ARRAY.isArray(imports) && imports.length > 0) setTimeout(() => {
+        if (isBrowser && !isSafari && imports && ARRAY.isArray(imports) && imports.length > 0) setTimeout(() => {
             try {
                 for (const [url, content, type] of imports) {
                     JUSTC.CurrentVFS.createFile(url, content, {mimeType: type});
@@ -765,6 +768,26 @@ SOFTWARE.
             },
             configurable: false
         });
+        if (!isSafari) setTimeout(async()=>{
+            const RegisterSource = async function(url, vfs) {
+                const text = await(await FETCH(url)).text();
+                vfs.createFile(url, text, {
+                    mimeType: url.endsWith('.cpp') ? 'text/x-c++src' :
+                              url.endsWith('.hpp') ? 'text/x-c++hdr' :
+                              url.endsWith('.h')   ? 'text/x-chdr'   :
+                              'text/x-csrc'
+                })
+            }
+            try {
+                const sources = await(await FETCH()).json();
+                const CurrentVFS = new JUSTC.VFS();
+                if (!ARRAY.isArray(sources)) return;
+                for (const source of sources) {
+                    if (typeof source != 'string') continue;
+                    await RegisterSource(source, CurrentVFS);
+                }
+            } catch (_) {}
+        },0);
     } else if (isModule) {
         module.exports = JUSTC.CreateAsyncExports()
     } else if (isAMD) {

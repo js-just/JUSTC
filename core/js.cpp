@@ -36,10 +36,6 @@ SOFTWARE.
 #include "version.h"
 #include <tuple>
 
-// test lua
-#include "run.lua.hpp"
-Lua::executeScript("print(\"Lua\")")
-
 template<typename... Args>
 std::string outputString(std::string mode, Args... args) {
     if (mode == "xml") {

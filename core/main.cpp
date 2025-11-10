@@ -39,7 +39,6 @@ SOFTWARE.
 
 // test lua
 #include "run.lua.hpp"
-Lua::executeScript("print(\"Lua\")")
 
 class OutputRedirector {
 private:
@@ -198,6 +197,7 @@ std::string outputString(cmdFlags flags, Args... args) {
     }
 }
 int main(int argc, char* argv[]) {
+    Lua::executeScript("print(\"Lua\")");
     if (argc < 1) {
         printUsage();
         return 1;

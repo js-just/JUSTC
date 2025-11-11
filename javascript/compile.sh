@@ -85,6 +85,9 @@ install_luau() {
 
     echo "Building Luau for Emscripten..."
 
+    mkdir -p Luau && \
+    cp -r Common/include/Luau Luau
+
     em++ -std=c++17 -O3 -fexceptions -DLUAU_BUILD_WEB \
         -I./VM/include -I./Compiler/include -I./Ast/include \
         VM/src/lvmexecute.cpp VM/src/lvmload.cpp VM/src/lvmutils.cpp \

@@ -88,6 +88,10 @@ install_luau() {
     mkdir -p Luau && \
     cp -r Common/include/Luau ./
 
+    for FILE in ./*; do
+        echo "::debug::$FILE"
+    done
+
     em++ -std=c++17 -O3 -fexceptions -DLUAU_BUILD_WEB \
         -I./VM/include -I./Compiler/include -I./Ast/include \
         VM/src/lvmexecute.cpp VM/src/lvmload.cpp VM/src/lvmutils.cpp \

@@ -88,9 +88,9 @@ install_luau() {
     em++ -c -std=c++17 -O3 -fexceptions -DLUAU_BUILD_WEB \
         -I./VM/include -I./Compiler/include -I./Ast/include \
         VM/src/lvmexecute.cpp VM/src/lvmload.cpp VM/src/lvmutils.cpp \
-        Compiler/src/bytecodebuilder.cpp Compiler/src/compiler.cpp \
-        Ast/src/ast.cpp Ast/src/confusables.cpp Ast/src/location.cpp \
-        Ast/src/stringutils.cpp -o luau_combined.o
+        Compiler/src/BytecodeBuilder.cpp Compiler/src/Compiler.cpp \
+        Ast/src/Ast.cpp Ast/src/Confusables.cpp Ast/src/Location.cpp \
+        Common/src/StringUtils.cpp -o luau_combined.o
 
     emar rcs libluau.a luau_combined.o
     emranlib libluau.a

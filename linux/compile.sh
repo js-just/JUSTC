@@ -26,11 +26,20 @@ set -e
 sudo apt-get update
 sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config
 
+if [ ! -d "luau" ]; then
+    echo "Downloading Luau..."
+    git clone https://github.com/luau-lang/luau.git
+    cd luau
+    git checkout 994b6416f1a2d16ac06c52b4e574bad5d8749053
+    cd ..
+fi
+
 mkdir build
 cd build
 cmake ..
 make -j$(nproc)
 sudo make install
+
 
 hash -r
 if ! command -v justc &> /dev/null; then

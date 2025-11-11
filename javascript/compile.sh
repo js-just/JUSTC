@@ -84,31 +84,24 @@ install_luau() {
     cd luau
     git checkout 0.994b6416f1a2d16ac06c52b4e574bad5d8749053
 
-    mkdir -p build
-    cd build
-
-    emcmake cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 \
-        -DLUAU_BUILD_CLI=OFF -DLUAU_BUILD_TESTS=OFF -DLUAU_BUILD_WEB=ON
-
-    emmake make -j4
-
-    cd ../..
-}
-
-build_luau_libs() {
-    echo "Building Luau libraries for Emscripten..."
+    echo "Building Luau for Emscripten..."
 
     em++ -c -std=c++17 -O3 -fexceptions -DLUAU_BUILD_WEB \
-        -Iluau/VM/include -Iluau/Compiler/include -Iluau/Ast/include \
-        luau/VM/src/lvmexecute.cpp luau/VM/src/lvmload.cpp luau/VM/src/lvmutils.cpp \
-        luau/Compiler/src/bytecodebuilder.cpp luau/Compiler/src/compiler.cpp \
-        luau/Ast/src/ast.cpp luau/Ast/src/confusables.cpp luau/Ast/src/location.cpp \
-        luau/Ast/src/stringutils.cpp -o luau_combined.o
+        -I./VM/include -I./Compiler/include -I./Ast/include \
+        VM/src/lvmexecute.cpp VM/src/lvmload.cpp VM/src/lvmutils.cpp \
+        Compiler/src/bytecodebuilder.cpp Compiler/src/compiler.cpp \
+        Ast/src/ast.cpp Ast/src/confusables.cpp Ast/src/location.cpp \
+        Ast/src/stringutils.cpp -o luau_combined.o
 
     emar rcs libluau.a luau_combined.o
     emranlib libluau.a
 
-    rm -f luau_combined.o
+    cd ..
+
+    cp luau/libluau.a ./
+    cp -r luau/VM/include ./luau_include
+    cp -r luau/Compiler/include ./luau_include
+    cp -r luau/Ast/include ./luau_include
 }
 
 web() {
@@ -117,7 +110,7 @@ web() {
         -o $WEB_OUTPUT \
         $COMMON_FLAGS \
         $WEB_FLAGS \
-        -Iluau/VM/include -Iluau/Compiler/include -Iluau/Ast/include
+        -I./luau_include
     COMPILE_EXIT_CODE=$?
     set -e
 
@@ -134,7 +127,7 @@ node() {
         -o $NODE_OUTPUT \
         $COMMON_FLAGS \
         $NODE_FLAGS \
-        -Iluau/VM/include -Iluau/Compiler/include -Iluau/Ast/include
+        -I./luau_include
     COMPILE_EXIT_CODE=$?
     set -e
 
@@ -145,7 +138,6 @@ node() {
 }
 
 install_luau && \
-build_luau_libs && \
 web && \
 node
 
@@ -188,8 +180,11 @@ srcfile=$JSOUT_DIR/JUSTC/index.json
 echo "[" > $srcfile
 SOURCE_FILES+=" core/main.cpp core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h core/run.js.cpp core/run.js.hpp core/run.lua.hpp"
 for file in $SOURCE_FILES; do
-    echo "\"$file\"," >> $srcfile
-    cp $file $JSOUT_DIR/JUSTC/$file
+    if [ -f "$file" ]; then
+        echo "\"$file\"," >> $srcfile
+        mkdir -p $JSOUT_DIR/JUSTC/$(dirname $file)
+        cp $file $JSOUT_DIR/JUSTC/$file
+    fi
 done
 head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
 echo "]" >> $srcfile

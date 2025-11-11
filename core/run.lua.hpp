@@ -24,26 +24,41 @@ SOFTWARE.
 
 */
 
-#pragma once
+#ifndef RUN_LUA_HPP
+#define RUN_LUA_HPP
 
 #include <string>
 
-extern "C" {
-    #include <lua.h>
-    #include <lualib.h>
-    #include <lauxlib.h>
-}
-
 class RunLua {
 public:
-    RunLua();
-    ~RunLua();
+    /**
+     * @brief Execute Luau code from a string
+     *
+     * @param code The Luau code to execute
+     * @return std::string Result of execution or error message
+     */
+    static std::string runScript(const std::string& code);
 
-    bool executeScript(const std::string& script);
-    bool executeFile(const std::string& filename);
-    void registerFunction(const std::string& name, lua_CFunction func);
+    /**
+     * @brief Process Luau blocks in the format <<--[[Lua code here]]>>
+     *
+     * @param luaCode The Luau code extracted from the block
+     * @return std::string Result of execution
+     */
+    static std::string processLuauBlock(const std::string& luaCode);
+
+    /**
+     * @brief Initialize the Luau VM (called automatically, but can be called manually)
+     */
+    static void initialize();
+
+    /**
+     * @brief Cleanup the Luau VM resources
+     */
+    static void cleanup();
 
 private:
-    lua_State* L;
-    void initJUSTC();
+    static bool isInitialized;
 };
+
+#endif

@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(JUSTC LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(ProcessorCount)
@@ -41,10 +41,16 @@ if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
-find_package(Lua REQUIRED)
+message(STATUS "Fetching Luau...")
+FetchContent_Declare(luau
+    GIT_REPOSITORY https://github.com/luau-lang/luau
+    GIT_TAG 0.994b6416f1a2d16ac06c52b4e574bad5d8749053 # Luau 0.699
+)
+
+FetchContent_MakeAvailable(luau)
+
 find_package(cpr QUIET)
 
-include(FetchContent)
 if(NOT cpr_FOUND)
     message(STATUS "CPR not found in system, building from source...")
     FetchContent_Declare(cpr
@@ -54,7 +60,6 @@ if(NOT cpr_FOUND)
 
     set(BUILD_CPR_TESTS OFF CACHE BOOL "Disable CPR tests")
     set(CPR_BUILD_TESTS OFF CACHE BOOL "Disable CPR tests")
-
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries")
     set(CPR_BUILD_TESTS OFF CACHE BOOL "Disable CPR tests")
 
@@ -92,7 +97,6 @@ add_executable(justc core/main.cpp)
 
 target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
-    ${LUA_INCLUDE_DIR}
 )
 
 if(CPR_BUILT_LOCALLY)
@@ -101,9 +105,9 @@ else()
     target_link_libraries(justc_core PRIVATE cpr::cpr)
 endif()
 target_link_libraries(justc_core PRIVATE quickjs)
-target_link_libraries(justc_core PRIVATE ${LUA_LIBRARIES})
+target_link_libraries(justc_core PRIVATE Luau::Ast Luau::Compiler Luau::VM)
 
-target_link_libraries(justc PRIVATE justc_core quickjs ${LUA_LIBRARIES})
+target_link_libraries(justc PRIVATE justc_core quickjs Luau::Ast Luau::Compiler Luau::VM)
 
 install(TARGETS justc DESTINATION bin)
 

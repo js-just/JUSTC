@@ -26,12 +26,10 @@ set -e
 sudo apt-get update
 sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config
 
-sudo apt-get install -y lua5.4 liblua5.4-dev
-
 mkdir build
 cd build
 cmake ..
-make
+make -j$(nproc)
 sudo make install
 
 hash -r

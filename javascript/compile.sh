@@ -43,7 +43,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MODULARIZE=1 \
 -s ALLOW_MEMORY_GROWTH=1 \
 -s INVOKE_RUN=0 \
--std=c++11 \
+-std=c++17 \
 -s DISABLE_EXCEPTION_CATCHING=0 \
 -s EXPORT_NAME='__justc__' \
 -s ASSERTIONS=2 \
@@ -59,7 +59,6 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MAXIMUM_MEMORY=512MB \
 --bind \
 -I./third-party \
--I./lua-5.4.4/src \
 -s STACK_OVERFLOW_CHECK=2 \
 -s SAFE_HEAP=1 \
 -s INITIAL_MEMORY=67108864 \
@@ -75,52 +74,50 @@ NODE_OUTPUT="javascript_output/$SAFE_DIR/justc.node.js"
 
 JSOUT_DIR="javascript_output/$SAFE_DIR"
 
-install_lua() {
-    if [ -f "lua-5.4.4/src/liblua.a" ]; then
-        echo "Lua already built, skipping installation."
+install_luau() {
+    if [ -d "luau" ] && [ -f "luau/build/libLuau.VM.a" ]; then
+        echo "Luau already built, skipping installation."
         return
     fi
 
-    wget -q https://www.lua.org/ftp/lua-5.4.4.tar.gz
-    tar -xzf lua-5.4.4.tar.gz
-    cd lua-5.4.4
+    git clone https://github.com/luau-lang/luau.git
+    cd luau
+    git checkout 0.994b6416f1a2d16ac06c52b4e574bad5d8749053
 
-    cat > src/Makefile.emscripten << 'EOF'
-CC = emcc
-AR = emar
-RANLIB = emranlib
-CFLAGS = -O2 -Wall -Wextra -DLUA_COMPAT_5_3 -DLUA_ANSI -fPIC -fexceptions
-LDFLAGS = -shared
+    mkdir -p build
+    cd build
 
-CORE_O = lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o lundump.o lvm.o lzio.o
-LIB_O = lauxlib.o lbaselib.o lcorolib.o ldblib.o liolib.o lmathlib.o loadlib.o loslib.o lstrlib.o ltablib.o lutf8lib.o linit.o
+    emcmake cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 \
+        -DLUAU_BUILD_CLI=OFF -DLUAU_BUILD_TESTS=OFF -DLUAU_BUILD_WEB=ON
 
-LUA_A = liblua.a
+    emmake make -j4
 
-all: $(LUA_A)
-
-$(LUA_A): $(CORE_O) $(LIB_O)
-	$(AR) rcu $@ $?
-	$(RANLIB) $@
-
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
-
-clean:
-	rm -f *.o *.a
-EOF
-
-    cd src
-    make -f Makefile.emscripten -j4
     cd ../..
+}
+
+build_luau_libs() {
+    echo "Building Luau libraries for Emscripten..."
+
+    em++ -c -std=c++17 -O3 -fexceptions -DLUAU_BUILD_WEB \
+        -Iluau/VM/include -Iluau/Compiler/include -Iluau/Ast/include \
+        luau/VM/src/lvmexecute.cpp luau/VM/src/lvmload.cpp luau/VM/src/lvmutils.cpp \
+        luau/Compiler/src/bytecodebuilder.cpp luau/Compiler/src/compiler.cpp \
+        luau/Ast/src/ast.cpp luau/Ast/src/confusables.cpp luau/Ast/src/location.cpp \
+        luau/Ast/src/stringutils.cpp -o luau_combined.o
+
+    emar rcs libluau.a luau_combined.o
+    emranlib libluau.a
+
+    rm -f luau_combined.o
 }
 
 web() {
     set +e
-    emcc $SOURCE_FILES ./lua-5.4.4/src/liblua.a \
+    emcc $SOURCE_FILES libluau.a \
         -o $WEB_OUTPUT \
         $COMMON_FLAGS \
-        $WEB_FLAGS
+        $WEB_FLAGS \
+        -Iluau/VM/include -Iluau/Compiler/include -Iluau/Ast/include
     COMPILE_EXIT_CODE=$?
     set -e
 
@@ -133,10 +130,11 @@ web() {
 node() {
     mkdir -p $JSOUT_DIR
     set +e
-    emcc $SOURCE_FILES ./lua-5.4.4/src/liblua.a \
+    emcc $SOURCE_FILES libluau.a \
         -o $NODE_OUTPUT \
         $COMMON_FLAGS \
-        $NODE_FLAGS
+        $NODE_FLAGS \
+        -Iluau/VM/include -Iluau/Compiler/include -Iluau/Ast/include
     COMPILE_EXIT_CODE=$?
     set -e
 
@@ -146,7 +144,8 @@ node() {
     fi
 }
 
-install_lua && \
+install_luau && \
+build_luau_libs && \
 web && \
 node
 
@@ -156,8 +155,13 @@ mv javascript/$SAFE_DIR/justc.core.js $JSOUT_DIR/justc.core.js
 mv javascript/core.js $JSOUT_DIR/justc.js
 mv javascript/test.js $JSOUT_DIR/test.js
 
-bash linux/compile.sh
-JUSTC_VERSION=$(justc -v)
+mkdir -p native-build
+cd native-build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+cd ..
+
+JUSTC_VERSION=$(native-build/justc -v 2>/dev/null || echo "1.0.0")
 JUSTC_NAME="Just an Ultimate Site Tool Configuration language"
 
 for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js; do

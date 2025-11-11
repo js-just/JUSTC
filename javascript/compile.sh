@@ -46,7 +46,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -std=c++17 \
 -s DISABLE_EXCEPTION_CATCHING=0 \
 -s EXPORT_NAME='__justc__' \
--s ASSERTIONS=2 \
+-s ASSERTIONS=0 \
 -s ASYNCIFY=1 \
 -s FETCH=1 \
 -s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close'] \
@@ -54,17 +54,10 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -flto \
 -s TOTAL_STACK=8MB \
 -s TOTAL_MEMORY=64MB \
--s MODULARIZE=1 \
 -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
 -s MAXIMUM_MEMORY=512MB \
 --bind \
--I./third-party \
--s STACK_OVERFLOW_CHECK=2 \
--s SAFE_HEAP=1 \
--s INITIAL_MEMORY=67108864 \
--s DEFAULT_TO_CXX=1 \
--fexceptions \
--s EXCEPTION_DEBUG=1"
+-I./third-party"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"
@@ -74,49 +67,12 @@ NODE_OUTPUT="javascript_output/$SAFE_DIR/justc.node.js"
 
 JSOUT_DIR="javascript_output/$SAFE_DIR"
 
-install_luau() {
-    if [ -d "luau" ] && [ -f "luau/build/libLuau.VM.a" ]; then
-        echo "Luau already built, skipping installation."
-        return
-    fi
-
-    git clone -b 0.699 https://github.com/luau-lang/luau.git luau
-    cd luau
-
-    echo "Building Luau for Emscripten..."
-
-    mkdir -p Luau && \
-    cp -r Common/include/Luau ./
-
-    for FILE in ./*; do
-        echo "::debug::$FILE"
-    done
-
-    em++ -std=c++17 -O3 -fexceptions -DLUAU_BUILD_WEB \
-        -I./VM/include -I./Compiler/include -I./Ast/include \
-        VM/src/lvmexecute.cpp VM/src/lvmload.cpp VM/src/lvmutils.cpp \
-        Compiler/src/BytecodeBuilder.cpp Compiler/src/Compiler.cpp \
-        Ast/src/Ast.cpp Ast/src/Confusables.cpp Ast/src/Location.cpp \
-        Common/src/StringUtils.cpp -o luau_combined.o
-
-    emar rcs libluau.a luau_combined.o
-    emranlib libluau.a
-
-    cd ..
-
-    cp luau/libluau.a ./
-    cp -r luau/VM/include ./luau_include
-    cp -r luau/Compiler/include ./luau_include
-    cp -r luau/Ast/include ./luau_include
-}
-
 web() {
     set +e
-    emcc $SOURCE_FILES libluau.a \
+    emcc $SOURCE_FILES \
         -o $WEB_OUTPUT \
         $COMMON_FLAGS \
-        $WEB_FLAGS \
-        -I./luau_include
+        $WEB_FLAGS
     COMPILE_EXIT_CODE=$?
     set -e
 
@@ -129,11 +85,10 @@ web() {
 node() {
     mkdir -p $JSOUT_DIR
     set +e
-    emcc $SOURCE_FILES libluau.a \
+    emcc $SOURCE_FILES \
         -o $NODE_OUTPUT \
         $COMMON_FLAGS \
-        $NODE_FLAGS \
-        -I./luau_include
+        $NODE_FLAGS
     COMPILE_EXIT_CODE=$?
     set -e
 
@@ -143,7 +98,6 @@ node() {
     fi
 }
 
-install_luau && \
 web && \
 node
 

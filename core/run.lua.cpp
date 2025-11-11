@@ -25,54 +25,15 @@ SOFTWARE.
 */
 
 #include "run.lua.hpp"
-#include <string>
-#include <stdexcept>
-#include <memory>
-
-#ifndef NO_LUA_SUPPORT
-#include <Luau/Compiler.h>
-#include <Luau/BytecodeBuilder.h>
-#include <Luau/VirtualMachine.h>
-#endif
-
-#ifndef NO_LUA_SUPPORT
-static std::unique_ptr<Luau::VM> luaVM = nullptr;
-#endif
-bool RunLua::isInitialized = false;
-
-void RunLua::initialize() {
-#ifndef NO_LUA_SUPPORT
-    if (!isInitialized) {
-        luaVM = std::make_unique<Luau::VM>();
-        isInitialized = true;
-    }
-#endif
-}
-
-void RunLua::cleanup() {
-#ifndef NO_LUA_SUPPORT
-    if (isInitialized) {
-        luaVM.reset();
-        isInitialized = false;
-    }
-#endif
-}
+#define LUA_IMPL
+#include <minilua/minilua.h>
 
 std::string RunLua::runScript(const std::string& code) {
-#ifdef NO_LUA_SUPPORT
-    return "Luau support not compiled in";
-#else
-    initialize();
-
-    try {
-        std::string bytecode = Luau::compile(code);
-        Luau::load(*luaVM, bytecode, "luau_script", 0);
-        return "Luau code executed successfully";
-
-    } catch (const Luau::CompileError& e) {
-        return std::string("Luau compile error: ") + e.what();
-    } catch (const std::exception& e) {
-        return std::string("Luau runtime error: ") + e.what();
-    }
-#endif
+    lua_State *L = luaL_newstate();
+    if(L == NULL)
+        throw std::runtime_error("Failed to lua_State *L = luaL_newstate();");
+    luaL_openlibs(L);
+    luaL_loadstring(L, code);
+    lua_call(L, 0, 0);
+    lua_close(L);
 }

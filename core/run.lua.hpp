@@ -32,11 +32,6 @@ SOFTWARE.
 class RunLua {
 public:
     static std::string runScript(const std::string& code);
-    static void initialize();
-    static void cleanup();
-
-private:
-    static bool isInitialized;
 };
 
 #endif

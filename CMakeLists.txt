@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
-project(JUSTC LANGUAGES CXX)
+project(JUSTC LANG CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -41,47 +41,7 @@ if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
-    include(FetchContent)
-endif()
-
-message(STATUS "Setting up Luau...")
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
-    FetchContent_Declare(luau
-        GIT_REPOSITORY https://github.com/luau-lang/luau
-        GIT_TAG 994b6416f1a2d16ac06c52b4e574bad5d8749053 # Luau 0.699
-    )
-    FetchContent_MakeAvailable(luau)
-else()
-    message(STATUS "Using manual Luau setup (CMake ${CMAKE_VERSION})")
-
-    if(NOT TARGET Luau::VM)
-        # Add Luau source files directly
-        file(GLOB_RECURSE LUAU_SOURCES
-            "luau/Ast/src/*.cpp"
-            "luau/Compiler/src/*.cpp"
-            "luau/VM/src/*.cpp"
-        )
-
-        if(LUAU_SOURCES)
-            add_library(luau_static STATIC ${LUAU_SOURCES})
-            target_include_directories(luau_static PUBLIC
-                "luau/Ast/include"
-                "luau/Compiler/include"
-                "luau/VM/include"
-            )
-            target_compile_features(luau_static PUBLIC cxx_std_17)
-            add_library(Luau::VM ALIAS luau_static)
-            add_library(Luau::Compiler ALIAS luau_static)
-            add_library(Luau::Ast ALIAS luau_static)
-            message(STATUS "Using pre-downloaded Luau sources")
-        else()
-            message(WARNING "Luau sources not found. Please clone Luau manually:")
-            message(WARNING "git clone https://github.com/luau-lang/luau.git")
-            message(WARNING "git checkout 994b6416f1a2d16ac06c52b4e574bad5d8749053")
-        endif()
-    endif()
-endif()
+include(FetchContent)
 
 find_package(cpr QUIET)
 
@@ -131,21 +91,21 @@ endif()
 include_directories(third-party)
 
 add_library(justc_core STATIC
-    core/lexer.cpp
-    core/parser.cpp
-    core/keywords.cpp
-    core/from.json.cpp
-    core/to.json.cpp
-    core/fetch.cpp
-    core/to.xml.cpp
-    core/to.yaml.cpp
-    core/utility.cpp
-    core/run.js.cpp
-    core/import.cpp
-    core/run.lua.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/lexer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/parser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/keywords.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/from.json.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/to.json.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/fetch.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/to.xml.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/to.yaml.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/utility.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/run.js.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/import.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/run.lua.cpp
 )
 
-add_executable(justc core/main.cpp)
+add_executable(justc ${CMAKE_CURRENT_SOURCE_DIR}/core/main.cpp)
 
 target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
@@ -159,22 +119,7 @@ endif()
 
 target_link_libraries(justc_core PRIVATE quickjs)
 
-if(TARGET Luau::VM)
-    target_link_libraries(justc_core PRIVATE Luau::Ast Luau::Compiler Luau::VM)
-elseif(TARGET luau_static)
-    target_link_libraries(justc_core PRIVATE luau_static)
-else()
-    message(WARNING "Luau not available - Lua scripting will be disabled")
-    target_compile_definitions(justc_core PRIVATE -DNO_LUA_SUPPORT)
-endif()
-
 target_link_libraries(justc PRIVATE justc_core quickjs)
-
-if(TARGET Luau::VM)
-    target_link_libraries(justc PRIVATE Luau::Ast Luau::Compiler Luau::VM)
-elseif(TARGET luau_static)
-    target_link_libraries(justc PRIVATE luau_static)
-endif()
 
 install(TARGETS justc DESTINATION bin)
 

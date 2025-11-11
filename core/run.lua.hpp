@@ -31,7 +31,7 @@ SOFTWARE.
 
 class RunLua {
 public:
-    static std::string runScript(const std::string& code);
+    static void runScript(const std::string& code);
 };
 
 #endif

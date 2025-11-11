@@ -27,13 +27,16 @@ SOFTWARE.
 #include "run.lua.hpp"
 #define LUA_IMPL
 #include <minilua/minilua.h>
+#include <string>
+#include <cstring>
+#include <stdexcept>
 
-std::string RunLua::runScript(const std::string& code) {
+void RunLua::runScript(const std::string& code) {
     lua_State *L = luaL_newstate();
     if(L == NULL)
         throw std::runtime_error("Failed to lua_State *L = luaL_newstate();");
     luaL_openlibs(L);
-    luaL_loadstring(L, code);
+    luaL_loadstring(L, code.c_str());
     lua_call(L, 0, 0);
     lua_close(L);
 }

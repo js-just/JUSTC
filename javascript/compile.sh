@@ -85,7 +85,7 @@ install_luau() {
 
     echo "Building Luau for Emscripten..."
 
-    em++ -c -std=c++17 -O3 -fexceptions -DLUAU_BUILD_WEB \
+    em++ -std=c++17 -O3 -fexceptions -DLUAU_BUILD_WEB \
         -I./VM/include -I./Compiler/include -I./Ast/include \
         VM/src/lvmexecute.cpp VM/src/lvmload.cpp VM/src/lvmutils.cpp \
         Compiler/src/BytecodeBuilder.cpp Compiler/src/Compiler.cpp \

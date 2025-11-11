@@ -44,7 +44,7 @@ endif()
 message(STATUS "Fetching Luau...")
 FetchContent_Declare(luau
     GIT_REPOSITORY https://github.com/luau-lang/luau
-    GIT_TAG 0.994b6416f1a2d16ac06c52b4e574bad5d8749053 # Luau 0.699
+    GIT_TAG 994b6416f1a2d16ac06c52b4e574bad5d8749053 # Luau 0.699
 )
 
 FetchContent_MakeAvailable(luau)

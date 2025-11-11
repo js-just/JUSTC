@@ -65,7 +65,3 @@ std::string RunLua::runScript(const std::string& code) {
         return std::string("Luau runtime error: ") + e.what();
     }
 }
-
-std::string RunLua::processLuauBlock(const std::string& luaCode) {
-    return runScript(luaCode);
-}

@@ -31,30 +31,8 @@ SOFTWARE.
 
 class RunLua {
 public:
-    /**
-     * @brief Execute Luau code from a string
-     *
-     * @param code The Luau code to execute
-     * @return std::string Result of execution or error message
-     */
     static std::string runScript(const std::string& code);
-
-    /**
-     * @brief Process Luau blocks in the format <<--[[Lua code here]]>>
-     *
-     * @param luaCode The Luau code extracted from the block
-     * @return std::string Result of execution
-     */
-    static std::string processLuauBlock(const std::string& luaCode);
-
-    /**
-     * @brief Initialize the Luau VM (called automatically, but can be called manually)
-     */
     static void initialize();
-
-    /**
-     * @brief Cleanup the Luau VM resources
-     */
     static void cleanup();
 
 private:

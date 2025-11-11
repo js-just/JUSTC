@@ -80,9 +80,8 @@ install_luau() {
         return
     fi
 
-    git clone https://github.com/luau-lang/luau.git
+    git clone -b 0.699 https://github.com/luau-lang/luau.git luau
     cd luau
-    git checkout 994b6416f1a2d16ac06c52b4e574bad5d8749053
 
     echo "Building Luau for Emscripten..."
 

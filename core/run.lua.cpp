@@ -76,7 +76,3 @@ std::string RunLua::runScript(const std::string& code) {
     }
 #endif
 }
-
-std::string RunLua::processLuauBlock(const std::string& luaCode) {
-    return runScript(luaCode);
-}

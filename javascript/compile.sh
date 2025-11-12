@@ -107,15 +107,12 @@ mv javascript/$SAFE_DIR/justc.core.js $JSOUT_DIR/justc.core.js
 mv javascript/core.js $JSOUT_DIR/justc.js
 mv javascript/test.js $JSOUT_DIR/test.js
 
-mkdir -p native-build
-cd native-build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-cd ..
-
-JUSTC_VERSION=$(native-build/justc -v 2>/dev/null || echo "1.0.0")
+JUSTC_VERSION=$(justc -v 2>/dev/null || echo "undefined")
 JUSTC_NAME="Just an Ultimate Site Tool Configuration language"
 
+if [[ "$JUSTC_VERSION" == "undefined" ]]; then
+    echo -e "::error::Invalid JUSTC version." && exit 1
+fi
 for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js; do
     printf "/*\n\n%s\n\n*/\n\n/*\n\n$JUSTC_NAME v$JUSTC_VERSION ($SAFE_DIR)\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
 done

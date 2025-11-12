@@ -55,7 +55,37 @@ jobs:
         id: set-dirpath-default
         run: echo "dirpath=${{ env.DEFAULT_DIR }}" >> $GITHUB_OUTPUT
 
-  compile:
+  compile-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: CMake
+        run: bash linux/compile.sh "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install_root"
+      - name: Upload compiled files
+        uses: actions/upload-artifact@v4
+        with:
+          name: justc-linux
+          path: ${{ github.workspace }}/install_root/bin/justc
+          retention-days: 1
+
+  test-linux:
+    runs-on: ubuntu-latest
+    needs: compile-linux
+    steps:
+      - name: Download compiled files
+        uses: actions/download-artifact@v4
+        with:
+          name: justc-linux
+          path: ${{ github.workspace }}/downloaded_artifacts
+      - name: Install JUSTC to /usr/bin
+        run: |
+          sudo cp ${{ github.workspace }}/downloaded_artifacts/justc /usr/bin/
+          sudo chmod +x /usr/bin/justc
+      - name: Test
+        run: bash test/linux/justc.sh
+
+  compile-wasm:
     runs-on: ubuntu-latest
     needs: determine-dirpath
     outputs:
@@ -93,6 +123,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-lua-544-
             ${{ runner.os }}-lua-
+      - name: Download compiled files
+        uses: actions/download-artifact@v4
+        with:
+          name: justc-linux
+          path: ${{ github.workspace }}/downloaded_artifacts
+      - name: Install JUSTC to /usr/bin
+        run: |
+          sudo cp ${{ github.workspace }}/downloaded_artifacts/justc /usr/bin/
+          sudo chmod +x /usr/bin/justc
       - name: Compile C++ to WASM
         env:
           OUTPUT_DIR: ${{ needs.determine-dirpath.outputs.dirpath }}

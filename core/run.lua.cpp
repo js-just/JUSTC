@@ -28,7 +28,6 @@ SOFTWARE.
 #define LUA_IMPL
 #include <minilua/minilua.h>
 #include <string>
-#include <memory>
 #include <stdexcept>
 
 struct LuaStateDeleter {

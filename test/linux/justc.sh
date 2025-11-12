@@ -23,9 +23,7 @@
 #!/bin/bash
 set -e
 
-bash linux/compile.sh
 FILE=test/linux/test
-
 if ! command -v justc &> /dev/null; then
     echo -e "::error::Failed to compile." && exit 1
 fi

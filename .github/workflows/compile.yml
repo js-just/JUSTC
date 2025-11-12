@@ -61,7 +61,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: CMake
-        run: bash linux/compile.sh "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install_root -DLUA_IMPL"
+        run: bash linux/compile.sh "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install_root"
       - name: Upload compiled files
         uses: actions/upload-artifact@v4
         with:

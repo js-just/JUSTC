@@ -61,7 +61,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: CMake
-        run: bash linux/compile.sh "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install_root"
+        run: bash linux/compile.sh "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install_root -DLUA_IMPL"
       - name: Upload compiled files
         uses: actions/upload-artifact@v4
         with:
@@ -148,7 +148,7 @@ jobs:
           path: javascript_output/${{ needs.determine-dirpath.outputs.dirpath }}/
           retention-days: 1
 
-  test-node:
+  test-nodejs:
     runs-on: ubuntu-latest
     needs: compile-wasm
     steps:

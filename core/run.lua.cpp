@@ -25,32 +25,50 @@ SOFTWARE.
 */
 
 #include "run.lua.hpp"
+#ifndef LUA_IMPL
 #define LUA_IMPL
+#endif
 #include <minilua/minilua.h>
 #include <string>
 #include <cstring>
 #include <stdexcept>
+#include <iostream>
 
 void RunLua::runScript(const std::string& code) {
+    std::cout << "Creating Lua state..." << std::endl;
+
     lua_State *L = luaL_newstate();
-    if (L == NULL)
+    if (L == NULL) {
+        std::cout << "FAILED: luaL_newstate() returned NULL" << std::endl;
         throw std::runtime_error("Failed to create Lua state");
+    }
+    std::cout << "Lua state created successfully" << std::endl;
 
+    std::cout << "Opening libraries..." << std::endl;
     luaL_openlibs(L);
+    std::cout << "Libraries opened" << std::endl;
 
+    std::cout << "Loading script: " << code.substr(0, 50) << "..." << std::endl;
     int load_result = luaL_loadstring(L, code.c_str());
     if (load_result != LUA_OK) {
-        std::string error_msg = lua_tostring(L, -1);
+        const char* error_msg = lua_tostring(L, -1);
+        std::cout << "Load failed with error: " << error_msg << std::endl;
         lua_close(L);
-        throw std::runtime_error("Lua load error: " + error_msg);
+        throw std::runtime_error(std::string("Lua load error: ") + error_msg);
     }
+    std::cout << "Script loaded successfully" << std::endl;
 
+    std::cout << "Executing script..." << std::endl;
     int call_result = lua_pcall(L, 0, 0, 0);
     if (call_result != LUA_OK) {
-        std::string error_msg = lua_tostring(L, -1);
+        const char* error_msg = lua_tostring(L, -1);
+        std::cout << "Execution failed with error: " << error_msg << std::endl;
         lua_close(L);
-        throw std::runtime_error("Lua runtime error: " + error_msg);
+        throw std::runtime_error(std::string("Lua runtime error: ") + error_msg);
     }
+    std::cout << "Script executed successfully" << std::endl;
 
+    std::cout << "Closing Lua state..." << std::endl;
     lua_close(L);
+    std::cout << "Lua state closed" << std::endl;
 }

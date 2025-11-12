@@ -51,8 +51,12 @@ void RunLua::runScript(const std::string& code) {
     std::cout << "Loading script: " << code.substr(0, 50) << "..." << std::endl;
     int load_result = luaL_loadstring(L, code.c_str());
     if (load_result != LUA_OK) {
+        #ifndef __EMSCRIPTEN__
         const char* error_msg = lua_tostring(L, -1);
         std::cout << "Load failed with error: " << error_msg << std::endl;
+        #else
+        std::cout << "Failed to load Lua script" << std::endl;
+        #endif
         lua_close(L);
         throw std::runtime_error(std::string("Lua load error: ") + error_msg);
     }
@@ -61,8 +65,12 @@ void RunLua::runScript(const std::string& code) {
     std::cout << "Executing script..." << std::endl;
     int call_result = lua_pcall(L, 0, 0, 0);
     if (call_result != LUA_OK) {
+        #ifndef __EMSCRIPTEN__
         const char* error_msg = lua_tostring(L, -1);
         std::cout << "Execution failed with error: " << error_msg << std::endl;
+        #else
+        std::cout << "Failed to execute Lua script" << std::endl;
+        #endif
         lua_close(L);
         throw std::runtime_error(std::string("Lua runtime error: ") + error_msg);
     }

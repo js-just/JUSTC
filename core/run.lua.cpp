@@ -25,58 +25,38 @@ SOFTWARE.
 */
 
 #include "run.lua.hpp"
-#ifndef LUA_IMPL
 #define LUA_IMPL
-#endif
 #include <minilua/minilua.h>
 #include <string>
-#include <cstring>
 #include <stdexcept>
-#include <iostream>
 
 void RunLua::runScript(const std::string& code) {
-    std::cout << "Creating Lua state..." << std::endl;
+    lua_State *L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize) {
+        (void)ud; (void)osize;
+        if (nsize == 0) {
+            free(ptr);
+            return nullptr;
+        } else {
+            return realloc(ptr, nsize);
+        }
+    }, nullptr);
 
-    lua_State *L = luaL_newstate();
-    if (L == NULL) {
-        std::cout << "FAILED: luaL_newstate() returned NULL" << std::endl;
-        throw std::runtime_error("Failed to create Lua state");
-    }
-    std::cout << "Lua state created successfully" << std::endl;
+    if (!L) throw std::runtime_error("lua_newstate failed");
 
-    std::cout << "Opening libraries..." << std::endl;
-    luaL_openlibs(L);
-    std::cout << "Libraries opened" << std::endl;
+    luaL_requiref(L, "_G", luaopen_base, 1);
+    lua_pop(L, 1);
 
-    std::cout << "Loading script: " << code.substr(0, 50) << "..." << std::endl;
-    int load_result = luaL_loadstring(L, code.c_str());
-    if (load_result != LUA_OK) {
-        #ifndef __EMSCRIPTEN__
-        const char* error_msg = lua_tostring(L, -1);
-        std::cout << "Load failed with error: " << error_msg << std::endl;
-        #else
-        std::cout << "Failed to load Lua script" << std::endl;
-        #endif
+    if (luaL_loadstring(L, code.c_str()) != LUA_OK) {
+        std::string err = lua_tostring(L, -1);
         lua_close(L);
-        throw std::runtime_error(std::string("Lua load error: ") + error_msg);
+        throw std::runtime_error("Load: " + err);
     }
-    std::cout << "Script loaded successfully" << std::endl;
 
-    std::cout << "Executing script..." << std::endl;
-    int call_result = lua_pcall(L, 0, 0, 0);
-    if (call_result != LUA_OK) {
-        #ifndef __EMSCRIPTEN__
-        const char* error_msg = lua_tostring(L, -1);
-        std::cout << "Execution failed with error: " << error_msg << std::endl;
-        #else
-        std::cout << "Failed to execute Lua script" << std::endl;
-        #endif
+    if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+        std::string err = lua_tostring(L, -1);
         lua_close(L);
-        throw std::runtime_error(std::string("Lua runtime error: ") + error_msg);
+        throw std::runtime_error("Runtime: " + err);
     }
-    std::cout << "Script executed successfully" << std::endl;
 
-    std::cout << "Closing Lua state..." << std::endl;
     lua_close(L);
-    std::cout << "Lua state closed" << std::endl;
 }

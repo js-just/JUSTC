@@ -28,29 +28,29 @@ SOFTWARE.
 #define LUA_IMPL
 #include <minilua/minilua.h>
 #include <string>
-#include <cstring>
+#include <memory>
 #include <stdexcept>
 
+struct LuaStateDeleter {
+    void operator()(lua_State* L) const {
+        if (L) lua_close(L);
+    }
+};
+
 void RunLua::runScript(const std::string& code) {
-    lua_State *L = luaL_newstate();
-    if (L == NULL)
+    std::unique_ptr<lua_State, LuaStateDeleter> L(luaL_newstate());
+    if (!L)
         throw std::runtime_error("Failed to create Lua state");
 
-    luaL_openlibs(L);
+    luaL_openlibs(L.get());
 
-    int load_result = luaL_loadstring(L, code.c_str());
-    if (load_result != LUA_OK) {
-        std::string error_msg = lua_tostring(L, -1);
-        lua_close(L);
+    if (luaL_loadstring(L.get(), code.c_str()) != LUA_OK) {
+        std::string error_msg = lua_tostring(L.get(), -1);
         throw std::runtime_error("Lua load error: " + error_msg);
     }
 
-    int call_result = lua_pcall(L, 0, 0, 0);
-    if (call_result != LUA_OK) {
-        std::string error_msg = lua_tostring(L, -1);
-        lua_close(L);
+    if (lua_pcall(L.get(), 0, 0, 0) != LUA_OK) {
+        std::string error_msg = lua_tostring(L.get(), -1);
         throw std::runtime_error("Lua runtime error: " + error_msg);
     }
-
-    lua_close(L);
 }

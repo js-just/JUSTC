@@ -1,4 +1,4 @@
-name: Compile C++ to WASM
+name: Compile
 
 on:
   push:

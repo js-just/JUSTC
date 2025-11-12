@@ -35,12 +35,12 @@ sudo make install
 
 
 hash -r
-if [[ "$OPTIONS" != "" ]] && ! command -v justc &> /dev/null; then
+if [[ "$OPTIONS" == "" ]] && ! command -v justc &> /dev/null; then
     sudo ln -sf /usr/local/bin/justc /usr/bin/justc
     hash -r
 fi
 
-if [[ "$OPTIONS" != "" ]] && ! command -v justc &> /dev/null; then
+if [[ "$OPTIONS" == "" ]] && ! command -v justc &> /dev/null; then
     echo -e "::error::CMake error." && exit 1
 fi
 

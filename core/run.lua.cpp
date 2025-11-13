@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "run.lua.hpp"
+#define LUA_USE_POSIX
 #define LUA_USE_LONGJMP
 #define LUA_IMPL
 #include <minilua/minilua.h>

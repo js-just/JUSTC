@@ -24,8 +24,6 @@ SOFTWARE.
 
 */
 
-#ifndef PARSER_EMSCRIPTEN_H
-#define PARSER_EMSCRIPTEN_H
 #pragma once
 
 #ifdef __EMSCRIPTEN__
@@ -49,9 +47,4 @@ EM_JS(void, warn_http_disabled, (const char* position, const char* url, const ch
     console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Running lexer and parser only - Cannot fetch', '"' + UTF8ToString(url) + '"', 'at', UTF8ToString(position), '\nUse JUSTC.execute for HTTP requests.');
 });
 
-EM_JS(void, debug_luau, (const char* log), {
-    console.warn('[JUSTC] Luau debug: ' + UTF8ToString(log));
-});
-
-#endif
 #endif

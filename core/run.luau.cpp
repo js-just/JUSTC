@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-#include "run.lua.hpp"
+#include "run.luau.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -36,11 +36,11 @@ SOFTWARE.
 #include "luacode.h"
 
 #ifdef __EMSCRIPTEN__
-#include "parser.emscripten.h"
+#include "run.luau.emscripten.h"
 #endif
 
 #define __JUSTC_LUAU_DEBUG__
-void RunLua::debug(const std::string log) {
+void RunLuau::debug(const std::string log) {
     #ifdef __JUSTC_LUAU_DEBUG__
     #ifdef __EMSCRIPTEN__
     debug_luau(log.c_str());
@@ -60,55 +60,55 @@ public:
         if (!L) {
             throw std::runtime_error("Failed to create Lua state");
         }
-        RunLua::debug("Lua state created successfully.");
+        RunLuau::debug("Lua state created successfully.");
 
         luaL_openlibs(L);
-        RunLua::debug("openlibs()");
+        RunLuau::debug("openlibs()");
 
-        RunLua::debug("Redefining unsafe environment...");
+        RunLuau::debug("Redefining unsafe environment...");
 
         lua_pushnil(L);
         lua_setglobal(L, "dofile");
-        RunLua::debug("dofile = nil");
+        RunLuau::debug("dofile = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "loadfile");
-        RunLua::debug("loadfile = nil");
+        RunLuau::debug("loadfile = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "io");
-        RunLua::debug("io = nil");
+        RunLuau::debug("io = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "os");
-        RunLua::debug("os = nil");
+        RunLuau::debug("os = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "package");
-        RunLua::debug("package = nil");
+        RunLuau::debug("package = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "debug");
-        RunLua::debug("debug = nil");
+        RunLuau::debug("debug = nil");
 
-        RunLua::debug("Redefined unsafe environment successfully.");
+        RunLuau::debug("Redefined unsafe environment successfully.");
     }
 
     ~LuaStateManager() {
         if (L) {
-            RunLua::debug("Closing Lua state...");
+            RunLuau::debug("Closing Lua state...");
             lua_close(L);
-            RunLua::debug("Lua state closed successfully.");
+            RunLuau::debug("Lua state closed successfully.");
         }
     }
 
     lua_State* getState() {
-        RunLua::debug("getState()");
+        RunLuau::debug("getState()");
         return L;
     }
 };
 
-void RunLua::runScript(const std::string& code) {
+void RunLuau::runScript(const std::string& code) {
     debug("Creating Lua state...");
     LuaStateManager luaManager;
     lua_State* L = luaManager.getState();
@@ -146,7 +146,7 @@ void RunLua::runScript(const std::string& code) {
     lua_close(L);
 }
 
-std::string RunLua::runScriptWithResult(const std::string& code) {
+std::string RunLuau::runScriptWithResult(const std::string& code) {
     LuaStateManager luaManager;
     lua_State* L = luaManager.getState();
 
@@ -188,7 +188,7 @@ std::string RunLua::runScriptWithResult(const std::string& code) {
     return output;
 }
 
-bool RunLua::compileScript(const std::string& code, std::string& error) {
+bool RunLuau::compileScript(const std::string& code, std::string& error) {
     LuaStateManager luaManager;
     lua_State* L = luaManager.getState();
 

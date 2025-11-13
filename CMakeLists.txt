@@ -198,7 +198,7 @@ add_library(justc_core STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/core/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/run.js.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/import.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/run.lua.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/run.luau.cpp
 )
 
 add_executable(justc ${CMAKE_CURRENT_SOURCE_DIR}/core/main.cpp)

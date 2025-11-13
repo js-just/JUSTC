@@ -24,13 +24,13 @@ SOFTWARE.
 
 */
 
-#ifndef RUN_LUA_HPP
-#define RUN_LUA_HPP
+#ifndef RUN_LUAU_HPP
+#define RUN_LUAU_HPP
 
 #include <string>
 #include <memory>
 
-class RunLua {
+class RunLuau {
 public:
     static void runScript(const std::string& code);
     static std::string runScriptWithResult(const std::string& code);

@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(JUSTC)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(ProcessorCount)
@@ -151,6 +151,17 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
             ${luau_SOURCE_DIR}/VM/src/lvmexecute.cpp
             ${luau_SOURCE_DIR}/VM/src/lvmload.cpp
             ${luau_SOURCE_DIR}/VM/src/lvmutils.cpp
+
+            ${luau_SOURCE_DIR}/Ast/src/Allocator.cpp
+            ${luau_SOURCE_DIR}/Ast/src/Cst.cpp
+            ${luau_SOURCE_DIR}/Ast/src/PrettyPrinter.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/Types.cpp
+            ${luau_SOURCE_DIR}/VM/src/lbuffer.cpp
+            ${luau_SOURCE_DIR}/VM/src/lbuflib.cpp
+            ${luau_SOURCE_DIR}/VM/src/lgcdebug.cpp
+            ${luau_SOURCE_DIR}/VM/src/lnumprint.cpp
+            ${luau_SOURCE_DIR}/VM/src/lveclib.cpp
+            ${luau_SOURCE_DIR}/VM/src/lvm.cpp
         )
 
         target_include_directories(luau_lib PUBLIC

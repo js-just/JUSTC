@@ -91,5 +91,7 @@ void RunLua::runScript(const std::string& code) {
         std::cout << "[LUA DEBUG] Lua state closed - COMPLETE" << std::endl;
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown Lua error" << std::endl;
     }
 }

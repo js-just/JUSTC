@@ -29,34 +29,39 @@ SOFTWARE.
 #include <minilua/minilua.h>
 #include <string>
 #include <stdexcept>
+#include <iostream>
 
 void RunLua::runScript(const std::string& code) {
-    lua_State *L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize) {
-        (void)ud; (void)osize;
-        if (nsize == 0) {
-            free(ptr);
-            return nullptr;
-        } else {
-            return realloc(ptr, nsize);
+    try {
+        lua_State *L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize) {
+            (void)ud; (void)osize;
+            if (nsize == 0) {
+                free(ptr);
+                return nullptr;
+            } else {
+                return realloc(ptr, nsize);
+            }
+        }, nullptr);
+
+        if (!L) throw std::runtime_error("lua_newstate failed");
+
+        luaL_requiref(L, "_G", luaopen_base, 1);
+        lua_pop(L, 1);
+
+        if (luaL_loadstring(L, code.c_str()) != LUA_OK) {
+            std::string err = lua_tostring(L, -1);
+            lua_close(L);
+            throw std::runtime_error("Load: " + err);
         }
-    }, nullptr);
 
-    if (!L) throw std::runtime_error("lua_newstate failed");
+        if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+            std::string err = lua_tostring(L, -1);
+            lua_close(L);
+            throw std::runtime_error("Runtime: " + err);
+        }
 
-    luaL_requiref(L, "_G", luaopen_base, 1);
-    lua_pop(L, 1);
-
-    if (luaL_loadstring(L, code.c_str()) != LUA_OK) {
-        std::string err = lua_tostring(L, -1);
         lua_close(L);
-        throw std::runtime_error("Load: " + err);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
     }
-
-    if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
-        std::string err = lua_tostring(L, -1);
-        lua_close(L);
-        throw std::runtime_error("Runtime: " + err);
-    }
-
-    lua_close(L);
 }

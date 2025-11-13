@@ -26,7 +26,6 @@ SOFTWARE.
 
 #include "run.lua.hpp"
 #define LUA_USE_POSIX
-#define LUA_USE_LONGJMP
 #define LUA_IMPL
 #include <minilua/minilua.h>
 #include <string>
@@ -43,20 +42,12 @@ void RunLua::runScript(const std::string& code) {
 
     luaL_openlibs(L);
 
-    int status = luaL_loadstring(L, code.c_str());
-    if (status != LUA_OK) {
-        const char* err = lua_tostring(L, -1);
+    if (luaL_dostring(L, code.c_str())) {
+        const char* error_msg = lua_tostring(L, -1);
         lua_close(L);
-        throw std::runtime_error(std::string("Load error: ") + err);
-    }
-
-    status = lua_pcall(L, 0, LUA_MULTRET, 0);
-    if (status != LUA_OK) {
-        const char* err = lua_tostring(L, -1);
-        lua_close(L);
-        throw std::runtime_error(std::string("Runtime error: ") + err);
+        throw std::runtime_error(std::string("Lua error: ") + error_msg);
     }
 
     lua_close(L);
-    std::cout << "Success!" << std::endl;
+    std::cout << "Lua script executed successfully" << std::endl;
 }

@@ -74,7 +74,8 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -I./luau/Compiler/include \
 -I./luau/VM/include \
 -I./luau/Ast/include \
--I./luau/Common/include"
+-I./luau/Common/include \
+-g"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"

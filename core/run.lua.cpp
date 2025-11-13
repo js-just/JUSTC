@@ -28,15 +28,25 @@ SOFTWARE.
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+#include <string>
+#include <cstring>
 
 #include "lua.h"
 #include "lualib.h"
 #include "luacode.h"
 
-#define JUSTC_LUAU_DEBUG
+#ifdef __EMSCRIPTEN__
+#include "parser.emscripten.h"
+#endif
+
+#define __JUSTC_LUAU_DEBUG__
 void RunLua::debug(const std::string log) {
-    #ifdef JUSTC_LUAU_DEBUG
+    #ifdef __JUSTC_LUAU_DEBUG__
+    #ifdef __EMSCRIPTEN__
+    debug_luau(log.c_str());
+    #else
     std::cout << "Luau debug: " << log << std::endl;
+    #endif
     #endif
 }
 

@@ -98,6 +98,8 @@ void RunLua::runScript(const std::string& code) {
         const char* error = lua_tostring(L, -1);
         throw std::runtime_error(std::string("Runtime error: ") + (error ? error : "Unknown error"));
     }
+
+    lua_close(L);
 }
 
 std::string RunLua::runScriptWithResult(const std::string& code) {
@@ -138,6 +140,7 @@ std::string RunLua::runScriptWithResult(const std::string& code) {
     }
 
     lua_pop(L, 1);
+    lua_close(L);
     return output;
 }
 

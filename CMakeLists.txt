@@ -133,10 +133,8 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
             ${luau_SOURCE_DIR}/VM/src/lfunc.cpp
             ${luau_SOURCE_DIR}/VM/src/lgc.cpp
             ${luau_SOURCE_DIR}/VM/src/linit.cpp
-#           ${luau_SOURCE_DIR}/VM/src/liolib.cpp
             ${luau_SOURCE_DIR}/VM/src/lmathlib.cpp
             ${luau_SOURCE_DIR}/VM/src/lmem.cpp
-#           ${luau_SOURCE_DIR}/VM/src/loadlib.cpp
             ${luau_SOURCE_DIR}/VM/src/lobject.cpp
             ${luau_SOURCE_DIR}/VM/src/loslib.cpp
             ${luau_SOURCE_DIR}/VM/src/lperf.cpp
@@ -151,7 +149,6 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
             ${luau_SOURCE_DIR}/VM/src/lvmexecute.cpp
             ${luau_SOURCE_DIR}/VM/src/lvmload.cpp
             ${luau_SOURCE_DIR}/VM/src/lvmutils.cpp
-
             ${luau_SOURCE_DIR}/Ast/src/Allocator.cpp
             ${luau_SOURCE_DIR}/Ast/src/Cst.cpp
             ${luau_SOURCE_DIR}/Ast/src/PrettyPrinter.cpp
@@ -161,7 +158,6 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
             ${luau_SOURCE_DIR}/VM/src/lgcdebug.cpp
             ${luau_SOURCE_DIR}/VM/src/lnumprint.cpp
             ${luau_SOURCE_DIR}/VM/src/lveclib.cpp
-#           ${luau_SOURCE_DIR}/VM/src/lvm.cpp
         )
 
         target_include_directories(luau_lib PUBLIC

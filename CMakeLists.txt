@@ -97,21 +97,84 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
 
     set(LUAU_BUILD_CLI OFF CACHE BOOL "Disable CLI")
     set(LUAU_BUILD_TESTS OFF CACHE BOOL "Disable tests")
-    set(LUAU_INSTALL_EXECUTABLES OFF CACHE BOOL "Disable executables installation")
+    set(LUAU_BUILD_WEB OFF CACHE BOOL "Disable web build")
 
     FetchContent_MakeAvailable(luau)
-    set(LUAU_BUILT_LOCALLY TRUE)
-else()
-    find_library(LUAU_LIB luau)
-    find_path(LUAU_INCLUDE luau.h)
-    if(LUAU_LIB AND LUAU_INCLUDE)
-        add_library(luau INTERFACE)
-        target_include_directories(luau INTERFACE ${LUAU_INCLUDE})
-        target_link_libraries(luau INTERFACE ${LUAU_LIB})
-        message(STATUS "Found system Luau")
-    else()
-        message(WARNING "Luau not found. Please install Luau development packages")
+
+    if(luau_POPULATED)
+        message(STATUS "Luau successfully configured")
+
+        add_library(luau_lib STATIC
+            ${luau_SOURCE_DIR}/Ast/src/Ast.cpp
+            ${luau_SOURCE_DIR}/Ast/src/Confusables.cpp
+            ${luau_SOURCE_DIR}/Ast/src/Lexer.cpp
+            ${luau_SOURCE_DIR}/Ast/src/Location.cpp
+            ${luau_SOURCE_DIR}/Ast/src/Parser.cpp
+            ${luau_SOURCE_DIR}/Ast/src/StringUtils.cpp
+            ${luau_SOURCE_DIR}/Ast/src/TimeTrace.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/Builtins.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/BuiltinFolding.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/BytecodeBuilder.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/Compiler.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/ConstantFolding.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/CostModel.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/lcode.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/TableShape.cpp
+            ${luau_SOURCE_DIR}/Compiler/src/ValueTracking.cpp
+            ${luau_SOURCE_DIR}/VM/src/lapi.cpp
+            ${luau_SOURCE_DIR}/VM/src/laux.cpp
+            ${luau_SOURCE_DIR}/VM/src/lbaselib.cpp
+            ${luau_SOURCE_DIR}/VM/src/lbitlib.cpp
+            ${luau_SOURCE_DIR}/VM/src/lbuiltins.cpp
+            ${luau_SOURCE_DIR}/VM/src/lcorolib.cpp
+            ${luau_SOURCE_DIR}/VM/src/ldblib.cpp
+            ${luau_SOURCE_DIR}/VM/src/ldebug.cpp
+            ${luau_SOURCE_DIR}/VM/src/ldo.cpp
+            ${luau_SOURCE_DIR}/VM/src/lfunc.cpp
+            ${luau_SOURCE_DIR}/VM/src/lgc.cpp
+            ${luau_SOURCE_DIR}/VM/src/linit.cpp
+            ${luau_SOURCE_DIR}/VM/src/liolib.cpp
+            ${luau_SOURCE_DIR}/VM/src/lmathlib.cpp
+            ${luau_SOURCE_DIR}/VM/src/lmem.cpp
+            ${luau_SOURCE_DIR}/VM/src/loadlib.cpp
+            ${luau_SOURCE_DIR}/VM/src/lobject.cpp
+            ${luau_SOURCE_DIR}/VM/src/loslib.cpp
+            ${luau_SOURCE_DIR}/VM/src/lperf.cpp
+            ${luau_SOURCE_DIR}/VM/src/lstate.cpp
+            ${luau_SOURCE_DIR}/VM/src/lstring.cpp
+            ${luau_SOURCE_DIR}/VM/src/lstrlib.cpp
+            ${luau_SOURCE_DIR}/VM/src/ltable.cpp
+            ${luau_SOURCE_DIR}/VM/src/ltablib.cpp
+            ${luau_SOURCE_DIR}/VM/src/ltm.cpp
+            ${luau_SOURCE_DIR}/VM/src/ludata.cpp
+            ${luau_SOURCE_DIR}/VM/src/lutf8lib.cpp
+            ${luau_SOURCE_DIR}/VM/src/lvmexecute.cpp
+            ${luau_SOURCE_DIR}/VM/src/lvmload.cpp
+            ${luau_SOURCE_DIR}/VM/src/lvmutils.cpp
+        )
+
+        target_include_directories(luau_lib PUBLIC
+            ${luau_SOURCE_DIR}/Ast/include
+            ${luau_SOURCE_DIR}/Compiler/include
+            ${luau_SOURCE_DIR}/VM/include
+            ${luau_SOURCE_DIR}/Common/include
+        )
+
+        target_compile_definitions(luau_lib PRIVATE
+            LUA_USE_LINUX
+            LUAU_FASTCALL
+        )
+
+        if(MSVC)
+            target_compile_options(luau_lib PRIVATE /W0)
+        else()
+            target_compile_options(luau_lib PRIVATE -w)
+        endif()
+
+        message(STATUS "Luau built from source")
     endif()
+else()
+    message(WARNING "Please use CMake 3.14+")
 endif()
 
 include_directories(third-party)
@@ -143,8 +206,15 @@ else()
     target_link_libraries(justc_core PRIVATE cpr::cpr)
 endif()
 
-target_link_libraries(justc_core PRIVATE quickjs luau)
-target_link_libraries(justc PRIVATE justc_core quickjs luau)
+target_link_libraries(justc_core PRIVATE quickjs luau_lib)
+target_link_libraries(justc PRIVATE justc_core quickjs luau_lib)
+
+target_include_directories(justc_core PUBLIC
+    ${luau_SOURCE_DIR}/Ast/include
+    ${luau_SOURCE_DIR}/Compiler/include
+    ${luau_SOURCE_DIR}/VM/include
+    ${luau_SOURCE_DIR}/Common/include
+)
 
 install(TARGETS justc DESTINATION bin)
 

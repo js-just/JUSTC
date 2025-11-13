@@ -36,11 +36,17 @@ tar -xzf wabt-1.0.34-ubuntu.tar.gz
 sudo cp wabt-1.0.34/bin/* /usr/local/bin/
 rm -rf wabt-1.0.34 wabt-1.0.34-ubuntu.tar.gz
 
-wget -q https://github.com/Roblox/luau/archive/refs/heads/master.tar.gz -O luau-master.tar.gz
-tar -xzf luau-master.tar.gz
-cd luau-master
+if [ ! -d "luau" ]; then
+    git clone https://github.com/Roblox/luau.git --depth 1
+fi
+cd luau
 make config=release -j$(nproc)
 cd ..
+mkdir -p third-party/luau
+cp -r luau/Compiler/include/* third-party/luau/
+cp -r luau/VM/include/* third-party/luau/
+cp -r luau/Ast/include/* third-party/luau/
+cp -r luau/Common/include/* third-party/luau/
 
 SOURCE_FILES="core/js.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp core/to.xml.cpp core/to.yaml.cpp core/utility.cpp core/import.cpp core/run.lua.cpp"
 
@@ -63,7 +69,11 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
 -s MAXIMUM_MEMORY=512MB \
 --bind \
--I./third-party"
+-I./third-party \
+-I./luau/Compiler/include \
+-I./luau/VM/include \
+-I./luau/Ast/include \
+-I./luau/Common/include"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"

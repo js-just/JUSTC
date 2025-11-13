@@ -27,6 +27,8 @@ OPTIONS="${1:-""}"
 sudo apt-get update
 sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config
 
+sudo apt-get install -y libluau-dev libluau0 || echo "Luau not available in packages, will build from source"
+
 mkdir build
 cd build
 cmake .. $OPTIONS

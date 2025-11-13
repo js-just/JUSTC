@@ -31,6 +31,8 @@ SOFTWARE.
 #include <memory>
 
 class RunLua {
+private:
+    static void debug(const std::string log);
 public:
     static void runScript(const std::string& code);
     static std::string runScriptWithResult(const std::string& code);

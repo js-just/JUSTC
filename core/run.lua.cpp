@@ -32,7 +32,13 @@ SOFTWARE.
 #include "lua.h"
 #include "lualib.h"
 #include "luacode.h"
-//#include "lauxlib.h"
+
+#define JUSTC_LUAU_DEBUG
+void RunLua::debug(const std::string log) {
+    #ifdef JUSTC_LUAU_DEBUG
+    std::cout << "Luau debug: " << log << std::endl;
+    #endif
+}
 
 class LuaStateManager {
 private:
@@ -44,60 +50,88 @@ public:
         if (!L) {
             throw std::runtime_error("Failed to create Lua state");
         }
+        RunLua::debug("Lua state created successfully.");
 
         luaL_openlibs(L);
+        RunLua::debug("openlibs()");
+
+        RunLua::debug("Redefining unsafe environment...");
 
         lua_pushnil(L);
         lua_setglobal(L, "dofile");
+        RunLua::debug("dofile = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "loadfile");
+        RunLua::debug("loadfile = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "io");
+        RunLua::debug("io = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "os");
+        RunLua::debug("os = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "package");
+        RunLua::debug("package = nil");
 
         lua_pushnil(L);
         lua_setglobal(L, "debug");
+        RunLua::debug("debug = nil");
+
+        RunLua::debug("Redefined unsafe environment successfully.");
     }
 
     ~LuaStateManager() {
         if (L) {
+            RunLua::debug("Closing Lua state...");
             lua_close(L);
+            RunLua::debug("Lua state closed successfully.");
         }
     }
 
-    lua_State* getState() { return L; }
+    lua_State* getState() {
+        RunLua::debug("getState()");
+        return L;
+    }
 };
 
 void RunLua::runScript(const std::string& code) {
+    debug("Creating Lua state...");
     LuaStateManager luaManager;
     lua_State* L = luaManager.getState();
 
+    debug("Compiling Luau code...");
     size_t bytecodeSize = 0;
     char* bytecode = luau_compile(code.c_str(), code.size(), NULL, &bytecodeSize);
     if (!bytecode) {
-        throw std::runtime_error("Failed to compile Lua code");
+        throw std::runtime_error("Failed to compile Luau code");
     }
+    debug("Luau code compiled successfully.");
 
+    debug("luau_load()");
     int result = luau_load(L, "user_code", bytecode, bytecodeSize, 0);
     free(bytecode);
 
     if (result != 0) {
+        debug("Failed to compile. Getting compilation error...");
         const char* error = lua_tostring(L, -1);
+        debug("Compilation error: " + std::string(error));
         throw std::runtime_error(std::string("Compilation error: ") + (error ? error : "Unknown error"));
     }
 
+    debug("Executing Luau code...");
     result = lua_pcall(L, 0, LUA_MULTRET, 0);
     if (result != LUA_OK) {
+        debug("Failed to execute. Getting runtime error...");
         const char* error = lua_tostring(L, -1);
+        debug("Runtime error: " + std::string(error));
         throw std::runtime_error(std::string("Runtime error: ") + (error ? error : "Unknown error"));
     }
+
+    debug("Done!");
 
     lua_close(L);
 }

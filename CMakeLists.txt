@@ -161,7 +161,7 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
             ${luau_SOURCE_DIR}/VM/src/lgcdebug.cpp
             ${luau_SOURCE_DIR}/VM/src/lnumprint.cpp
             ${luau_SOURCE_DIR}/VM/src/lveclib.cpp
-            ${luau_SOURCE_DIR}/VM/src/lvm.cpp
+#           ${luau_SOURCE_DIR}/VM/src/lvm.cpp
         )
 
         target_include_directories(luau_lib PUBLIC

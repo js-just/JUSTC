@@ -88,6 +88,32 @@ else()
     endif()
 endif()
 
+message(STATUS "Installing Luau...")
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
+    FetchContent_Declare(luau
+        GIT_REPOSITORY https://github.com/Roblox/luau.git
+        GIT_TAG master
+    )
+
+    set(LUAU_BUILD_CLI OFF CACHE BOOL "Disable CLI")
+    set(LUAU_BUILD_TESTS OFF CACHE BOOL "Disable tests")
+    set(LUAU_INSTALL_EXECUTABLES OFF CACHE BOOL "Disable executables installation")
+
+    FetchContent_MakeAvailable(luau)
+    set(LUAU_BUILT_LOCALLY TRUE)
+else()
+    find_library(LUAU_LIB luau)
+    find_path(LUAU_INCLUDE luau.h)
+    if(LUAU_LIB AND LUAU_INCLUDE)
+        add_library(luau INTERFACE)
+        target_include_directories(luau INTERFACE ${LUAU_INCLUDE})
+        target_link_libraries(luau INTERFACE ${LUAU_LIB})
+        message(STATUS "Found system Luau")
+    else()
+        message(WARNING "Luau not found. Please install Luau development packages")
+    endif()
+endif()
+
 include_directories(third-party)
 
 add_library(justc_core STATIC
@@ -117,9 +143,8 @@ else()
     target_link_libraries(justc_core PRIVATE cpr::cpr)
 endif()
 
-target_link_libraries(justc_core PRIVATE quickjs)
-
-target_link_libraries(justc PRIVATE justc_core quickjs)
+target_link_libraries(justc_core PRIVATE quickjs luau)
+target_link_libraries(justc PRIVATE justc_core quickjs luau)
 
 install(TARGETS justc DESTINATION bin)
 

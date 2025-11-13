@@ -52,7 +52,7 @@ void setupGlobalExceptionHandler() {
             try {
                 std::rethrow_exception(current);
             } catch (const std::exception& e) {
-                logError("Exception: " + e.what());
+                logError(std::string("Exception: ") + std::string(e.what()));
             } catch (...) {
                 logError("Unknown exception type");
             }
@@ -108,7 +108,7 @@ public:
                 std::cerr.rdbuf(silentBuffer.rdbuf());
             }
         } else {
-            logError(error);
+            logError(std::string(error));
         }
     }
 };

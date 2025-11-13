@@ -30,38 +30,62 @@ SOFTWARE.
 #include <string>
 #include <stdexcept>
 #include <iostream>
+#include <cstdlib>
+
+static void* lua_allocator(void* ud, void* ptr, size_t osize, size_t nsize) {
+    (void)ud; (void)osize;
+    if (nsize == 0) {
+        free(ptr);
+        return NULL;
+    } else {
+        return realloc(ptr, nsize);
+    }
+}
 
 void RunLua::runScript(const std::string& code) {
-    try {
-        lua_State *L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize) {
-            (void)ud; (void)osize;
-            if (nsize == 0) {
-                free(ptr);
-                return nullptr;
-            } else {
-                return realloc(ptr, nsize);
-            }
-        }, nullptr);
+    std::cout << "[LUA DEBUG] Creating Lua state..." << std::endl;
 
-        if (!L) throw std::runtime_error("lua_newstate failed");
-
-        luaL_requiref(L, "_G", luaopen_base, 1);
-        lua_pop(L, 1);
-
-        if (luaL_loadstring(L, code.c_str()) != LUA_OK) {
-            std::string err = lua_tostring(L, -1);
-            lua_close(L);
-            throw std::runtime_error("Load: " + err);
-        }
-
-        if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
-            std::string err = lua_tostring(L, -1);
-            lua_close(L);
-            throw std::runtime_error("Runtime: " + err);
-        }
-
-        lua_close(L);
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    lua_State *L = luaL_newstate();
+    if (L == NULL) {
+        std::cout << "[LUA DEBUG] FAILED: luaL_newstate() returned NULL" << std::endl;
+        throw std::runtime_error("Failed to create Lua state");
     }
+    std::cout << "[LUA DEBUG] Lua state created successfully at: " << L << std::endl;
+
+    std::cout << "[LUA DEBUG] Opening standard libraries..." << std::endl;
+    luaL_openlibs(L);
+    std::cout << "[LUA DEBUG] Libraries opened" << std::endl;
+
+    std::cout << "[LUA DEBUG] Testing with simple print..." << std::endl;
+    if (luaL_dostring(L, "print('LUA: Hello from Lua')")) {
+        const char* error_msg = lua_tostring(L, -1);
+        std::cout << "[LUA DEBUG] Simple test failed: " << error_msg << std::endl;
+        lua_close(L);
+        throw std::runtime_error(std::string("Lua simple test failed: ") + error_msg);
+    }
+    std::cout << "[LUA DEBUG] Simple test passed!" << std::endl;
+
+    std::cout << "[LUA DEBUG] Loading user script..." << std::endl;
+    int load_result = luaL_loadstring(L, code.c_str());
+    if (load_result != LUA_OK) {
+        const char* error_msg = lua_tostring(L, -1);
+        std::cout << "[LUA DEBUG] Load failed with code " << load_result << ": " << error_msg << std::endl;
+        lua_close(L);
+        throw std::runtime_error(std::string("Lua load error: ") + error_msg);
+    }
+    std::cout << "[LUA DEBUG] Script loaded successfully" << std::endl;
+
+    std::cout << "[LUA DEBUG] Executing user script..." << std::endl;
+    int call_result = lua_pcall(L, 0, 0, 0);
+    if (call_result != LUA_OK) {
+        const char* error_msg = lua_tostring(L, -1);
+        std::cout << "[LUA DEBUG] Execution failed with code " << call_result << ": " << error_msg << std::endl;
+        lua_close(L);
+        throw std::runtime_error(std::string("Lua runtime error: ") + error_msg);
+    }
+    std::cout << "[LUA DEBUG] Script executed successfully" << std::endl;
+
+    std::cout << "[LUA DEBUG] Closing Lua state..." << std::endl;
+    lua_close(L);
+    std::cout << "[LUA DEBUG] Lua state closed - COMPLETE" << std::endl;
 }

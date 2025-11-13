@@ -133,7 +133,7 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
             ${luau_SOURCE_DIR}/VM/src/lfunc.cpp
             ${luau_SOURCE_DIR}/VM/src/lgc.cpp
             ${luau_SOURCE_DIR}/VM/src/linit.cpp
-            ${luau_SOURCE_DIR}/VM/src/liolib.cpp
+#           ${luau_SOURCE_DIR}/VM/src/liolib.cpp
             ${luau_SOURCE_DIR}/VM/src/lmathlib.cpp
             ${luau_SOURCE_DIR}/VM/src/lmem.cpp
             ${luau_SOURCE_DIR}/VM/src/loadlib.cpp

@@ -110,7 +110,7 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
             ${luau_SOURCE_DIR}/Ast/src/Lexer.cpp
             ${luau_SOURCE_DIR}/Ast/src/Location.cpp
             ${luau_SOURCE_DIR}/Ast/src/Parser.cpp
-            ${luau_SOURCE_DIR}/Ast/src/StringUtils.cpp
+            ${luau_SOURCE_DIR}/Common/src/StringUtils.cpp
             ${luau_SOURCE_DIR}/Ast/src/TimeTrace.cpp
             ${luau_SOURCE_DIR}/Compiler/src/Builtins.cpp
             ${luau_SOURCE_DIR}/Compiler/src/BuiltinFolding.cpp

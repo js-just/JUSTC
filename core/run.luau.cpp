@@ -36,7 +36,7 @@ SOFTWARE.
 #include "luacode.h"
 
 #ifdef __EMSCRIPTEN__
-#include "run.luau.emscripten.h"
+#include "run.luau.emscripten.hpp"
 #endif
 
 #define __JUSTC_LUAU_DEBUG__

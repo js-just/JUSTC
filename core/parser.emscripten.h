@@ -24,31 +24,34 @@ SOFTWARE.
 
 */
 
+#ifndef PARSER_EMSCRIPTEN_H
+#define PARSER_EMSCRIPTEN_H
 #pragma once
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 
-inline EM_JS(void, warn_unsupported_js_type, (const char* timestamp, const char* value, const char* position), {
+EM_JS(void, warn_unsupported_js_type, (const char* timestamp, const char* value, const char* position), {
     console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Unsupported JavaScript output type ("' + UTF8ToString(value) + '") was converted to a string at', UTF8ToString(position));
 });
 
-inline EM_JS(void, warn_js_disabled, (const char* position, const char* token_value, const char* timestamp), {
+EM_JS(void, warn_js_disabled, (const char* position, const char* token_value, const char* timestamp), {
     console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Running lexer and parser only - Cannot run JavaScript', '"' + UTF8ToString(token_value) + '"', 'at', UTF8ToString(position));
 });
-inline EM_JS(void, warn_js_disabled_by_justc, (const char* position, const char* token_value, const char* timestamp), {
+EM_JS(void, warn_js_disabled_by_justc, (const char* position, const char* token_value, const char* timestamp), {
     console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') JavaScript disallowed - Cannot run JavaScript', '"' + UTF8ToString(token_value) + '"', 'at', UTF8ToString(position));
 });
-inline EM_JS(void, warn_cant_enable_js, (const char* position, const char* timestamp, const char* filename, const char* filetype), {
+EM_JS(void, warn_cant_enable_js, (const char* position, const char* timestamp, const char* filename, const char* filetype), {
     console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Attempt to allow JavaScript at <import', UTF8ToString(filetype), '"'+UTF8ToString(filename)+'">', 'at', UTF8ToString(position));
 });
 
-inline EM_JS(void, warn_http_disabled, (const char* position, const char* url, const char* timestamp), {
+EM_JS(void, warn_http_disabled, (const char* position, const char* url, const char* timestamp), {
     console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Running lexer and parser only - Cannot fetch', '"' + UTF8ToString(url) + '"', 'at', UTF8ToString(position), '\nUse JUSTC.execute for HTTP requests.');
 });
 
-inline EM_JS(void, debug_luau, (const char* log), {
+EM_JS(void, debug_luau, (const char* log), {
     console.warn('[JUSTC] Luau debug: ' + UTF8ToString(log));
 });
 
+#endif
 #endif

@@ -32,7 +32,7 @@ SOFTWARE.
 #include "lua.h"
 #include "lualib.h"
 #include "luacode.h"
-#include "lauxlib.h"
+//#include "lauxlib.h"
 
 class LuaStateManager {
 private:

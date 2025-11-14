@@ -25,7 +25,7 @@ set -e
 
 mkdir -p luau
 
-wget -q https://github.com/luau-lang/luau/releases/download/0.699/luau-0.699.tar.gz
+wget -q https://github.com/luau-lang/luau/archive/refs/tags/0.699.tar.gz
 tar -xzf luau-0.699.tar.gz
 cp luau-0.699/* luau/
 rm -rf luau-0.699 luau-0.699.tar.gz

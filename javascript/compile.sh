@@ -159,7 +159,7 @@ mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
 mv javascript/npm.json $JSOUT_DIR/package.json
 
 mkdir -p $JSOUT_DIR/luau
-cp luau/* $JSOUT_DIR/luau/
+cp -r luau/* $JSOUT_DIR/luau/
 
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"

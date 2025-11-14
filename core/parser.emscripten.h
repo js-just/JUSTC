@@ -49,7 +49,8 @@ EM_JS(void, warn_http_disabled, (const char* position, const char* url, const ch
 
 #ifdef __JUSTC_WEB__
 EM_JS(int, use_luau, (const char* script, const char* timestamp, const char* position), {
-    var err = __justc__luau__.ccall('executeScript', 'string', ['string'], [UTF8ToString(script)]);
+    var luau= await __justc__luau__();
+    var err = luau.ccall('executeScript', 'string', ['string'], [UTF8ToString(script)]);
     if (err) {
         var err_text = err.replace('stdin:', '');
         console.error('[JUSTC] (' + UTF8ToString(timestamp) + ') Luau error:', err_text + '\nat Luau, line', parseInt(err_text) - 1, '\nat' + UTF8ToString(position));

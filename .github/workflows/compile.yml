@@ -132,6 +132,10 @@ jobs:
           source emsdk/emsdk_env.sh
           emcmake cmake . -DLUAU_BUILD_WEB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           make -j2 Luau.Web "LDFLAGS=-sEXPORT_NAME='__justc__luau__'"
+          cd ..
+          mkdir -p compiledLuau
+          cp luau/Luau.Web.js compiledLuau/Luau.Web.js
+          cp luau/LICENSE.txt compiledLuau/LICENSE.txt
       - name: Upload compiled files
         uses: actions/upload-artifact@v4
         with:

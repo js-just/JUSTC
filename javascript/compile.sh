@@ -160,8 +160,9 @@ mv javascript/npm.json $JSOUT_DIR/package.json
 
 LUAU=$JSOUT_DIR/luau
 mkdir -p $LUAU
-cp -r luau/* $LUAU
-rm -r $LUAU/emsdk $LUAU/tests
+cp luau/Luau.Web.js $LUAU/luau.js
+cp luau/LICENSE.txt $LUAU/license.txt
+printf "/*\n\n%s\n\n*/\n\n" "$(cat $LUAU/license.txt)" | cat - "$LUAU/luau.js" > temp.js && mv temp.js "$LUAU/luau.js"
 
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"

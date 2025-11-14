@@ -466,7 +466,9 @@ ParseResult Parser::parse(bool doExecute) {
                 }
                 advance();
             } else if (match("Lua")) {
+                debug_luau("Token type: Lua");
                 try {
+                    debug_luau(std::string("Executing Luau: " + currentToken().value).c_str());
                     RunLuau::runScript(currentToken().value);
                 } catch (const std::exception& e) {
                     throw std::runtime_error("Lua error at " + Utility::position(position, input) + ":\n" + e.what());

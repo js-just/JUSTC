@@ -25,7 +25,13 @@ set -e
 
 mkdir -p luau
 
-wget -q https://github.com/luau-lang/luau/archive/refs/tags/0.699.tar.gz
+wget -v https://github.com/luau-lang/luau/archive/refs/tags/0.699.tar.gz -O luau-0.699.tar.gz
+
+if [ ! -f "luau-0.699.tar.gz" ]; then
+    echo -e "::error::Failed to download Luau 0.699"
+    exit 1
+fi
+
 tar -xzf luau-0.699.tar.gz
-cp luau-0.699/* luau/
+cp -r luau-0.699/* luau/
 rm -rf luau-0.699 luau-0.699.tar.gz

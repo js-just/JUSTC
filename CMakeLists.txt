@@ -116,15 +116,8 @@ else()
     target_link_libraries(justc_core PRIVATE cpr::cpr)
 endif()
 
-target_link_libraries(justc_core PRIVATE quickjs luau_lib)
-target_link_libraries(justc PRIVATE justc_core quickjs luau_lib)
-
-target_include_directories(justc_core PUBLIC
-    ${luau_SOURCE_DIR}/Ast/include
-    ${luau_SOURCE_DIR}/Compiler/include
-    ${luau_SOURCE_DIR}/VM/include
-    ${luau_SOURCE_DIR}/Common/include
-)
+target_link_libraries(justc_core PRIVATE quickjs)
+target_link_libraries(justc PRIVATE justc_core quickjs)
 
 install(TARGETS justc DESTINATION bin)
 

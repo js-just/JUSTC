@@ -36,20 +36,7 @@ tar -xzf wabt-1.0.34-ubuntu.tar.gz
 sudo cp wabt-1.0.34/bin/* /usr/local/bin/
 rm -rf wabt-1.0.34 wabt-1.0.34-ubuntu.tar.gz
 
-if [ ! -d "luau" ]; then
-    git clone https://github.com/Roblox/luau.git --depth 1
-fi
-cd luau
-make config=release -j$(nproc)
-cd ..
-mkdir -p third-party/luau
-cp -r luau/Compiler/include/* third-party/luau/
-cp -r luau/VM/include/* third-party/luau/
-cp -r luau/Ast/include/* third-party/luau/
-cp -r luau/Common/include/* third-party/luau/
-
-SOURCE_FILES="core/js.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp core/to.xml.cpp core/to.yaml.cpp core/utility.cpp core/import.cpp core/run.luau.cpp"
-LUAU_FILES="luau/Ast/src/Ast.cpp luau/Ast/src/Confusables.cpp luau/Ast/src/Lexer.cpp luau/Ast/src/Location.cpp luau/Ast/src/Parser.cpp luau/Common/src/StringUtils.cpp luau/Ast/src/TimeTrace.cpp luau/Compiler/src/Builtins.cpp luau/Compiler/src/BuiltinFolding.cpp luau/Compiler/src/BytecodeBuilder.cpp luau/Compiler/src/Compiler.cpp luau/Compiler/src/ConstantFolding.cpp luau/Compiler/src/CostModel.cpp luau/Compiler/src/lcode.cpp luau/Compiler/src/TableShape.cpp luau/Compiler/src/ValueTracking.cpp luau/VM/src/lapi.cpp luau/VM/src/laux.cpp luau/VM/src/lbaselib.cpp luau/VM/src/lbitlib.cpp luau/VM/src/lbuiltins.cpp luau/VM/src/lcorolib.cpp luau/VM/src/ldblib.cpp luau/VM/src/ldebug.cpp luau/VM/src/ldo.cpp luau/VM/src/lfunc.cpp luau/VM/src/lgc.cpp luau/VM/src/linit.cpp luau/VM/src/lmathlib.cpp luau/VM/src/lmem.cpp luau/VM/src/lobject.cpp luau/VM/src/loslib.cpp luau/VM/src/lperf.cpp luau/VM/src/lstate.cpp luau/VM/src/lstring.cpp luau/VM/src/lstrlib.cpp luau/VM/src/ltable.cpp luau/VM/src/ltablib.cpp luau/VM/src/ltm.cpp luau/VM/src/ludata.cpp luau/VM/src/lutf8lib.cpp luau/VM/src/lvmexecute.cpp luau/VM/src/lvmload.cpp luau/VM/src/lvmutils.cpp luau/Ast/src/Allocator.cpp luau/Ast/src/Cst.cpp luau/Ast/src/PrettyPrinter.cpp luau/Compiler/src/Types.cpp luau/VM/src/lbuffer.cpp luau/VM/src/lbuflib.cpp luau/VM/src/lgcdebug.cpp luau/VM/src/lnumprint.cpp luau/VM/src/lveclib.cpp"
+SOURCE_FILES="core/js.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp core/to.xml.cpp core/to.yaml.cpp core/utility.cpp core/import.cpp"
 
 COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_string\",\"_malloc\",\"_free\",\"_version\"] \
 -s EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"UTF8ToString\",\"stringToUTF8\"] \
@@ -70,12 +57,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
 -s MAXIMUM_MEMORY=512MB \
 --bind \
--I./third-party \
--I./luau/Compiler/include \
--I./luau/VM/include \
--I./luau/Ast/include \
--I./luau/Common/include \
--g"
+-I./third-party"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"
@@ -153,7 +135,7 @@ mkdir -p $JSOUT_DIR/JUSTC/core
 mkdir -p $JSOUT_DIR/JUSTC/javascript
 srcfile=$JSOUT_DIR/JUSTC/index.json
 echo "[" > $srcfile
-SOURCE_FILES+=" core/main.cpp core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h core/run.js.cpp core/run.js.hpp core/run.luau.hpp core/run.luau.emscripten.hpp"
+SOURCE_FILES+=" core/main.cpp core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h core/run.js.cpp core/run.js.hpp"
 for file in $SOURCE_FILES; do
     if [ -f "$file" ]; then
         echo "\"$file\"," >> $srcfile
@@ -175,6 +157,9 @@ mv javascript/test.justc $JSOUT_DIR/test.justc
 cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
 mv javascript/npm.json $JSOUT_DIR/package.json
+
+mkdir -p $JSOUT_DIR/luau
+cp luau/* $JSOUT_DIR/luau/
 
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"

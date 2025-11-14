@@ -72,7 +72,8 @@ web() {
     emcc $SOURCE_FILES $LUAU_FILES \
         -o $WEB_OUTPUT \
         $COMMON_FLAGS \
-        $WEB_FLAGS
+        $WEB_FLAGS \
+        -D __JUSTC_WEB__
     COMPILE_EXIT_CODE=$?
     set -e
 

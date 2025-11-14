@@ -1,0 +1,8 @@
+-- Luau test
+<<
+print("Hello from Luau")
+local x = 10
+local y = 20
+print("Sum:", x + y)
+>>
+.

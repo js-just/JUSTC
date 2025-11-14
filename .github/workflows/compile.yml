@@ -130,8 +130,9 @@ jobs:
         run: |
           cd luau
           source emsdk/emsdk_env.sh
+          export EMCC_CFLAGS="-sEXPORT_NAME='__justc__luau__' -sMODULARIZE -sSINGLE_FILE"
           emcmake cmake . -DLUAU_BUILD_WEB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-          make -j2 Luau.Web "LDFLAGS=-sEXPORT_NAME='__justc__luau__'"
+          make -j2 Luau.Web
           cd ..
           mkdir -p compiledLuau
           cp luau/Luau.Web.js compiledLuau/Luau.Web.js

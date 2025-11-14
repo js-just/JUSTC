@@ -485,8 +485,8 @@ ParseResult Parser::parse(bool doExecute) {
                     }
 
                     #ifdef __EMSCRIPTEN__
-                        debug_lua("Executing Luau code, length: " + std::to_string(luaCode.length()));
-                        debug_lua("Code preview: " + luaCode.substr(0, std::min(50, (int)luaCode.length())));
+                        debug_lua(std::string("Executing Luau code, length: " + std::to_string(luaCode.length())).c_str());
+                        debug_lua(std::string("Code preview: " + luaCode.substr(0, std::min(50, (int)luaCode.length()))).c_str());
                     #endif
 
                     RunLuau::runScript(luaCode);
@@ -497,13 +497,13 @@ ParseResult Parser::parse(bool doExecute) {
                 } catch (const std::exception& e) {
                     std::string errorMsg = "Lua error at " + Utility::position(position, input) + ":\n" + e.what();
                     #ifdef __EMSCRIPTEN__
-                        debug_lua("Luau error: " + errorMsg);
+                        debug_lua(std::string("Luau error: " + errorMsg).c_str());
                     #endif
                     throw std::runtime_error(errorMsg);
                 } catch (...) {
                     std::string errorMsg = "Fatal Lua error at " + Utility::position(position, input) + ".";
                     #ifdef __EMSCRIPTEN__
-                        debug_lua("Fatal Luau error: " + errorMsg);
+                        debug_lua(std::string("Fatal Luau error: " + errorMsg).c_str());
                     #endif
                     throw std::runtime_error(errorMsg);
                 }

@@ -39,7 +39,6 @@ SOFTWARE.
 #include "utility.h"
 #include <vector>
 #include "import.hpp"
-#include "run.luau.hpp"
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"

@@ -122,13 +122,15 @@ jobs:
           cd luau/emsdk
           ./emsdk install latest
           ./emsdk activate latest
+      - name: Setup ccache
+        uses: Chocobo1/setup-ccache-action@v1
       - name: Install Luau
         run: bash javascript/install_luau.sh
       - name: make
         run: |
           cd luau
           source emsdk/emsdk_env.sh
-          emcmake cmake . -DLUAU_BUILD_WEB=ON -DCMAKE_BUILD_TYPE=Release
+          emcmake cmake . -DLUAU_BUILD_WEB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           make -j2 Luau.Web "LDFLAGS=-sEXPORT_NAME='__justc__luau__'"
       - name: Upload compiled files
         uses: actions/upload-artifact@v4

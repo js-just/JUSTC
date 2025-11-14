@@ -158,8 +158,10 @@ cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
 mv javascript/npm.json $JSOUT_DIR/package.json
 
-mkdir -p $JSOUT_DIR/luau
-cp -r luau/* $JSOUT_DIR/luau/
+LUAU=$JSOUT_DIR/luau
+mkdir -p $LUAU
+cp -r luau/* $LUAU
+rm -r $LUAU/emsdk $LUAU/tests
 
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"

@@ -27,9 +27,6 @@ OUTPUT_DIR="${1:-development}"
 SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
 mkdir -p "javascript/$SAFE_DIR"
 
-emcc --version
-$EMCCVERSION=$(emcc --version)
-
 echo $OUTPUT_DIR
 echo $SAFE_DIR
 echo "dirpath=$SAFE_DIR" >> $GITHUB_OUTPUT
@@ -103,6 +100,9 @@ node() {
         exit 1
     fi
 }
+
+emcc --version
+$EMCCVERSION=$(emcc --version)
 
 web && \
 node

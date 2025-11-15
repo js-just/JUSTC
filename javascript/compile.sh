@@ -27,6 +27,9 @@ OUTPUT_DIR="${1:-development}"
 SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
 mkdir -p "javascript/$SAFE_DIR"
 
+emcc --version
+EMCCVERSION=$(emcc --version)
+
 echo $OUTPUT_DIR
 echo $SAFE_DIR
 echo "dirpath=$SAFE_DIR" >> $GITHUB_OUTPUT
@@ -101,9 +104,6 @@ node() {
     fi
 }
 
-emcc --version
-$EMCCVERSION=$(emcc --version)
-
 web && \
 node
 
@@ -119,8 +119,12 @@ JUSTC_NAME="Just an Ultimate Site Tool Configuration language"
 if [[ "$JUSTC_VERSION" == "undefined" ]]; then
     echo -e "::error::Invalid JUSTC version." && exit 1
 fi
+OUTPUT_VERSION="$JUSTC_VERSION ($SAFE_DIR)"
+if [[ "$JUSTC_VERSION" == "$SAFE_DIR" ]]; then
+    OUTPUT_VERSION="$JUSTC_VERSION"
+fi
 for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js; do
-    printf "/*\n\n%s\n\n*/\n\n/*\n\n$JUSTC_NAME v$JUSTC_VERSION ($SAFE_DIR)\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
+    printf "/*\n\n%s\n\n*/\n\n/*\n\n$JUSTC_NAME v$OUTPUT_VERSION\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
 done
 for file in justc justc.node; do
     wasm2wat $JSOUT_DIR/$file.wasm > $JSOUT_DIR/$file.wat
@@ -130,17 +134,48 @@ for file in justc justc.node; do
         echo "  (@custom \"justc.website\" \"https://just.js.org/justc\")"
         echo "  (@custom \"justc.license\" \"MIT License. https://just.js.org/justc/license.txt\")"
         echo "  (@custom \"justc.copyright\" \"Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>\")"
-        echo "  (@custom \"justc.version\" \"$JUSTC_VERSION ($SAFE_DIR)\")"
+        echo "  (@custom \"justc.version\" \"$OUTPUT_VERSION\")"
         tail -n +2 "$JSOUT_DIR/$file.wat"
     } > $JSOUT_DIR/$file.tmp
     wat2wasm $JSOUT_DIR/$file.tmp --enable-annotations -o $JSOUT_DIR/$file.wasm
     rm $JSOUT_DIR/$file.tmp
 done
 
+JSONString() {
+    local str="$1"
+    local -i i len=${#str}
+    local c
+    local -a result=()
+
+    for (( i=0; i<len; i++ )); do
+        c="${str:i:1}"
+        case "$c" in
+            '"') result+=('\\\"') ;;
+            '\\') result+=('\\\\') ;;
+            $'\b') result+=('\\b') ;;
+            $'\f') result+=('\\f') ;;
+            $'\n') result+=('\\n') ;;
+            $'\r') result+=('\\r') ;;
+            $'\t') result+=('\\t') ;;
+            *)
+                LC_CTYPE=C printf -v ord '%d' "'$c"
+                if (( ord < 0x20 || ord == 0x7F )); then
+                    printf -v hex '\\u%04x' "$ord"
+                    result+=("$hex")
+                else
+                    result+=("$c")
+                fi
+                ;;
+        esac
+    done
+
+    return "${result[@]}"
+}
+
 mkdir -p $JSOUT_DIR/JUSTC/core
 mkdir -p $JSOUT_DIR/JUSTC/javascript
 srcfile=$JSOUT_DIR/JUSTC/index.json
-echo "{\"emcc\":{\"version\":\"$EMCCVERSION\"},\"sources\":[" > $srcfile
+echo "{\"version\":[\"$(JSONString $JUSTC_VERSION)\",\"$(JSONString $SAFE_DIR)\"],\"compiler\":\"$(JSONString $EMCCVERSION)\",\"sources\":[" > $srcfile
 SOURCE_FILES+=" core/main.cpp core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h core/run.js.cpp core/run.js.hpp"
 for file in $SOURCE_FILES; do
     if [ -f "$file" ]; then
@@ -163,12 +198,6 @@ mv javascript/test.justc $JSOUT_DIR/test.justc
 cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
 mv javascript/npm.json $JSOUT_DIR/package.json
-
-LUAU=$JSOUT_DIR/luau
-mkdir -p $LUAU
-cp luau/Luau.Web.js $LUAU/luau.js
-cp luau/LICENSE.txt $LUAU/license.txt
-printf "/*\n\n%s\n\n*/\n\n" "$(cat $LUAU/license.txt)" | cat - "$LUAU/luau.js" > temp.js && mv temp.js "$LUAU/luau.js"
 
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"

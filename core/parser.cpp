@@ -471,7 +471,7 @@ ParseResult Parser::parse(bool doExecute) {
                 bool luau_error = use_luau(currentToken().value.c_str(), getCurrentTimestamp().c_str(), Utility::position(position, input).c_str());
                 if (luau_error) throw std::runtime_error("Luau error at " + Utility::position(position, input));
                 #else
-                RunLuau::runScript(const std::string& code);
+                RunLuau::runScript(currentToken().value);
                 #endif
                 ast.push_back(ASTNode("LUAU"));
                 advance();

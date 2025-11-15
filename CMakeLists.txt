@@ -92,7 +92,7 @@ message(STATUS "Installing Luau...")
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
     FetchContent_Declare(luau
         GIT_REPOSITORY https://github.com/Roblox/luau.git
-        GIT_TAG master
+        GIT_TAG 0.699
     )
 
     set(LUAU_BUILD_CLI OFF CACHE BOOL "Disable CLI")

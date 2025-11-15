@@ -59,11 +59,11 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -I./third-party"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker\
--s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close','use_luau']"
+-sASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close','use_luau']"
 WEB_OUTPUT="javascript/$SAFE_DIR/justc.core.js"
 
 NODE_FLAGS="-s ENVIRONMENT=node\
--s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close']"
+-sASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close']"
 NODE_OUTPUT="javascript_output/$SAFE_DIR/justc.node.js"
 
 JSOUT_DIR="javascript_output/$SAFE_DIR"

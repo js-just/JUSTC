@@ -39,14 +39,11 @@ SOFTWARE.
 #include "run.luau.emscripten.hpp"
 #endif
 
-#define __JUSTC_LUAU_DEBUG__
 void RunLuau::debug(const std::string log) {
     #ifdef __JUSTC_LUAU_DEBUG__
-    #ifdef __EMSCRIPTEN__
     debug_luau(log.c_str());
     #else
     std::cout << "Luau debug: " << log << std::endl;
-    #endif
     #endif
 }
 

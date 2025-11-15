@@ -35,7 +35,6 @@ public:
     static void runScript(const std::string& code);
     static std::string runScriptWithResult(const std::string& code);
     static bool compileScript(const std::string& code, std::string& error);
-    static void debug(const std::string log);
 };
 
 #endif

@@ -816,7 +816,7 @@ SOFTWARE.
             };
             try {
                 const urlprefix = SCRIPT.src.slice(0,-8)+'JUSTC/';
-                const sources = await(await FETCH(urlprefix)).json();
+                const sources = (await(await FETCH(urlprefix)).json())['sources'];
                 const CurrentVFS = new JUSTC.VFS();
                 if (!ARRAY.isArray(sources)) return;
                 for (const source of sources) {

@@ -27,6 +27,9 @@ OUTPUT_DIR="${1:-development}"
 SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
 mkdir -p "javascript/$SAFE_DIR"
 
+emcc --version
+$EMCCVERSION=$(emcc --version)
+
 echo $OUTPUT_DIR
 echo $SAFE_DIR
 echo "dirpath=$SAFE_DIR" >> $GITHUB_OUTPUT
@@ -137,7 +140,7 @@ done
 mkdir -p $JSOUT_DIR/JUSTC/core
 mkdir -p $JSOUT_DIR/JUSTC/javascript
 srcfile=$JSOUT_DIR/JUSTC/index.json
-echo "[" > $srcfile
+echo "{\"emcc\":{\"version\":\"$EMCCVERSION\"},\"sources\":[" > $srcfile
 SOURCE_FILES+=" core/main.cpp core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h core/run.js.cpp core/run.js.hpp"
 for file in $SOURCE_FILES; do
     if [ -f "$file" ]; then
@@ -147,7 +150,7 @@ for file in $SOURCE_FILES; do
     fi
 done
 head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
-echo "]" >> $srcfile
+echo "]}" >> $srcfile
 cp javascript/core.txt $JSOUT_DIR/JUSTC/javascript/core.js
 cp javascript/index.d.txt $JSOUT_DIR/JUSTC/javascript/core.d.ts
 OUTPUT_URL="https://just.js.org/justc/$SAFE_DIR"

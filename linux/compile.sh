@@ -24,6 +24,8 @@
 set -e
 OPTIONS="${1:-""}"
 
+g++ --version
+
 sudo apt-get update
 sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config
 

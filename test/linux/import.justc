@@ -1,2 +1,3 @@
 IMPORT JUSTC(test/linux/luau.justc),
-test is {{console.log(String(10+10+10+109))}}.
+test is {{console.log(String(10+10+10+109))}},
+<<print('Hi!')>>.

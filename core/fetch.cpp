@@ -156,14 +156,7 @@ std::string Fetch::executeHttpRequest(const std::string& url, const std::string&
         {"Accept", "*/*"},
         {"X-JUSTC", "JUSTC/" + JUSTC_VERSION}
     };
-    auto request = cpr::Get;
-    if (method == "POST") request = cpr::Post;
-    else if (method == "PUT") request = cpr::Put;
-    else if (method == "PATCH") request = cpr::Patch;
-    else if (method == "DELETE") request = cpr::Delete;
-    else if (method == "HEAD") request = cpr::Head;
-    else if (method == "OPTIONS") request = cpr::Options;
-    else if (method != "GET") throw std::runtime_error("HTTP: Invalid method.");
+
     try {
         for (const auto& pair : headers) {
             std::string pairfirst = pair.first;
@@ -172,24 +165,60 @@ std::string Fetch::executeHttpRequest(const std::string& url, const std::string&
             std::transform(pairfirst.begin(), pairfirst.end(),
                    pf.begin(),
                    [](unsigned char c){ return std::tolower(c); });
-            if (pf === "user-agent" || pf === "x-justc") throw std::runtime_error("HTTP: Attempt to set \"" + pair.first + "\" header.");
+            if (pf == "user-agent" || pf == "x-justc") throw std::runtime_error("HTTP: Attempt to set \"" + pair.first + "\" header.");
             reqHeaders[pair.first] = pair.second;
         }
 
         cpr::Response response;
-        if (method == "GET" || method == "DELETE" || method == "HEAD" || method == "OPTIONS")
-            response = request(
+
+        if (method == "GET") {
+            response = cpr::Get(
                 cpr::Url{url},
                 reqHeaders,
                 cpr::Timeout{10000}
             );
-        else
-            response = request(
+        } else if (method == "POST") {
+            response = cpr::Post(
                 cpr::Url{url},
                 reqHeaders,
                 cpr::Body{body},
                 cpr::Timeout{10000}
             );
+        } else if (method == "PUT") {
+            response = cpr::Put(
+                cpr::Url{url},
+                reqHeaders,
+                cpr::Body{body},
+                cpr::Timeout{10000}
+            );
+        } else if (method == "PATCH") {
+            response = cpr::Patch(
+                cpr::Url{url},
+                reqHeaders,
+                cpr::Body{body},
+                cpr::Timeout{10000}
+            );
+        } else if (method == "DELETE") {
+            response = cpr::Delete(
+                cpr::Url{url},
+                reqHeaders,
+                cpr::Timeout{10000}
+            );
+        } else if (method == "HEAD") {
+            response = cpr::Head(
+                cpr::Url{url},
+                reqHeaders,
+                cpr::Timeout{10000}
+            );
+        } else if (method == "OPTIONS") {
+            response = cpr::Options(
+                cpr::Url{url},
+                reqHeaders,
+                cpr::Timeout{10000}
+            );
+        } else {
+            throw std::runtime_error("HTTP: Invalid method.");
+        }
 
         if (response.status_code >= 400 && response.status_code < 600 && method != "HEAD") {
             if (response.text.empty()) {

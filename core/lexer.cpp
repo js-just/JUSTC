@@ -34,6 +34,7 @@ SOFTWARE.
 #include <cstring>
 #include <sstream>
 #include "utility.h"
+#include <iostream>
 
 #ifdef __EMSCRIPTEN__
 #include "parser.h"

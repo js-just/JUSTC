@@ -35,14 +35,3 @@ fi
 tar -xzf luau-0.699.tar.gz
 cp -r luau-0.699/* luau/
 rm -rf luau-0.699 luau-0.699.tar.gz
-
-find luau -type d -name "include" | while read include_dir; do # Copy everything from luau/*/include/Luau/ to luau/*/src/Luau/
-    parent_dir=$(dirname "$include_dir")
-
-    find "$include_dir" -mindepth 1 -type d | while read subdir; do
-        dir_name=$(basename "$subdir")
-        src_target="$parent_dir/src/$dir_name"
-
-        cp -r "$subdir" "$src_target"
-    done
-done

@@ -49,80 +49,81 @@ std::string Fetch::executeHttpRequest(const std::string& url, const std::string&
     }
     char* result = (char*)EM_ASM_INT({
         return Asyncify.handleSleep(function(wakeUp) {
-            var throwError = (e) => {
-                "use strict";
-                var JUSTC = {
-                    HTTP: {}
-                };
-                JUSTC.HTTP.Error = class extends Error {};
-                throw new JUSTC.HTTP.Error('[JUSTC] HTTP: ' + e);
-            }
             try {
                 var url = UTF8ToString($0);
                 var version = UTF8ToString($1);
-                var isBrowser = (typeof window !== 'undefined') && (typeof navigator !== 'undefined');
+                var method = UTF8ToString($2);
+                var headersStr = UTF8ToString($3);
+                var body = UTF8ToString($4);
 
+                var isBrowser = (typeof window !== 'undefined') && (typeof navigator !== 'undefined');
                 var xhr = new XMLHttpRequest();
-                xhr.open(UTF8ToString($2), url, false);
+                xhr.open(method, url, false);
+
                 xhr.setRequestHeader('Accept', '*/*');
                 if (!isBrowser) {
                     xhr.setRequestHeader('User-Agent', 'JUSTC/' + version);
                 }
                 xhr.setRequestHeader('X-JUSTC', 'JUSTC/' + version);
-                var headers = UTF8ToString($3).split('\n');
-                for (var header of headers) {
+
+                var headers = headersStr.split('\n');
+                for (var i = 0; i < headers.length; i++) {
+                    var header = headers[i];
+                    if (header.trim() === '') continue;
+
                     var headerArray = header.split(':');
-                    if (headerArray[0].toLowerCase() === 'user-agent' || headerArray[0].toLowerCase() === 'x-justc') throwError("Attempt to set \"" + headerArray[0] + "\" header.")
-                    try {
-                        xhr.setRequestHeader(headerArray[0], headerArray[1]);
-                    } catch (e) {
-                        console.warn('[JUSTC] (' + (new Date()).toLocaleString('sv-SE', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                            hour12: false
-                        }) + ') HTTP: Failed to set header', headerArray[0], 'with value', headerArray[1] + ':', e);
+                    if (headerArray.length >= 2) {
+                        var key = headerArray[0].trim();
+                        var value = headerArray.slice(1).join(':').trim();
+
+                        var keyLower = key.toLowerCase();
+                        if (keyLower === 'user-agent' || keyLower === 'x-justc') {
+                            throw new Error('Attempt to set "' + key + '" header.');
+                        }
+
+                        try {
+                            xhr.setRequestHeader(key, value);
+                        } catch (e) {
+                            var timestamp = new Date().toISOString().replace('T', ' ').substr(0, 19);
+                            console.warn('[JUSTC] (' + timestamp + ') HTTP: Failed to set header ' + key + ' with value ' + value + ': ' + e);
+                        }
                     }
                 }
 
                 xhr.onload = function() {
                     var response = xhr.responseText;
-                    if (UTF8ToString($2) === 'HEAD' || UTF8ToString($2) === 'OPTIONS') {
+
+                    if (method === 'HEAD' || method === 'OPTIONS') {
                         var headersString = xhr.getAllResponseHeaders();
                         var headersObject = {};
                         var headerLines = headersString.trim().split('\n');
-                        headerLines.forEach(line => {
+
+                        for (var j = 0; j < headerLines.length; j++) {
+                            var line = headerLines[j];
                             var parts = line.split(': ');
                             if (parts.length === 2) {
                                 var key = parts[0].trim();
                                 var value = parts[1].trim();
                                 headersObject[key] = value;
                             }
-                        });
+                        }
+
                         var headersOutput = "";
-                        for (var [key, value] of Object.entries(headersObject)) {
-                            headersOutput += key + ":" + value + "\n";
+                        for (var key in headersObject) {
+                            if (headersObject.hasOwnProperty(key)) {
+                                headersOutput += key + ":" + headersObject[key] + "\n";
+                            }
                         }
                         response = headersOutput + ">STATUS:" + xhr.status;
                     }
                     var length = lengthBytesUTF8(response) + 1;
                     var result = _malloc(length);
                     if (xhr.status >= 400 && xhr.status < 600) {
-                        if ((length - 1) < 1) {
-                            throwError("Request failed with status " + xhr.status + ".");
+                        if (response.length < 1) {
+                            throw new Error('Request failed with status ' + xhr.status + '.');
                         } else {
-                            console.warn('[JUSTC] (' + (new Date()).toLocaleString('sv-SE', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                                hour12: false
-                            }) + ') HTTP: Request succeeded, but with status', xhr.status);
+                            var timestamp = new Date().toISOString().replace('T', ' ').substr(0, 19);
+                            console.warn('[JUSTC] (' + timestamp + ') HTTP: Request succeeded, but with status ' + xhr.status);
                         }
                     }
                     stringToUTF8(response, result, length);
@@ -130,13 +131,12 @@ std::string Fetch::executeHttpRequest(const std::string& url, const std::string&
                 };
 
                 xhr.onerror = function() {
-                    throwError("Request failed with status " + xhr.status + ".");
+                    throw new Error('Request failed with status ' + xhr.status + '.');
                 };
 
-                var body = UTF8ToString($4);
                 xhr.send(body.length > 0 ? body : undefined);
             } catch (e) {
-                throwError("Request failed: " + e);
+                throw new Error('Request failed: ' + e);
             }
         });
     }, url.c_str(), JUSTC_VERSION.c_str(), method.c_str(), serialized_headers.c_str(), body.c_str());

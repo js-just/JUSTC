@@ -24,12 +24,10 @@ SOFTWARE.
 
 */
 
-#ifndef KEYWORDS_H
-#define KEYWORDS_H
+#include "http.hpp"
+#include "../../fetch.h"
+#include "../../parser.h"
 
-#include <vector>
-#include <string>
-
-extern const std::vector<std::string> keywords;
-
-#endif
+Value HTTP::GET(const std::string& url, const std::unordered_map<std::string, std::string>& headers, const std::string& format) {
+    return Fetch::request(url, format, "GET", headers);
+}

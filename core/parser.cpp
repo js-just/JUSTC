@@ -541,13 +541,12 @@ Value Parser::convertToDecimal(const Value& value) {
     return value;
 }
 
+void Parser::parseScopeCommandError(const std::string scope) {
+    throw std::runtime_error("Expected scope mode keyword, got \"" + type + "\" at " + Utility::position(currentToken().start, input) + ". Scope mode keywords are: \"global\", \"local\", \"strict\".");
+}
 ASTNode Parser::parseScopeCommand() {
     ASTNode node("SCOPE_COMMAND", "", currentToken().start);
     advance();
-
-    void throwErr(std::string type) {
-        throw std::runtime_error("Expected scope mode keyword, got \"" + type + "\" at " + Utility::position(currentToken().start, input) + ". Scope mode keywords are: \"global\", \"local\", \"strict\".");
-    }
 
     if (match("keyword")) {
         std::string type = currentToken().value;
@@ -588,7 +587,7 @@ ASTNode Parser::parseOutputCommand() {
     return node;
 }
 
-void Parser::parseReturnCommandError(const bool a, const bool b = false) {
+void Parser::parseReturnCommandError(const bool a, const bool b) {
     if (a && b) throw std::runtime_error("Expected identifier, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
     else if (b) throw std::runtime_error("Expected variable name, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
     else if (a) throw std::runtime_error("Expected \"[\", got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
@@ -604,7 +603,7 @@ ASTNode Parser::parseReturnCommand() {
             if (match("identifier")) {
                 outputVariables.push_back(currentToken().value);
                 advance();
-            } else parseReturnCommandError(true, true)
+            } else parseReturnCommandError(true, true);
             if (match(",")) advance();
         }
         if (match("]")) advance();
@@ -630,14 +629,13 @@ ASTNode Parser::parseReturnCommand() {
     return node;
 }
 
+void Parser::parseAllowCommandError() {
+    throw std::runtime_error("Expected language name, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ". Supported languages are: \"JavaScript\", \"Luau\".");
+}
 ASTNode Parser::parseAllowCommand() {
     ASTNode node("ALLOW_COMMAND", "", currentToken().start);
     std::string command = currentToken().value;
     advance();
-
-    void throwErr() {
-        throw std::runtime_error("Expected language name, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ". Supported languages are: \"JavaScript\", \"Luau\".");
-    }
 
     if (match("keyword", "JavaScript")) {
         if (!canAllowJS && command == "allow") {
@@ -648,7 +646,7 @@ ASTNode Parser::parseAllowCommand() {
         } else allowJavaScript = (command == "allow");
         node.value = booleanToValue(allowJavaScript);
         advance();
-    } else throwErr();
+    } else parseAllowCommandError();
 
     return node;
 }

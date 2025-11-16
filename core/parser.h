@@ -335,6 +335,8 @@ private:
     Value onHTTPDisabled(size_t startPos, std::string args0string_value);
     void parseOutputCommandError(const std::string mode);
     void parseReturnCommandError(const bool a, const bool b = false);
+    void parseScopeCommandError(const std::string scope);
+    void parseAllowCommandError();
 
 public:
     static std::string getCurrentTimestamp();

@@ -208,7 +208,7 @@ std::string Fetch::executeHttpRequest(const std::string& url, const std::string&
             for (const auto& header : response.header) {
                 output += header.first + ":" + header.second + "\n";
             }
-            return output + ">STATUS:" + response.status_code;
+            return output + ">STATUS:" + std::to_string(response.status_code);
         }
 
         return response.text;

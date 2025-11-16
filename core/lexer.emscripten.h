@@ -24,26 +24,16 @@ SOFTWARE.
 
 */
 
-#ifndef UTILITY_H
-#define UTILITY_H
+#pragma once
 
-#include "parser.h"
-#include <string>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
 
-class Utility {
-public:
-    static std::string numberValue2string(const Value& value);
-    static std::string value2string(const Value& value);
-    static std::string double2hexString(const double d);
-    static std::string double2octString(const double d);
-    static std::string double2binString(const double d);
-    static bool checkNumbers(const Value& left, const Value& right);
-    static std::pair<size_t, size_t> pos(const size_t& pos, const std::string& script);
-    static std::string position(const size_t& pos_, const std::string& script);
-    static DataType typeDeclaration2dataType(const std::string& typeDeclaration, const std::string& position);
-    static Value convert(const Value value, const DataType type);
-    static Value ParseResult2Value(const ParseResult parseresult);
-    static bool isGitHubActions();
-};
+EM_JS(void, warn_lexer_js, (const char* timestamp, const char* position), {
+    console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') JavaScript may be corrupted in the lexer output.', UTF8ToString(position));
+});
+EM_JS(void, warn_lexer_luau, (const char* timestamp, const char* position), {
+    console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Luau may be corrupted in the lexer output.', UTF8ToString(position));
+});
 
 #endif

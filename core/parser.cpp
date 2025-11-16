@@ -542,7 +542,7 @@ Value Parser::convertToDecimal(const Value& value) {
 }
 
 void Parser::parseScopeCommandError(const std::string scope) {
-    throw std::runtime_error("Expected scope mode keyword, got \"" + type + "\" at " + Utility::position(currentToken().start, input) + ". Scope mode keywords are: \"global\", \"local\", \"strict\".");
+    throw std::runtime_error("Expected scope mode keyword, got \"" + scope + "\" at " + Utility::position(currentToken().start, input) + ". Scope mode keywords are: \"global\", \"local\", \"strict\".");
 }
 ASTNode Parser::parseScopeCommand() {
     ASTNode node("SCOPE_COMMAND", "", currentToken().start);

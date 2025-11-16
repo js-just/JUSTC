@@ -333,6 +333,8 @@ private:
     Value functionFLOOR(const std::vector<Value>& args);
 
     Value onHTTPDisabled(size_t startPos, std::string args0string_value);
+    void parseOutputCommandError(const std::string mode);
+    void parseReturnCommandError(const bool a, const bool b = false);
 
 public:
     static std::string getCurrentTimestamp();

@@ -565,13 +565,12 @@ ASTNode Parser::parseScopeCommand() {
     return node;
 }
 
+void Parser::parseOutputCommandError(const std::string mode) {
+    throw std::runtime_error("Expected output mode keyword, got \"" + mode + "\" at " + Utility::position(currentToken().start, input) + ". Output mode keywords are: \"specified\", \"everything\", \"disabled\".");
+}
 ASTNode Parser::parseOutputCommand() {
     ASTNode node("OUTPUT_COMMAND", "", currentToken().start);
     advance();
-
-    void throwErr(std::string mode) {
-        throw std::runtime_error("Expected output mode keyword, got \"" + mode + "\" at " + Utility::position(currentToken().start, input) + ". Output mode keywords are: \"specified\", \"everything\", \"disabled\".");
-    }
 
     if (match("keyword")) {
         std::string mode = currentToken().value;
@@ -580,26 +579,24 @@ ASTNode Parser::parseOutputCommand() {
             node.value = stringToValue(outputMode);
             advance();
         } else {
-            throwErr(mode);
+            parseOutputCommandError(mode);
         }
     } else {
-        throwErr(currentToken().value);
+        parseOutputCommandError(currentToken().value);
     }
 
     return node;
 }
 
+void Parser::parseReturnCommandError(const bool a, const bool b = false) {
+    if (a && b) throw std::runtime_error("Expected identifier, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
+    else if (b) throw std::runtime_error("Expected variable name, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
+    else if (a) throw std::runtime_error("Expected \"[\", got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
+    else throw std::runtime_error("Expected \"]\" (to close \"[\"), got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
+}
 ASTNode Parser::parseReturnCommand() {
     ASTNode node("RETURN_COMMAND", "", currentToken().start);
     advance();
-
-    void throwErr(bool a, bool b = false) {
-        if (a && b) throw std::runtime_error("Expected identifier, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
-        else if (b) throw std::runtime_error("Expected variable name, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
-        else if (a) throw std::runtime_error("Expected \"[\", got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
-        else throw std::runtime_error("Expected \"]\" (to close \"[\"), got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
-    }
-    void throwErr
 
     if (match("[")) {
         advance();
@@ -607,12 +604,12 @@ ASTNode Parser::parseReturnCommand() {
             if (match("identifier")) {
                 outputVariables.push_back(currentToken().value);
                 advance();
-            } else throwErr(true, true)
+            } else parseReturnCommandError(true, true)
             if (match(",")) advance();
         }
         if (match("]")) advance();
-        else throwErr(false);
-    } else throwErr(true);
+        else parseReturnCommandError(false);
+    } else parseReturnCommandError(true);
 
     if (match("keyword", "as")) {
         advance();
@@ -622,12 +619,12 @@ ASTNode Parser::parseReturnCommand() {
                 if (match("identifier") || match("string") || match("number")) {
                     outputNames.push_back(currentToken().value);
                     advance();
-                } else throwErr(false, true);
+                } else parseReturnCommandError(false, true);
                 if (match(",")) advance();
             }
             if (match("]")) advance();
-            else throwErr(false);
-        } else throwErr(true);
+            else parseReturnCommandError(false);
+        } else parseReturnCommandError(true);
     }
 
     return node;

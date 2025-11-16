@@ -30,10 +30,10 @@ SOFTWARE.
 #include <emscripten.h>
 
 EM_JS(void, warn_lexer_js, (const char* timestamp, const char* position), {
-    console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') JavaScript may be corrupted in the lexer output.', UTF8ToString(position));
+    console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') JavaScript may be corrupted in the lexer output.', '('+UTF8ToString(position)+')');
 });
 EM_JS(void, warn_lexer_luau, (const char* timestamp, const char* position), {
-    console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Luau may be corrupted in the lexer output.', UTF8ToString(position));
+    console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Luau may be corrupted in the lexer output.', '('+UTF8ToString(position)+')');
 });
 
 #endif

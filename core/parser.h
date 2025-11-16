@@ -229,7 +229,7 @@ private:
     ASTNode parseStatement(bool doExecute);
     ASTNode parseVariableDeclaration(bool doExecute);
     ASTNode parseCommand(bool doExecute);
-    ASTNode parseTypeCommand();
+    ASTNode parseScopeCommand();
     ASTNode parseOutputCommand();
     ASTNode parseReturnCommand();
     ASTNode parseAllowCommand();

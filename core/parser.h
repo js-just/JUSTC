@@ -225,7 +225,7 @@ private:
     Value parsePower(bool doExecute);
     Value parseUnary(bool doExecute);
     Value parseFunctionCall(bool doExecute);
-    Value parseSpaceCall(bool doExecute)
+    Value parseSpaceCall(bool doExecute);
 
     ASTNode parseStatement(bool doExecute);
     ASTNode parseVariableDeclaration(bool doExecute);

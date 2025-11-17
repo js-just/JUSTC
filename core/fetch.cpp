@@ -287,10 +287,10 @@ Value Fetch::request(const std::string& url, const std::string& method, const st
         auto content = executeHttpRequest(url, method, body, headers);
 
         result.type = DataType::JUSTC_OBJECT;
-        result.object_value = {
-            {"text", content.first},
-            {"status", content.second.first},
-            {"headers", content.second.second}
+        result.object_value = std::unordered_map<std::string, Value>{
+            {"text", Value{DataType::STRING, content.first}},
+            {"status", Value{DataType::STRING, content.second.first}},
+            {"headers", Value{DataType::STRING, content.second.second}}
         };
         result.name = "HTTP.Response";
     } catch (const std::exception& e) {

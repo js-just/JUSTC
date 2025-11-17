@@ -33,6 +33,7 @@ SOFTWARE.
 #include <cstring>
 #include <sstream>
 #include <cstddef>
+#include <unordered_map>
 
 std::string Utility::numberValue2string(const Value& value) {
     if (value.number_value == std::floor(value.number_value)) {
@@ -49,6 +50,9 @@ std::string Utility::value2string(const Value& value) {
         case DataType::BINARY:
         case DataType::OCTAL:
             return numberValue2string(value);
+        case DataType::JUSTC_OBJECT:
+            if (value.name == "HTTP.Responce") return value.object_value["text"];
+            else return value.toString();
         default:
             return value.toString();
     }
@@ -191,4 +195,21 @@ Value Utility::ParseResult2Value(const ParseResult parseresult) {
 bool Utility::isGitHubActions() {
     const char* githubActions = std::getenv("GITHUB_ACTIONS");
     return (githubActions && std::string(githubActions) == "true");
+}
+
+std::unordered_map<std::string, std::string> Utility::ParseHeaders(const std::string& headers) {
+    std::unordered_map<std::string, std::string> output;
+    std::istringstream lines_stream(headers);
+    std::string line;
+    while (std::getline(lines_stream, line, '\n')) {
+        std::istringstream pair_stream(line);
+        std::string key;
+        std::string value;
+        if (std::getline(pair_stream, key, ':')) {
+            if (std::getline(pair_stream, value)) {
+                output[key] = value;
+            }
+        }
+    }
+    return output;
 }

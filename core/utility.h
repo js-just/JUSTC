@@ -44,6 +44,8 @@ public:
     static Value convert(const Value value, const DataType type);
     static Value ParseResult2Value(const ParseResult parseresult);
     static bool isGitHubActions();
+    static std::unordered_map<std::string, std::string> ParseHeaders(const std::string& headers);
+    static std::string defaultHTTPAccept = "text/*, application/x-justc, application/json, application/lua, application/hocon, application/xml, application/yaml, */*";
 };
 
 #endif

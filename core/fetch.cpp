@@ -33,6 +33,7 @@ SOFTWARE.
 #include <string>
 #include <algorithm>
 #include <cctype>
+#include <utility>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -42,7 +43,7 @@ long getCurrentTime() {
     return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
 }
 
-std::string Fetch::executeHttpRequest(const std::string& url, const std::string& method, const std::string& body, const std::unordered_map<std::string, std::string>& headers) {
+std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRequest(const std::string& url, const std::string& method, const std::string& body, const std::unordered_map<std::string, std::string>& headers) {
     std::string serialized_headers;
     for (const auto& pair : headers) {
         serialized_headers += pair.first + ":" + pair.second + "\n";
@@ -150,101 +151,93 @@ std::string Fetch::executeHttpRequest(const std::string& url, const std::string&
 #else
 #include <cpr/cpr.h>
 
-std::string Fetch::executeHttpRequest(const std::string& url, const std::string& method, const std::string& body, const std::unordered_map<std::string, std::string>& headers) {
+std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRequest(const std::string& url, const std::string& method, const std::string& body, const std::unordered_map<std::string, std::string>& headers) {
     cpr::Header reqHeaders = {
         {"User-Agent", "JUSTC/" + JUSTC_VERSION},
         {"Accept", "*/*"},
         {"X-JUSTC", "JUSTC/" + JUSTC_VERSION}
     };
 
-    try {
-        for (const auto& pair : headers) {
-            std::string pairfirst = pair.first;
-            std::string pf;
-            pf.resize(pairfirst.size());
-            std::transform(pairfirst.begin(), pairfirst.end(),
-                   pf.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
-            if (pf == "user-agent" || pf == "x-justc") throw std::runtime_error("HTTP: Attempt to set \"" + pair.first + "\" header.");
-            reqHeaders[pair.first] = pair.second;
-        }
-
-        cpr::Response response;
-
-        if (method == "GET") {
-            response = cpr::Get(
-                cpr::Url{url},
-                reqHeaders,
-                cpr::Timeout{10000}
-            );
-        } else if (method == "POST") {
-            response = cpr::Post(
-                cpr::Url{url},
-                reqHeaders,
-                cpr::Body{body},
-                cpr::Timeout{10000}
-            );
-        } else if (method == "PUT") {
-            response = cpr::Put(
-                cpr::Url{url},
-                reqHeaders,
-                cpr::Body{body},
-                cpr::Timeout{10000}
-            );
-        } else if (method == "PATCH") {
-            response = cpr::Patch(
-                cpr::Url{url},
-                reqHeaders,
-                cpr::Body{body},
-                cpr::Timeout{10000}
-            );
-        } else if (method == "DELETE") {
-            response = cpr::Delete(
-                cpr::Url{url},
-                reqHeaders,
-                cpr::Timeout{10000}
-            );
-        } else if (method == "HEAD") {
-            response = cpr::Head(
-                cpr::Url{url},
-                reqHeaders,
-                cpr::Timeout{10000}
-            );
-        } else if (method == "OPTIONS") {
-            response = cpr::Options(
-                cpr::Url{url},
-                reqHeaders,
-                cpr::Timeout{10000}
-            );
-        } else {
-            throw std::runtime_error("HTTP: Invalid method.");
-        }
-
-        if (response.status_code >= 400 && response.status_code < 600 && method != "HEAD") {
-            if (response.text.empty()) {
-                throw std::runtime_error("HTTP: Request failed with status " + std::to_string(response.status_code));
-            } else {
-                std::cerr << "[JUSTC] HTTP: Request succeeded, but with status " << response.status_code << std::endl;
-            }
-        }
-
-        if (response.error) {
-            throw std::runtime_error("HTTP: Request failed: " + response.error.message);
-        }
-
-        if (method == "HEAD" || method == "OPTIONS") {
-            std::string output;
-            for (const auto& header : response.header) {
-                output += header.first + ":" + header.second + "\n";
-            }
-            return output + ">STATUS:" + std::to_string(response.status_code);
-        }
-
-        return response.text;
-
-    } catch (const std::exception& e) {
-        return "HTTP: Error: " + std::string(e.what());
+    for (const auto& pair : headers) {
+        std::string pairfirst = pair.first;
+        std::string pf;
+        pf.resize(pairfirst.size());
+        std::transform(pairfirst.begin(), pairfirst.end(),
+                pf.begin(),
+                [](unsigned char c){ return std::tolower(c); });
+        if (pf == "user-agent" || pf == "x-justc") throw std::runtime_error("HTTP: Attempt to set \"" + pair.first + "\" header.");
+        reqHeaders[pair.first] = pair.second;
     }
+
+    cpr::Response response;
+
+    if (method == "GET") {
+        response = cpr::Get(
+            cpr::Url{url},
+            reqHeaders,
+            cpr::Timeout{10000}
+        );
+    } else if (method == "POST") {
+        response = cpr::Post(
+            cpr::Url{url},
+            reqHeaders,
+            cpr::Body{body},
+            cpr::Timeout{10000}
+        );
+    } else if (method == "PUT") {
+        response = cpr::Put(
+            cpr::Url{url},
+            reqHeaders,
+            cpr::Body{body},
+            cpr::Timeout{10000}
+        );
+    } else if (method == "PATCH") {
+        response = cpr::Patch(
+            cpr::Url{url},
+            reqHeaders,
+            cpr::Body{body},
+            cpr::Timeout{10000}
+        );
+    } else if (method == "DELETE") {
+        response = cpr::Delete(
+            cpr::Url{url},
+            reqHeaders,
+            cpr::Timeout{10000}
+        );
+    } else if (method == "HEAD") {
+        response = cpr::Head(
+            cpr::Url{url},
+            reqHeaders,
+            cpr::Timeout{10000}
+        );
+    } else if (method == "OPTIONS") {
+        response = cpr::Options(
+            cpr::Url{url},
+            reqHeaders,
+            cpr::Timeout{10000}
+        );
+    } else {
+        throw std::runtime_error("HTTP: Invalid method.");
+    }
+
+    if (response.status_code >= 400 && response.status_code < 600 && method != "HEAD") {
+        if (response.text.empty()) {
+            throw std::runtime_error("HTTP: Request failed with status " + std::to_string(response.status_code));
+        } else {
+            std::cerr << "[JUSTC] HTTP: Request succeeded, but with status " << response.status_code << std::endl;
+        }
+    }
+
+    if (response.error) {
+        throw std::runtime_error("HTTP: Request failed: " + response.error.message);
+    }
+
+    std::string responseHeaders;
+    for (const auto& header : response.header) {
+        responseHeaders += header.first + ":" + header.second + "\n";
+    }
+    std::pair<std::string, auto> output(response.text, std::make_pair(std::to_string(response.status_code), responseHeaders));
+    return output;
 }
 
 #endif
@@ -260,34 +253,22 @@ void Fetch::processHttpRequests(const ParseResult& result) {
     }
 }
 
-Value Fetch::fetchHttpContent(const std::string& url, const std::string& expectedType, const std::string& method, const std::string& body, const std::unordered_map<std::string, std::string>& headers) {
+Value Fetch::request(const std::string& url, const std::string& method, const std::unordered_map<std::string, std::string>& headers, const std::string& body) {
     Value result;
 
     try {
-        std::string content = executeHttpRequest(url, method, body, headers);
+        auto content = executeHttpRequest(url, method, body, headers);
 
-        if (expectedType == "JSON" || expectedType == "HTTPJSON") {
-            result.type = DataType::JSON_OBJECT;
-            result.string_value = content;
-        } else if (expectedType == "TEXT" || expectedType == "HTTPTEXT") {
-            result.type = DataType::STRING;
-            result.string_value = content;
-        } else if (expectedType == "JUSTC" || expectedType == "HTTPJUSTC") {
-            result.type = DataType::JUSTC_OBJECT;
-            result.string_value = content;
-        } else {
-            result.type = DataType::STRING;
-            result.string_value = content;
-        }
-
+        result.type = DataType::JUSTC_OBJECT;
+        result.object_value = {
+            {"text", content.first},
+            {"status", content.second.first},
+            {"headers", content.second.second}
+        };
+        result.name = "HTTP.Response";
     } catch (const std::exception& e) {
         std::runtime_error("HTTP request failed: " + std::string(e.what()));
     }
 
-    return result;
-}
-
-Value Fetch::request(const std::string& url, const std::string& format, const std::string& method, const std::unordered_map<std::string, std::string>& headers, const std::string& body) {
-    Value result = fetchHttpContent(url, format, method, body, headers);
     return result;
 }

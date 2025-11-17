@@ -48,7 +48,14 @@ std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRe
     for (const auto& pair : headers) {
         serialized_headers += pair.first + ":" + pair.second + "\n";
     }
-    char* result = (char*)EM_ASM_INT({
+
+    struct HttpResult {
+        char* response_text;
+        char* status_code;
+        char* response_headers;
+    };
+
+    HttpResult* http_result = (HttpResult*)EM_ASM_INT({
         return Asyncify.handleSleep(function(wakeUp) {
             try {
                 var url = UTF8ToString($0);
@@ -85,49 +92,59 @@ std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRe
                         try {
                             xhr.setRequestHeader(key, value);
                         } catch (e) {
-                            var timestamp = new Date().toISOString().replace('T', ' ').substr(0, 19);
-                            console.warn('[JUSTC] (' + timestamp + ') HTTP: Failed to set header ' + key + ' with value ' + value + ': ' + e);
+                            console.warn('[JUSTC] (' + UTF8ToString($5) + ') HTTP: Failed to set header ' + key + ' with value ' + value + ': ' + e);
                         }
                     }
                 }
 
                 xhr.onload = function() {
-                    var response = xhr.responseText;
+                    var responseText = xhr.responseText;
+                    var statusCode = xhr.status.toString();
+                    var headersString = "";
 
-                    if (method === 'HEAD' || method === 'OPTIONS') {
-                        var headersString = xhr.getAllResponseHeaders();
-                        var headersObject = {};
-                        var headerLines = headersString.trim().split('\n');
+                    headersString = xhr.getAllResponseHeaders();
+                    var headersObject = {};
+                    var headerLines = headersString.trim().split('\n');
 
-                        for (var j = 0; j < headerLines.length; j++) {
-                            var line = headerLines[j];
-                            var parts = line.split(': ');
-                            if (parts.length === 2) {
-                                var key = parts[0].trim();
-                                var value = parts[1].trim();
-                                headersObject[key] = value;
-                            }
+                    for (var j = 0; j < headerLines.length; j++) {
+                        var line = headerLines[j];
+                        var parts = line.split(': ');
+                        if (parts.length === 2) {
+                            var key = parts[0].trim();
+                            var value = parts[1].trim();
+                            headersObject[key] = value;
                         }
-
-                        var headersOutput = "";
-                        for (var key in headersObject) {
-                            if (headersObject.hasOwnProperty(key)) {
-                                headersOutput += key + ":" + headersObject[key] + "\n";
-                            }
-                        }
-                        response = headersOutput + ">STATUS:" + xhr.status;
                     }
-                    var length = lengthBytesUTF8(response) + 1;
-                    var result = _malloc(length);
-                    if (xhr.status >= 400 && xhr.status < 600) {
-                        if (response.length < 1) {
-                            throw new Error('Request failed with status ' + xhr.status + '.');
+
+                    headersString = "";
+                    for (var key in headersObject) {
+                        if (headersObject.hasOwnProperty(key)) {
+                            headersString += key + ":" + headersObject[key] + "\n";
+                        }
+                    }
+                    headersString = "";
+
+                    if (xhr.status >= 400 && xhr.status < 600 && method != "HEAD") {
+                        if (responseText.length < 1) {
+                            throw new Error('Request failed with status ' + statusCode + '.');
                         } else {
-                            var timestamp = new Date().toISOString().replace('T', ' ').substr(0, 19);
-                            console.warn('[JUSTC] (' + timestamp + ') HTTP: Request succeeded, but with status ' + xhr.status);
+                            console.warn('[JUSTC] (' + UTF8ToString($5) + ') HTTP: Request succeeded, but with status ' + statusCode);
                         }
                     }
-                    stringToUTF8(response, result, length);
+
+                    var result = _malloc(sizeof(HttpResult));
+                    var responseTextPtr = _malloc(lengthBytesUTF8(responseText) + 1);
+                    var statusCodePtr = _malloc(lengthBytesUTF8(statusCode) + 1);
+                    var headersPtr = _malloc(lengthBytesUTF8(headersString) + 1);
+
+                    stringToUTF8(responseText, responseTextPtr, lengthBytesUTF8(responseText) + 1);
+                    stringToUTF8(statusCode, statusCodePtr, lengthBytesUTF8(statusCode) + 1);
+                    stringToUTF8(headersString, headersPtr, lengthBytesUTF8(headersString) + 1);
+
+                    HEAPU32[result / 4] = responseTextPtr;
+                    HEAPU32[result / 4 + 1] = statusCodePtr;
+                    HEAPU32[result / 4 + 2] = headersPtr;
+
                     wakeUp(result);
                 };
 
@@ -140,15 +157,25 @@ std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRe
                 throw new Error('Request failed: ' + e);
             }
         });
-    }, url.c_str(), JUSTC_VERSION.c_str(), method.c_str(), serialized_headers.c_str(), body.c_str());
+    }, url.c_str(), JUSTC_VERSION.c_str(), method.c_str(), serialized_headers.c_str(), body.c_str(), Parser::getCurrentTimestamp().c_str());
 
-    std::string resultStr(result);
-    free(result);
+    char* response_text_ptr = (char*)HEAPU32[http_result / 4];
+    char* status_code_ptr = (char*)HEAPU32[http_result / 4 + 1];
+    char* headers_ptr = (char*)HEAPU32[http_result / 4 + 2];
 
-    return resultStr;
+    std::string response_text(response_text_ptr);
+    std::string status_code(status_code_ptr);
+    std::string response_headers(headers_ptr);
+
+    free(response_text_ptr);
+    free(status_code_ptr);
+    free(headers_ptr);
+    free(http_result);
+
+    return std::make_pair(response_text, std::make_pair(status_code, response_headers));
 }
 
-#else
+#endif
 #include <cpr/cpr.h>
 
 std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRequest(const std::string& url, const std::string& method, const std::string& body, const std::unordered_map<std::string, std::string>& headers) {
@@ -236,7 +263,7 @@ std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRe
     for (const auto& header : response.header) {
         responseHeaders += header.first + ":" + header.second + "\n";
     }
-    std::pair<std::string, auto> output(response.text, std::make_pair(std::to_string(response.status_code), responseHeaders));
+    std::pair<std::string, std::pair<std::string, std::string>> output(response.text, std::make_pair(std::to_string(response.status_code), responseHeaders));
     return output;
 }
 

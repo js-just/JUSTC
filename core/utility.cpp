@@ -213,3 +213,5 @@ std::unordered_map<std::string, std::string> Utility::ParseHeaders(const std::st
     }
     return output;
 }
+
+std::string Utility::defaultHTTPAccept = "text/*, application/x-justc, application/json, application/lua, application/hocon, application/xml, application/yaml, */*";

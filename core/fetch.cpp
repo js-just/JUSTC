@@ -175,7 +175,7 @@ std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRe
     return std::make_pair(response_text, std::make_pair(status_code, response_headers));
 }
 
-#endif
+#else
 #include <cpr/cpr.h>
 
 std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRequest(const std::string& url, const std::string& method, const std::string& body, const std::unordered_map<std::string, std::string>& headers) {

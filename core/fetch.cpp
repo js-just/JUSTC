@@ -37,6 +37,9 @@ SOFTWARE.
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+#include <emscripten/val.h>
+
+using namespace emscripten;
 
 long getCurrentTime() {
     auto now = std::chrono::system_clock::now();
@@ -44,135 +47,56 @@ long getCurrentTime() {
 }
 
 std::pair<std::string, std::pair<std::string, std::string>> Fetch::executeHttpRequest(const std::string& url, const std::string& method, const std::string& body, const std::unordered_map<std::string, std::string>& headers) {
-    std::string serialized_headers;
+    val global = val::global();
+    val XMLHttpRequest = global["XMLHttpRequest"];
+    val xhr = XMLHttpRequest.new_();
+
+    xhr.call<void>("open", val(method), val(url), val(false));
+
+    xhr.call<void>("setRequestHeader", val("Accept"), val("*/*"));
+    xhr.call<void>("setRequestHeader", val("X-JUSTC"), val("JUSTC/" + JUSTC_VERSION));
+
     for (const auto& pair : headers) {
-        serialized_headers += pair.first + ":" + pair.second + "\n";
+        std::string key_lower = pair.first;
+        std::transform(key_lower.begin(), key_lower.end(), key_lower.begin(), ::tolower);
+
+        if (key_lower == "user-agent" || key_lower == "x-justc") {
+            throw std::runtime_error("HTTP: Attempt to set \"" + pair.first + "\" header.");
+        }
+
+        try {
+            xhr.call<void>("setRequestHeader", val(pair.first), val(pair.second));
+        } catch (const std::exception& e) {
+            std::cerr << "[JUSTC] (" << Parser::getCurrentTimestamp() << ") HTTP: Failed to set header "
+                      << pair.first << " with value " << pair.second << ": " << e.what() << std::endl;
+        }
     }
 
-    struct HttpResult {
-        char* response_text;
-        char* status_code;
-        char* response_headers;
-    };
+    if (body.empty()) {
+        xhr.call<void>("send");
+    } else {
+        xhr.call<void>("send", val(body));
+    }
 
-    HttpResult* http_result = (HttpResult*)EM_ASM_INT({
-        return Asyncify.handleSleep(function(wakeUp) {
-            try {
-                var url = UTF8ToString($0);
-                var version = UTF8ToString($1);
-                var method = UTF8ToString($2);
-                var headersStr = UTF8ToString($3);
-                var body = UTF8ToString($4);
+    int status = xhr["status"].as<int>();
+    std::string response_text = xhr["responseText"].as<std::string>();
 
-                var isBrowser = (typeof window !== 'undefined') && (typeof navigator !== 'undefined');
-                var xhr = new XMLHttpRequest();
-                xhr.open(method, url, false);
+    std::string response_headers_str;
+    val headers_str = xhr.call<val>("getAllResponseHeaders");
+    if (!headers_str.isUndefined() && !headers_str.isNull()) {
+        response_headers_str = headers_str.as<std::string>();
+    }
 
-                xhr.setRequestHeader('Accept', '*/*');
-                if (!isBrowser) {
-                    xhr.setRequestHeader('User-Agent', 'JUSTC/' + version);
-                }
-                xhr.setRequestHeader('X-JUSTC', 'JUSTC/' + version);
+    if (status >= 400 && status < 600 && method != "HEAD") {
+        if (response_text.empty()) {
+            throw std::runtime_error("HTTP: Request failed with status " + std::to_string(status));
+        } else {
+            std::cerr << "[JUSTC] (" << Parser::getCurrentTimestamp() << ") HTTP: Request succeeded, but with status "
+                      << status << std::endl;
+        }
+    }
 
-                var headers = headersStr.split('\n');
-                for (var i = 0; i < headers.length; i++) {
-                    var header = headers[i];
-                    if (header.trim() === '') continue;
-
-                    var headerArray = header.split(':');
-                    if (headerArray.length >= 2) {
-                        var key = headerArray[0].trim();
-                        var value = headerArray.slice(1).join(':').trim();
-
-                        var keyLower = key.toLowerCase();
-                        if (keyLower === 'user-agent' || keyLower === 'x-justc') {
-                            throw new Error('Attempt to set "' + key + '" header.');
-                        }
-
-                        try {
-                            xhr.setRequestHeader(key, value);
-                        } catch (e) {
-                            console.warn('[JUSTC] (' + UTF8ToString($5) + ') HTTP: Failed to set header ' + key + ' with value ' + value + ': ' + e);
-                        }
-                    }
-                }
-
-                xhr.onload = function() {
-                    var responseText = xhr.responseText;
-                    var statusCode = xhr.status.toString();
-                    var headersString = "";
-
-                    headersString = xhr.getAllResponseHeaders();
-                    var headersObject = {};
-                    var headerLines = headersString.trim().split('\n');
-
-                    for (var j = 0; j < headerLines.length; j++) {
-                        var line = headerLines[j];
-                        var parts = line.split(': ');
-                        if (parts.length === 2) {
-                            var key = parts[0].trim();
-                            var value = parts[1].trim();
-                            headersObject[key] = value;
-                        }
-                    }
-
-                    headersString = "";
-                    for (var key in headersObject) {
-                        if (headersObject.hasOwnProperty(key)) {
-                            headersString += key + ":" + headersObject[key] + "\n";
-                        }
-                    }
-                    headersString = "";
-
-                    if (xhr.status >= 400 && xhr.status < 600 && method != "HEAD") {
-                        if (responseText.length < 1) {
-                            throw new Error('Request failed with status ' + statusCode + '.');
-                        } else {
-                            console.warn('[JUSTC] (' + UTF8ToString($5) + ') HTTP: Request succeeded, but with status ' + statusCode);
-                        }
-                    }
-
-                    var result = _malloc(sizeof(HttpResult));
-                    var responseTextPtr = _malloc(lengthBytesUTF8(responseText) + 1);
-                    var statusCodePtr = _malloc(lengthBytesUTF8(statusCode) + 1);
-                    var headersPtr = _malloc(lengthBytesUTF8(headersString) + 1);
-
-                    stringToUTF8(responseText, responseTextPtr, lengthBytesUTF8(responseText) + 1);
-                    stringToUTF8(statusCode, statusCodePtr, lengthBytesUTF8(statusCode) + 1);
-                    stringToUTF8(headersString, headersPtr, lengthBytesUTF8(headersString) + 1);
-
-                    HEAPU32[result / 4] = responseTextPtr;
-                    HEAPU32[result / 4 + 1] = statusCodePtr;
-                    HEAPU32[result / 4 + 2] = headersPtr;
-
-                    wakeUp(result);
-                };
-
-                xhr.onerror = function() {
-                    throw new Error('Request failed with status ' + xhr.status + '.');
-                };
-
-                xhr.send(body.length > 0 ? body : undefined);
-            } catch (e) {
-                throw new Error('Request failed: ' + e);
-            }
-        });
-    }, url.c_str(), JUSTC_VERSION.c_str(), method.c_str(), serialized_headers.c_str(), body.c_str(), Parser::getCurrentTimestamp().c_str());
-
-    char* response_text_ptr = (char*)HEAPU32[http_result / 4];
-    char* status_code_ptr = (char*)HEAPU32[http_result / 4 + 1];
-    char* headers_ptr = (char*)HEAPU32[http_result / 4 + 2];
-
-    std::string response_text(response_text_ptr);
-    std::string status_code(status_code_ptr);
-    std::string response_headers(headers_ptr);
-
-    free(response_text_ptr);
-    free(status_code_ptr);
-    free(headers_ptr);
-    free(http_result);
-
-    return std::make_pair(response_text, std::make_pair(status_code, response_headers));
+    return std::make_pair(response_text, std::make_pair(std::to_string(status), response_headers_str));
 }
 
 #else
@@ -294,7 +218,7 @@ Value Fetch::request(const std::string& url, const std::string& method, const st
         };
         result.name = "HTTP.Response";
     } catch (const std::exception& e) {
-        std::runtime_error("HTTP request failed: " + std::string(e.what()));
+        throw std::runtime_error("HTTP request failed: " + std::string(e.what()));
     }
 
     return result;

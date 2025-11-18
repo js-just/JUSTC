@@ -51,8 +51,11 @@ std::string Utility::value2string(const Value& value) {
         case DataType::OCTAL:
             return numberValue2string(value);
         case DataType::JUSTC_OBJECT:
-            if (value.name == "HTTP.Responce") return value2string(value.object_value["text"]);
-            else return value.toString();
+            if (value.name == "HTTP.Responce") {
+                auto text = value.object_value.find("text");
+                if (text != value.object_value.end()) return value2string(text->second);
+                else return value.toString();
+            } else return value.toString();
         default:
             return value.toString();
     }

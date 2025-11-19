@@ -53,7 +53,7 @@
                 if (!input || input.length < 1) return;
                 try {
                     const output = JUSTC[func](input);
-                    alert(typeof output === "object" ? JSON.stringify(output) : String(output));
+                    output(typeof output === "object" ? JSON.stringify(output) : String(output));
                 } catch (err) {
                     alert("Error: "+err);
                 }
@@ -73,12 +73,20 @@
                 }
             }
             function pser() {
-                const output = JUSTC.requestPermissions('core.parser')(JSON.parse(code()));
-                alert(typeof output === "object" ? JSON.stringify(output) : String(output));
+                try {
+                    const output = JUSTC.requestPermissions('core.parser')(JSON.parse(code()));
+                    output(typeof output === "object" ? JSON.stringify(output) : String(output));
+                } catch (err) {
+                    alert("Error: "+err);
+                }
             }
             function lxer() {
-                const output = JUSTC.requestPermissions('core.lexer')(code());
-                alert(typeof output === "object" ? JSON.stringify(output) : String(output));
+                try {
+                    const output = JUSTC.requestPermissions('core.lexer')(code());
+                    output(typeof output === "object" ? JSON.stringify(output) : String(output));
+                } catch (err) {
+                    alert("Error: "+err);
+                }
             }
             const wait = setInterval(()=>{
                 if (document.documentElement.getAttribute('justc') != null && window.JUSTC_MonacoEditor) {

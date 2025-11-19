@@ -200,6 +200,7 @@ mv javascript/test.justc $JSOUT_DIR/test.justc
 cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
 mv javascript/npm.json $JSOUT_DIR/package.json
+mv javascript/monaco.js $JSOUT_DIR/monaco.js
 
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"

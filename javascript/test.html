@@ -6,9 +6,9 @@
         <title>JUSTC browsers test</title>
     </head>
     <body>
-        <button onclick="exec()">Execute</button>
+        <button onclick="exec()">Execute</button><button onclick="pars()">Parse</button><button onclick="init()">Initialize</button>
         <hr>
-        <button onclick="pars()">Parse</button><button onclick="init()">Initialize</button>
+        <button onclick="pser()">Parser</button><button onclick="lxer()">Lexer</button>
         <script src="justc.js"></script>
         <script>
             function code() {
@@ -38,6 +38,15 @@
                     alert("Failed: "+err);
                 }
             }
+            function pser() {
+                const output = JUSTC.requestPermissions('core.parser')(JSON.parse(code()));
+                alert(typeof output === "object" ? JSON.stringify(output) : String(output));
+            }
+            function lxer() {
+                const output = JUSTC.requestPermissions('core.lexer')(code());
+                alert(typeof output === "object" ? JSON.stringify(output) : String(output));
+            }
         </script>
+        <script src="monaco.js"></script>
     </body>
 </html>

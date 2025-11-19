@@ -2,7 +2,7 @@ const monacoScript = document.createElement('script');
 monacoScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.29.1/min/vs/loader.min.js';
 const monacoElement = document.createElement('div');
 monacoElement.id = "editor";
-monacoElement.style = "height: 80vh";
+monacoElement.style = "height: 80vh; outline: 2px solid gray; overflow-y: clip; border-radius: 2px;";
 
 function monacoJUSTClang() {
     return {

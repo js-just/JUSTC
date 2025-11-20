@@ -53,7 +53,7 @@ function monacoJUSTClang() {
 
                 { include: '@whitespace' },
 
-                [/-\[/, 'comment', '@comment'],
+                [/-\{/, 'comment', '@comment'],
 
                 [/{{/, { token: 'keyword', next: '@jsEmbedded', nextEmbedded: 'javascript' }],
 
@@ -85,9 +85,9 @@ function monacoJUSTClang() {
             ],
 
             comment: [
-                [/[^\-\]]+/, 'comment'],
-                [/\]-/, 'comment', '@pop'],
-                [/[\-\]]/, 'comment']
+                [/[^\-\}]+/, 'comment'],
+                [/\}-/, 'comment', '@pop'],
+                [/[\-\}]/, 'comment']
             ],
 
             string: [

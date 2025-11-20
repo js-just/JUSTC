@@ -107,16 +107,34 @@ struct Value {
     double toNumber() const;
     bool toBoolean() const;
 
-    static Value createNumber(double num);
-    static Value createString(const std::string& str);
-    static Value createBoolean(bool b);
-    static Value createNull();
-    static Value createLink(const std::string& link);
-    static Value createPath(const std::string& path);
-    static Value createVariable(const std::string& varName);
-    static Value createHexadecimal(double num);
-    static Value createBinary(double num);
-    static Value createOctal(double num);
+    std::wstring toWString() const {
+        try {
+            return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(string_value);
+        } catch (...) {
+            return L"";
+        }
+    }
+
+    static Value createString(const std::string& str) {
+        Value result;
+        result.type = DataType::STRING;
+        result.string_value = str;
+        result.name = "\"" + str + "\"";
+        return result;
+    }
+
+    static Value createString(const std::wstring& wstr) {
+        Value result;
+        result.type = DataType::STRING;
+        try {
+            result.string_value = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(wstr);
+            result.name = "\"" + result.string_value + "\"";
+        } catch (...) {
+            result.string_value = "";
+            result.name = "\"\"";
+        }
+        return result;
+    }
 };
 
 struct LogEntry {

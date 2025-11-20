@@ -706,7 +706,7 @@ ASTNode Parser::parseImportCommand() {
                 imports = Import::JUSTC(path, Utility::position(position, input), doExecute, runAsync, allowJavaScript, mode, allowLuau);
             } catch (const std::exception& e) {
                 std::string importType = mode ? "module" : "script";
-                throw std::runtime_error(e.what() + "\n at <import " + importType + " \"" + path + "\"> at " + Utility::position(currentToken().start, input) + ".");
+                throw std::runtime_error(std::string(e.what()) + "\n at <import " + importType + " \"" + path + "\"> at " + Utility::position(currentToken().start, input) + ".");
             } catch (...) {
                 throw std::runtime_error("Invalid import \"JUSTC(" + path + ") at " + Utility::position(position, input));
             }

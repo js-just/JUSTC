@@ -1,4 +1,4 @@
-const version = addEventListener;
+const [version] = process.argv.slice(2);
 
 const package = {
     name: "justc",

@@ -115,6 +115,7 @@ sed -i 's/justc\.core\.wasm/justc.wasm/g' javascript/$SAFE_DIR/justc.core.js
 mv javascript/$SAFE_DIR/justc.core.js $JSOUT_DIR/justc.core.js
 mv javascript/core.js $JSOUT_DIR/justc.js
 mv javascript/test.js $JSOUT_DIR/test.js
+mv javascript/cli.js $JSOUT_DIR/cli.js
 
 JUSTC_VERSION=$(justc -v 2>/dev/null || echo "undefined")
 JUSTC_NAME="Just an Ultimate Site Tool Configuration language"
@@ -134,31 +135,32 @@ JSONString() {
     local str="$1"
     local -i i len=${#str}
     local c
-    local -a result=()
+    local result=""
+    local ord hex
 
     for (( i=0; i<len; i++ )); do
         c="${str:i:1}"
         case "$c" in
-            '"') result+=('\\\"') ;;
-            '\\') result+=('\\\\') ;;
-            $'\b') result+=('\\b') ;;
-            $'\f') result+=('\\f') ;;
-            $'\n') result+=('\\n') ;;
-            $'\r') result+=('\\r') ;;
-            $'\t') result+=('\\t') ;;
+            '"') result+='\\\"' ;;
+            '\\') result+='\\\\' ;;
+            $'\b') result+='\\b' ;;
+            $'\f') result+='\\f' ;;
+            $'\n') result+='\\n' ;;
+            $'\r') result+='\\r' ;;
+            $'\t') result+='\\t' ;;
             *)
-                LC_CTYPE=C printf -v ord '%d' "'$c"
+                ord=$(printf '%d' "'$c")
                 if (( ord < 0x20 || ord == 0x7F )); then
                     printf -v hex '\\u%04x' "$ord"
-                    result+=("$hex")
+                    result+="$hex"
                 else
-                    result+=("$c")
+                    result+="$c"
                 fi
                 ;;
         esac
     done
 
-    return "${result[@]}"
+    echo -n "$result"
 }
 echo "console.log(\"$(JSONString "$JUSTC_HELP")\");" > $JSOUT_DIR/help.js
 

@@ -166,6 +166,10 @@ jobs:
         with:
           name: luau
           path: luau
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24.x'
       - name: Compile C++ to WASM
         env:
           OUTPUT_DIR: ${{ needs.determine-dirpath.outputs.dirpath }}

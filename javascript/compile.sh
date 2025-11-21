@@ -141,13 +141,13 @@ JSONString() {
     for (( i=0; i<len; i++ )); do
         c="${str:i:1}"
         case "$c" in
-            '"') result+='\\\"' ;;
-            '\\') result+='\\\\' ;;
-            $'\b') result+='\\b' ;;
-            $'\f') result+='\\f' ;;
-            $'\n') result+='\\n' ;;
-            $'\r') result+='\\r' ;;
-            $'\t') result+='\\t' ;;
+            '"') result+='\"' ;;
+            '\\') result+='\\' ;;
+            $'\b') result+='\b' ;;
+            $'\f') result+='\f' ;;
+            $'\n') result+='\n' ;;
+            $'\r') result+='\r' ;;
+            $'\t') result+='\t' ;;
             *)
                 ord=$(printf '%d' "'$c")
                 if (( ord < 0x20 || ord == 0x7F )); then

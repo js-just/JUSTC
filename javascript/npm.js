@@ -38,5 +38,8 @@ const package = {
     os: ["darwin", "linux", "win32"],
     cpu: ["x64", "arm64"]
 };
+console.log(version);
+console.log(package);
+console.log(JSON.stringify(package));
 
 console.log(JSON.stringify(package));

@@ -1,8 +1,8 @@
-const [version] = process.argv.slice(2);
+const [vvv] = process.argv.slice(2);
 
 const package = {
     name: "justc",
-    version,
+    version: vvv,
     description: "Just an Ultimate Site Tool Configuration language",
     main: "index.js",
     bin: {
@@ -38,8 +38,4 @@ const package = {
     os: ["darwin", "linux", "win32"],
     cpu: ["x64", "arm64"]
 };
-console.log(version);
-console.log(package);
-console.log(JSON.stringify(package));
-
 console.log(JSON.stringify(package));

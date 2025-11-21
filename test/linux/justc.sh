@@ -84,3 +84,34 @@ justc $FILE.justc $FILE.yml -r -y
 echo "reading output"
 RESULTX=$(cat $FILE.yml)
 echo "Executed (YAML):    $RESULTX"
+
+echo ""
+echo ""
+echo "running speed tests..."
+
+declare -a outputModes=("json" "xml" "yaml")
+
+for outputMode in "${outputModes[@]}"; do
+    timeName="JUSTC -> ${outputMode^^}"
+    (
+        start=$(date +%s%3N)
+
+        case "$outputMode" in
+            json)
+                justc -e "оутпутмод = ${outputMode}, aka = \"${timeName}\"." -r -j
+                ;;
+            xml)
+                justc -e "оутпутмод = ${outputMode}, aka = \"${timeName}\"." -r -x
+                ;;
+            yaml)
+                justc -e "оутпутмод = ${outputMode}, aka = \"${timeName}\"." -r -y
+                ;;
+        esac
+
+        end=$(date +%s%3N)
+        duration=$((end - start))
+        echo "${timeName}: ${duration}ms"
+    ) &
+done
+
+wait

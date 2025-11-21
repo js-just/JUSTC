@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # MIT License
 #
 # Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>
@@ -20,7 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#!/bin/bash
 set -e
 
 OUTPUT_DIR="${1:-development}"
@@ -117,31 +118,17 @@ mv javascript/test.js $JSOUT_DIR/test.js
 
 JUSTC_VERSION=$(justc -v 2>/dev/null || echo "undefined")
 JUSTC_NAME="Just an Ultimate Site Tool Configuration language"
+JUSTC_HELP=$(justc -h || echo "undefined")
 
 if [[ "$JUSTC_VERSION" == "undefined" ]]; then
     echo -e "::error::Invalid JUSTC version." && exit 1
+elif [[ "$JUSTC_HELP" == "undefined" ]]; then
+    echo -e "::error::Invalid JUSTC --help." && exit 1
 fi
 OUTPUT_VERSION="$JUSTC_VERSION ($SAFE_DIR)"
 if [[ "$JUSTC_VERSION" == "$SAFE_DIR" ]]; then
     OUTPUT_VERSION="$JUSTC_VERSION"
 fi
-for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js; do
-    printf "/*\n\n%s\n\n*/\n\n/*\n\n$JUSTC_NAME v$OUTPUT_VERSION\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
-done
-for file in justc justc.node; do
-    wasm2wat $JSOUT_DIR/$file.wasm > $JSOUT_DIR/$file.wat
-    {
-        head -n1 "$JSOUT_DIR/$file.wat"
-        echo "  (@custom \"justc\" \"$JUSTC_NAME\")"
-        echo "  (@custom \"justc.website\" \"https://just.js.org/justc\")"
-        echo "  (@custom \"justc.license\" \"MIT License. https://just.js.org/justc/license.txt\")"
-        echo "  (@custom \"justc.copyright\" \"Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>\")"
-        echo "  (@custom \"justc.version\" \"$OUTPUT_VERSION\")"
-        tail -n +2 "$JSOUT_DIR/$file.wat"
-    } > $JSOUT_DIR/$file.tmp
-    wat2wasm $JSOUT_DIR/$file.tmp --enable-annotations -o $JSOUT_DIR/$file.wasm
-    rm $JSOUT_DIR/$file.tmp
-done
 
 JSONString() {
     local str="$1"
@@ -173,6 +160,25 @@ JSONString() {
 
     return "${result[@]}"
 }
+echo "console.log(\"$(JSONString "$JUSTC_HELP")\");" > $JSOUT_DIR/help.js
+
+for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js $JSOUT_DIR/cli.js $JSOUT_DIR/help.js; do
+    printf "/*\n\n%s\n\n*/\n\n/*\n\n$JUSTC_NAME v$OUTPUT_VERSION\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
+done
+for file in justc justc.node; do
+    wasm2wat $JSOUT_DIR/$file.wasm > $JSOUT_DIR/$file.wat
+    {
+        head -n1 "$JSOUT_DIR/$file.wat"
+        echo "  (@custom \"justc\" \"$JUSTC_NAME\")"
+        echo "  (@custom \"justc.website\" \"https://just.js.org/justc\")"
+        echo "  (@custom \"justc.license\" \"MIT License. https://just.js.org/justc/license.txt\")"
+        echo "  (@custom \"justc.copyright\" \"Copyright (c) 2025 JustStudio. <https://juststudio.is-a.dev/>\")"
+        echo "  (@custom \"justc.version\" \"$OUTPUT_VERSION\")"
+        tail -n +2 "$JSOUT_DIR/$file.wat"
+    } > $JSOUT_DIR/$file.tmp
+    wat2wasm $JSOUT_DIR/$file.tmp --enable-annotations -o $JSOUT_DIR/$file.wasm
+    rm $JSOUT_DIR/$file.tmp
+done
 
 mkdir -p $JSOUT_DIR/JUSTC/core
 mkdir -p $JSOUT_DIR/JUSTC/javascript
@@ -199,8 +205,10 @@ mv javascript/test.justc $JSOUT_DIR/test.justc
 
 cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
-mv javascript/npm.json $JSOUT_DIR/package.json
+echo "$(node javascript/npm.js)" > $JSOUT_DIR/package.json
 mv javascript/monaco.js $JSOUT_DIR/monaco.js
+
+printf "#!/usr/bin/env node\n\n%s" "$(cat $JSOUT_DIR/cli.js)" > temp.js && mv temp.js "$JSOUT_DIR/cli.js"
 
 for FILE in $JSOUT_DIR/*; do
     echo "::debug::$FILE"

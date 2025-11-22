@@ -298,23 +298,18 @@ private:
 
     Value convertToDecimal(const Value& value);
 
-    template<typename Func, typename... Args>
-    std::future<typename std::result_of<Func(Args...)>::type>
-    executeAsyncIfEnabled(Func&& func, Args&&... args) {
-        typedef typename std::result_of<Func(Args...)>::type ResultType;
+    template<class Func>
+    auto executeAsyncIfEnabled(Func&& func) -> std::future<decltype(func())> {
+        typedef decltype(func()) ResultType;
 
         if (runAsync) {
-#ifdef __EMSCRIPTEN__
-            return std::async(std::launch::deferred,
-                            std::forward<Func>(func),
-                            std::forward<Args>(args)...);
-#else
-            return std::async(std::launch::async,
-                            std::forward<Func>(func),
-                            std::forward<Args>(args)...);
-#endif
+    #ifdef __EMSCRIPTEN__
+            return std::async(std::launch::deferred, std::forward<Func>(func));
+    #else
+            return std::async(std::launch::async, std::forward<Func>(func));
+    #endif
         } else {
-            ResultType result = func(std::forward<Args>(args)...);
+            ResultType result = func();
             return std::async(std::launch::deferred, [result]() { return result; });
         }
     }

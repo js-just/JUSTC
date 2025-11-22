@@ -1773,8 +1773,8 @@ void Parser::extractReferences(const Value& value, std::vector<std::string>& ref
 }
 
 std::future<Value> Parser::functionHTTPAsync(size_t startPos, const std::string& method, const std::vector<Value>& args) {
-    return executeAsyncIfEnabled([this, startPos, args]() {
-        return functionHTTP(startPos, args);
+    return executeAsyncIfEnabled([this, startPos, method, args]() {
+        return functionHTTP(startPos, method, args);
     });
 }
 
@@ -1919,9 +1919,7 @@ Value Parser::functionHTTP(size_t startPos, const std::string& method, const std
     } else {
         result = HTTP::GET(url, headers);
     }
-    if (body && (
-        method != "POST" || method != "PUT" || method != "PATCH"
-    )) {
+    if (!body.empty() && method != "POST" && method != "PUT" && method != "PATCH") {
         Utility::Warn("HTTP: Cannot send body with method \"" + method + "\" at " + Utility::position(startPos, input) + ".");
     }
     if ((match(".") || match(":")) && peekToken().type == "identifier") {

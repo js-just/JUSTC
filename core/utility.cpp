@@ -34,6 +34,7 @@ SOFTWARE.
 #include <sstream>
 #include <cstddef>
 #include <unordered_map>
+#include <iostream>
 #ifdef __EMSCRIPTEN__
 #include "utility.emscripten.h"
 #endif

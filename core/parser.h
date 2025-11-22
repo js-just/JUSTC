@@ -320,9 +320,7 @@ private:
     }
 
     // built-in
-    std::future<Value> functionHTTPJSONAsync(const std::vector<Value>& args);
-    std::future<Value> functionHTTPTEXTAsync(size_t startPos, const std::vector<Value>& args);
-    std::future<Value> functionHTTPJUSTCAsync(const std::vector<Value>& args);
+    std::future<Value> functionHTTPAsync(size_t startPos, const std::string& method, const std::vector<Value>& args);
     std::future<Value> functionFILEAsync(const std::vector<Value>& args);
     Value functionVALUE(const std::vector<Value>& args);
     Value functionSTRING(const std::vector<Value>& args);
@@ -335,10 +333,8 @@ private:
     Value functionTYPEOF(const std::vector<Value>& args);
     Value functionECHO(const std::vector<Value>& args);
     Value functionJSON(const std::vector<Value>& args);
-    Value functionHTTPJSON(const std::vector<Value>& args);
-    Value functionHTTPTEXT(size_t startPos, const std::vector<Value>& args);
+    Value functionHTTP(size_t startPos, const std::string& method, const std::vector<Value>& args);
     Value functionJUSTC(const std::vector<Value>& args);
-    Value functionHTTPJUSTC(const std::vector<Value>& args);
     Value functionPARSEJUSTC(const std::vector<Value>& args);
     Value functionPARSEJSON(const std::vector<Value>& args);
     Value functionFILE(const std::vector<Value>& args);

@@ -1332,10 +1332,70 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
             return onHTTPDisabled(startPos, args[0].string_value);
         }
         if (runAsync) {
-            auto future = functionHTTPAsync(startPos, args);
+            auto future = functionHTTPAsync(startPos, "GET", args);
             return future.get();
         }
-        return functionHTTP(startPos, args);
+        return functionHTTP(startPos, "GET", args);
+    }
+    if (funcName == "HTTP::POST") {
+        if (!doExecute) {
+            return onHTTPDisabled(startPos, args[0].string_value);
+        }
+        if (runAsync) {
+            auto future = functionHTTPAsync(startPos, "POST", args);
+            return future.get();
+        }
+        return functionHTTP(startPos, "POST", args);
+    }
+    if (funcName == "HTTP::PUT") {
+        if (!doExecute) {
+            return onHTTPDisabled(startPos, args[0].string_value);
+        }
+        if (runAsync) {
+            auto future = functionHTTPAsync(startPos, "PUT", args);
+            return future.get();
+        }
+        return functionHTTP(startPos, "PUT", args);
+    }
+    if (funcName == "HTTP::PATCH") {
+        if (!doExecute) {
+            return onHTTPDisabled(startPos, args[0].string_value);
+        }
+        if (runAsync) {
+            auto future = functionHTTPAsync(startPos, "PATCH", args);
+            return future.get();
+        }
+        return functionHTTP(startPos, "PATCH", args);
+    }
+    if (funcName == "HTTP::DELETE") {
+        if (!doExecute) {
+            return onHTTPDisabled(startPos, args[0].string_value);
+        }
+        if (runAsync) {
+            auto future = functionHTTPAsync(startPos, "DELETE", args);
+            return future.get();
+        }
+        return functionHTTP(startPos, "DELETE", args);
+    }
+    if (funcName == "HTTP::HEAD") {
+        if (!doExecute) {
+            return onHTTPDisabled(startPos, args[0].string_value);
+        }
+        if (runAsync) {
+            auto future = functionHTTPAsync(startPos, "HEAD", args);
+            return future.get();
+        }
+        return functionHTTP(startPos, "HEAD", args);
+    }
+    if (funcName == "HTTP::OPTIONS") {
+        if (!doExecute) {
+            return onHTTPDisabled(startPos, args[0].string_value);
+        }
+        if (runAsync) {
+            auto future = functionHTTPAsync(startPos, "OPTIONS", args);
+            return future.get();
+        }
+        return functionHTTP(startPos, "OPTIONS", args);
     }
     if (funcName == "JUSTC") return functionJUSTC(args);
     if (funcName == "PARSEJUSTC") return functionPARSEJUSTC(args);
@@ -1712,7 +1772,7 @@ void Parser::extractReferences(const Value& value, std::vector<std::string>& ref
     // TODO: get links from complex things
 }
 
-std::future<Value> Parser::functionHTTPAsync(size_t startPos, const std::vector<Value>& args) {
+std::future<Value> Parser::functionHTTPAsync(size_t startPos, const std::string& method, const std::vector<Value>& args) {
     return executeAsyncIfEnabled([this, startPos, args]() {
         return functionHTTP(startPos, args);
     });

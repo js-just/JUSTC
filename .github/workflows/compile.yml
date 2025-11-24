@@ -109,7 +109,7 @@ jobs:
       - name: Test
         run: bash test/linux/justc.sh
 
-  install-luau:
+  donwload-luau:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -124,7 +124,7 @@ jobs:
 
   compile-wasm:
     runs-on: ubuntu-latest
-    needs: [determine-dirpath, compile-linux, install-luau]
+    needs: [determine-dirpath, compile-linux, download-luau]
     outputs:
       dirpath: ${{ steps.compile.outputs.dirpath }}
     steps:
@@ -210,7 +210,7 @@ jobs:
           name: compiled-wasm
           path: javascript_output/${{ needs.determine-dirpath.outputs.dirpath }}/
       - name: Cleanup
-        run: rm javascript_output/$OUTPUT_DIR/test.js
+        run: rm javascript_output/$OUTPUT_DIR/test.js && rm -rf javascript/JUSTC
         env:
           OUTPUT_DIR: ${{ needs.compile-wasm.outputs.dirpath }}
       - name: Commit to Website

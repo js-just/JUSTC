@@ -91,7 +91,7 @@ web() {
     fi
 }
 
-node() {
+nodejs() {
     mkdir -p $JSOUT_DIR
     set +e
     emcc $SOURCE_FILES $LUAU_FILES \
@@ -108,7 +108,7 @@ node() {
 }
 
 web && \
-node
+nodejs
 
 mv javascript/$SAFE_DIR/justc.core.wasm $JSOUT_DIR/justc.wasm
 sed -i 's/justc\.core\.wasm/justc.wasm/g' javascript/$SAFE_DIR/justc.core.js

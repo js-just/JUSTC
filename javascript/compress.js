@@ -9,7 +9,7 @@ try {
     console.log('compressing', file);
     const compressed = JSSC.compress(content);
     console.log('writing', file);
-    fs.writeFileSync(file, compressed, 'utf16le');
+    fs.writeFileSync(file, compressed);
     console.log(file, 'compressed successfully');
 } catch (error) {
     console.log('::error::', file, error);

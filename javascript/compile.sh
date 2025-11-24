@@ -212,7 +212,7 @@ rm $JSOUT_DIR/compress.js
 
 cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
-echo "$(node javascript/npm.js "$JUSTC_VERSION")" > $JSOUT_DIR/package.json
+node javascript/npm.js "$JUSTC_VERSION" && mv javascript/package.json $JSOUT_DIR/package.json
 mv javascript/monaco.js $JSOUT_DIR/monaco.js
 
 printf "#!/usr/bin/env node\n\n%s" "$(cat $JSOUT_DIR/cli.js)" > temp.js && mv temp.js "$JSOUT_DIR/cli.js"

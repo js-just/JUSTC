@@ -183,6 +183,7 @@ for file in justc justc.node; do
 done
 
 npm i strc
+mv javascript/compress.js $JSOUT_DIR/compress.js
 
 mkdir -p $JSOUT_DIR/JUSTC/core
 mkdir -p $JSOUT_DIR/JUSTC/javascript
@@ -194,7 +195,7 @@ for file in $SOURCE_FILES; do
         echo "\"$file\"," >> $srcfile
         mkdir -p $JSOUT_DIR/JUSTC/$(dirname $file)
         cp $file $JSOUT_DIR/JUSTC/$file
-        node javascript/compress.js $file
+        node $JSOUT_DIR/compress.js $file || echo "::error::Failed to compress"
     fi
 done
 head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
@@ -207,6 +208,7 @@ printf "%s\n//# sourceMappingURL=$OUTPUT_URL/justc.js.map" "$(cat $JSOUT_DIR/jus
 
 mv javascript/test.html $JSOUT_DIR/test.html
 mv javascript/test.justc $JSOUT_DIR/test.justc
+rm $JSOUT_DIR/compress.js
 
 cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts

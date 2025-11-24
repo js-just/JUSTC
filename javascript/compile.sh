@@ -194,6 +194,7 @@ for file in $SOURCE_FILES; do
         echo "\"$file\"," >> $srcfile
         mkdir -p $JSOUT_DIR/JUSTC/$(dirname $file)
         cp $file $JSOUT_DIR/JUSTC/$file
+        node javascript/compress.js $file
     fi
 done
 head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile

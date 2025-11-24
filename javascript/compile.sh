@@ -182,12 +182,14 @@ for file in justc justc.node; do
     rm $JSOUT_DIR/$file.tmp
 done
 
+npm i strc
+
 mkdir -p $JSOUT_DIR/JUSTC/core
 mkdir -p $JSOUT_DIR/JUSTC/javascript
 srcfile=$JSOUT_DIR/JUSTC/index.json
 echo "{\"version\":[\"$(JSONString "$JUSTC_VERSION")\",\"$(JSONString "$SAFE_DIR")\"],\"compiler\":\"$(JSONString "$EMCCVERSION")\",\"sources\":[" > $srcfile
 SOURCE_FILES+=" core/main.cpp core/lexer.h core/parser.h core/from.json.hpp core/to.json.h core/keywords.h core/fetch.h core/version.h core/json.hpp core/to.xml.h core/to.yaml.h core/utility.h core/import.hpp core/parser.emscripten.h core/run.js.cpp core/run.js.hpp core/run.luau.hpp core/built-in/http/http.hpp core/utility.emscripten.h"
-npm i strc && for file in $SOURCE_FILES; do
+for file in $SOURCE_FILES; do
     if [ -f "$file" ]; then
         echo "\"$file\"," >> $srcfile
         mkdir -p $JSOUT_DIR/JUSTC/$(dirname $file)

@@ -193,9 +193,9 @@ SOURCE_FILES+=" core/main.cpp core/lexer.h core/parser.h core/from.json.hpp core
 for file in $SOURCE_FILES; do
     if [ -f "$file" ]; then
         echo "\"$file\"," >> $srcfile
+        node $JSOUT_DIR/compress.js $file || echo "::error::Failed to compress"
         mkdir -p $JSOUT_DIR/JUSTC/$(dirname $file)
         cp $file $JSOUT_DIR/JUSTC/$file
-        node $JSOUT_DIR/compress.js $file || echo "::error::Failed to compress"
     fi
 done
 head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile

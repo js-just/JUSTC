@@ -182,6 +182,8 @@ for file in justc justc.node; do
     rm $JSOUT_DIR/$file.tmp
 done
 
+npm i strc
+
 mkdir -p $JSOUT_DIR/JUSTC/core
 mkdir -p $JSOUT_DIR/JUSTC/javascript
 srcfile=$JSOUT_DIR/JUSTC/index.json

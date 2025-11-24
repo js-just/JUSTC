@@ -182,8 +182,6 @@ for file in justc justc.node; do
     rm $JSOUT_DIR/$file.tmp
 done
 
-npm i strc
-
 mkdir -p $JSOUT_DIR/JUSTC/core
 mkdir -p $JSOUT_DIR/JUSTC/javascript
 srcfile=$JSOUT_DIR/JUSTC/index.json
@@ -194,7 +192,6 @@ for file in $SOURCE_FILES; do
         echo "\"$file\"," >> $srcfile
         mkdir -p $JSOUT_DIR/JUSTC/$(dirname $file)
         cp $file $JSOUT_DIR/JUSTC/$file
-        node javascript/compress.js "$file"
     fi
 done
 head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
@@ -210,7 +207,7 @@ mv javascript/test.justc $JSOUT_DIR/test.justc
 
 cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
-node javascript/npm.js "$JUSTC_VERSION" && mv javascript/package.json $JSOUT_DIR/package.json
+echo "$(node javascript/npm.js "$JUSTC_VERSION")" > $JSOUT_DIR/package.json
 mv javascript/monaco.js $JSOUT_DIR/monaco.js
 
 printf "#!/usr/bin/env node\n\n%s" "$(cat $JSOUT_DIR/cli.js)" > temp.js && mv temp.js "$JSOUT_DIR/cli.js"

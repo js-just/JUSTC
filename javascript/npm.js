@@ -1,10 +1,8 @@
-const [version] = process.argv.slice(2);
-const fs = require('fs');
-const path = require('path');
+const [vvv] = process.argv.slice(2);
 
 const package = {
     name: "justc",
-    version,
+    version: vvv,
     description: "Just an Ultimate Site Tool Configuration language",
     main: "index.js",
     bin: {
@@ -40,5 +38,4 @@ const package = {
     os: ["darwin", "linux", "win32"],
     cpu: ["x64", "arm64"]
 };
-
-fs.writeFileSync(path.join(__dirname, 'package.json'), JSON.stringify(package));
+console.log(JSON.stringify(package));

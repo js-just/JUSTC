@@ -754,7 +754,7 @@ ASTNode Parser::parseStatement(bool doExecute) {
     }
 }
 
-ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant = true) {
+ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     std::string identifier = currentToken().value;
     size_t startPos = currentToken().start;
     ASTNode node("VARIABLE_DECLARATION", identifier, startPos);

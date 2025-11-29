@@ -718,6 +718,7 @@ ASTNode Parser::parseImportCommand() {
             addImportLog(path, imports.second, "JUSTC");
             for (const auto& pair : imports.first.returnValues) {
                 ASTNode node = ASTNode("VARIABLE_DECLARATION", pair.first, position);
+                constVars[pair.first] = true;
                 node.value = pair.second;
                 ast.push_back(node);
             }
@@ -742,15 +743,22 @@ ASTNode Parser::parseStatement(bool doExecute) {
         ast.push_back(parseCommand(doExecute));
     } else if (match("identifier")) {
         return parseVariableDeclaration(doExecute);
+    } else if (match("keyword", "const")) {
+        advance();
+        return parseVariableDeclaration(doExecute);
+    } else if (match("keyword", "var")) {
+        advance();
+        return parseVariableDeclaration(doExecute, false);
     } else {
         return parseCommand(doExecute);
     }
 }
 
-ASTNode Parser::parseVariableDeclaration(bool doExecute) {
+ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant = true) {
     std::string identifier = currentToken().value;
     size_t startPos = currentToken().start;
     ASTNode node("VARIABLE_DECLARATION", identifier, startPos);
+    node.constant = constant;
     advance();
 
     std::string assignOp;
@@ -804,6 +812,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute) {
     }
 
     variables[identifier] = Value();
+    constVars[identifier] = node.constant;
 
     return node;
 }
@@ -2130,7 +2139,7 @@ void Parser::evaluateAllVariablesSync() {
                 std::string varName = node.identifier;
                 Value oldValue = variables[varName];
                 Value newValue = evaluateASTNode(node);
-                if (std::find(vars.begin(), vars.end(), varName) != vars.end()) {
+                if (std::find(vars.begin(), vars.end(), varName) != vars.end() && constVars[varName] == true) {
                     throw std::runtime_error("Attempt to redefine \"" + varName + "\" at " + Utility::position(node.startPos, input) + ".");
                 }
                 vars.push_back(varName);

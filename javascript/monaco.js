@@ -14,7 +14,7 @@ function monacoJUSTClang() {
             "disallow", "JavaScript", "safe", "Luau",
             "class", "function", "public", "private",
             "static", "const", "define", "undefine",
-            "echo", "log", "logfile", "space",
+            "echo", "log", "logfile", "space", "var",
 
             "is", "isn't", "isif", "then", "elseif", "else",
             "isifn't", "elseifn't", "then't", "elsen't",

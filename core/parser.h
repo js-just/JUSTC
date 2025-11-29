@@ -182,6 +182,7 @@ struct ASTNode {
     std::vector<std::string> tokens;
     size_t startPos;
     DataType typeDeclaration;
+    bool constant;
 
     ASTNode(const std::string& t, const std::string& id = "", size_t start = 0)
         : type(t), identifier(id), startPos(start), typeDeclaration(DataType::UNKNOWN) {}
@@ -197,6 +198,7 @@ private:
     std::string input;
 
     std::unordered_map<std::string, Value> variables;
+    std::unordered_map<std::string, bool> constVars;
     std::unordered_map<std::string, std::vector<std::string>> dependencies;
     std::vector<std::string> outputVariables;
     std::vector<std::string> outputNames;
@@ -256,7 +258,7 @@ private:
     Value parseSpaceCall(bool doExecute);
 
     ASTNode parseStatement(bool doExecute);
-    ASTNode parseVariableDeclaration(bool doExecute);
+    ASTNode parseVariableDeclaration(bool doExecute, bool constant = true);
     ASTNode parseCommand(bool doExecute);
     ASTNode parseScopeCommand();
     ASTNode parseOutputCommand();

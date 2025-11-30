@@ -32,23 +32,11 @@ SOFTWARE.
 std::random_device Math::rd;
 std::mt19937 Math::gen(Math::rd());
 
-template<typename... Args>
-double Math::Min(Args... args) {
-    static_assert(sizeof...(args) > 0, "Math::Min requires at least one argument");
-    return minRecursive(args...);
-}
-
 double Math::Min(const std::vector<double>& values) {
     if (values.empty()) {
         throw std::invalid_argument("Math::Min: vector cannot be empty");
     }
     return *std::min_element(values.begin(), values.end());
-}
-
-template<typename... Args>
-double Math::Max(Args... args) {
-    static_assert(sizeof...(args) > 0, "Math::Max requires at least one argument");
-    return maxRecursive(args...);
 }
 
 double Math::Max(const std::vector<double>& values) {
@@ -198,30 +186,3 @@ double Math::ToDegrees(double radians) {
 double Math::ToRadians(double degrees) {
     return degrees * (PI / 180.0);
 }
-
-template<typename T>
-double Math::minRecursive(T value) {
-    return static_cast<double>(value);
-}
-
-template<typename T, typename... Args>
-double Math::minRecursive(T first, T second, Args... args) {
-    return minRecursive(std::min(static_cast<double>(first), static_cast<double>(second)), args...);
-}
-
-template<typename T>
-double Math::maxRecursive(T value) {
-    return static_cast<double>(value);
-}
-
-template<typename T, typename... Args>
-double Math::maxRecursive(T first, T second, Args... args) {
-    return maxRecursive(std::max(static_cast<double>(first), static_cast<double>(second)), args...);
-}
-
-template double Math::Min<int>(int... args);
-template double Math::Min<double>(double... args);
-template double Math::Min<float>(float... args);
-template double Math::Max<int>(int... args);
-template double Math::Max<double>(double... args);
-template double Math::Max<float>(float... args);

@@ -40,12 +40,18 @@ private:
 
 public:
     template<typename... Args>
-    static double Min(Args... args);
+    static double Min(Args... args) {
+        static_assert(sizeof...(args) > 0, "Math::Min requires at least one argument");
+        return minRecursive(args...);
+    }
 
     static double Min(const std::vector<double>& values);
 
     template<typename... Args>
-    static double Max(Args... args);
+    static double Max(Args... args) {
+        static_assert(sizeof...(args) > 0, "Math::Max requires at least one argument");
+        return maxRecursive(args...);
+    }
 
     static double Max(const std::vector<double>& values);
 
@@ -91,16 +97,24 @@ public:
 
 private:
     template<typename T>
-    static double minRecursive(T value);
+    static double minRecursive(T value) {
+        return static_cast<double>(value);
+    }
 
     template<typename T, typename... Args>
-    static double minRecursive(T first, T second, Args... args);
+    static double minRecursive(T first, T second, Args... args) {
+        return minRecursive(std::min(static_cast<double>(first), static_cast<double>(second)), args...);
+    }
 
     template<typename T>
-    static double maxRecursive(T value);
+    static double maxRecursive(T value) {
+        return static_cast<double>(value);
+    }
 
     template<typename T, typename... Args>
-    static double maxRecursive(T first, T second, Args... args);
+    static double maxRecursive(T first, T second, Args... args) {
+        return maxRecursive(std::max(static_cast<double>(first), static_cast<double>(second)), args...);
+    }
 };
 
 #endif

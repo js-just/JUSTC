@@ -2143,7 +2143,8 @@ void Parser::evaluateAllVariablesSync() {
                 Value newValue = evaluateASTNode(node);
 
                 bool isConst = (constVars.find(varName) != constVars.end());
-                if (std::find(vars.begin(), vars.end(), varName) != vars.end() && isConst) {
+                bool defined = (std::find(vars.begin(), vars.end(), varName) != vars.end());
+                if (defined && isConst) {
                     throw std::runtime_error("Attempt to redefine \"" + varName + "\" at " + Utility::position(node.startPos, input) + ".");
                 }
                 vars.push_back(varName);

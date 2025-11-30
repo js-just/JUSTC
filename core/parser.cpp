@@ -812,7 +812,9 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     }
 
     variables[identifier] = Value();
-    constVars[identifier] = node.constant;
+    if (constant) {
+        constVars[identifier] = true;
+    }
 
     return node;
 }

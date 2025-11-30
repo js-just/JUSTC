@@ -2132,6 +2132,14 @@ void Parser::evaluateAllVariablesSync() {
     const int MAX_PASSES = 100;
 
     std::unordered_map<std::string, bool> variableMutability;
+    for (auto& node : ast) {
+        if (node.type == "VARIABLE_DECLARATION") {
+            std::string varName = node.identifier;
+            if (variableMutability.find(varName) == variableMutability.end()) {
+                variableMutability[varName] = !node.constant;
+            }
+        }
+    }
 
     do {
         changed = false;
@@ -2143,12 +2151,13 @@ void Parser::evaluateAllVariablesSync() {
                 Value oldValue = variables[varName];
                 Value newValue = evaluateASTNode(node);
 
-                auto mutabilityIt = variableMutability.find(varName);
-                if (mutabilityIt == variableMutability.end()) {
-                    variableMutability[varName] = !node.constant;
-                } else {
-                    bool isMutable = mutabilityIt->second;
-                    if (!isMutable) {
+                if (newValue.type == DataType::VARIABLE && newValue.string_value == varName) {
+                    throw std::runtime_error("Variable cannot reference itself: " + varName);
+                }
+
+                bool isMutable = variableMutability[varName];
+                if (!isMutable && oldValue.type != DataType::UNKNOWN && newValue.type != DataType::UNKNOWN) {
+                    if (oldValue.toString() != newValue.toString()) {
                         throw std::runtime_error("Attempt to redefine \"" + varName + "\" at " + Utility::position(node.startPos, input) + ".");
                     }
                 }

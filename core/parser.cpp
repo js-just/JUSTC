@@ -44,6 +44,7 @@ SOFTWARE.
 #include <unordered_map>
 
 #include "built-in/http/http.hpp"
+#include "built-in/math/math.hpp"
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"
@@ -1436,6 +1437,47 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "absolute") return functionABSOLUTE(args);
     if (funcName == "ceil") return functionCEIL(args);
     if (funcName == "floor") return functionFLOOR(args);
+
+    double inpnum = args[0].number_value;
+    if (funcName == "Math::Abs") {
+        return Value::createNumber(Math::Abs(inpnum));
+    }
+    if (funcName == "Math::Acos") {
+        return Value::createNumber(Math::Acos(inpnum));
+    }
+    if (funcName == "Math::Asin") {
+        return Value::createNumber(Math::Asin(inpnum));
+    }
+    if (funcName == "Math::Atan") {
+        return Value::createNumber(Math::Atan(inpnum));
+    }
+    if (funcName == "Math::Atan2") {
+        return Value::createNumber(Math::Atan2(inpnum, args[1].number_value));
+    }
+    if (funcName == "Math::Ceil") {
+        return Value::createNumber(Math::Ceil(inpnum));
+    }
+    if (funcName == "Math::Cos") {
+        return Value::createNumber(Math::Cos(inpnum));
+    }
+    if (funcName == "Math::Clamp") {
+        return Value::createNumber(Math::Clamp(inpnum, args[1].number_value, args[2].number_value));
+    }
+    if (funcName == "Math::Exp") {
+        return Value::createNumber(Math::Exp(inpnum));
+    }
+    if (funcName == "Math::Floor") {
+        return Value::createNumber(Math::Floor(inpnum));
+    }
+    if (funcName == "Math::Hypot") {
+        return Value::createNumber(Math::Hypot(inpnum, args[1].number_value));
+    }
+    if (funcName == "Math::Log") {
+        return Value::createNumber(Math::Log(inpnum));
+    }
+    if (funcName == "Math::Log10") {
+        return Value::createNumber(Math::Log10(inpnum));
+    }
 
     throw std::runtime_error("Unknown function: " + funcName);
 }

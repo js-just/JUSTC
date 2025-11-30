@@ -24,6 +24,9 @@ SOFTWARE.
 
 */
 
+#ifndef HTTP_HPP
+#define HTTP_HPP
+
 #include <string>
 #include <unordered_map>
 #include "../../parser.h"
@@ -39,3 +42,5 @@ class HTTP {
         static Value OPTIONS(const std::string& url, const std::unordered_map<std::string, std::string>& headers);
 //      static Value request(const std::string& url, const std::unordered_map<std::string, std::string>& headers, const std::string& body, const std::string& method);
 };
+
+#endif

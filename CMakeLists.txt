@@ -201,6 +201,7 @@ add_library(justc_core STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/core/run.luau.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/http/http.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/math/math.cpp
 )
 
 add_executable(justc ${CMAKE_CURRENT_SOURCE_DIR}/core/main.cpp)

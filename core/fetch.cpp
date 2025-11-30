@@ -218,7 +218,7 @@ Value Fetch::request(const std::string& url, const std::string& method, const st
         };
         result.name = "HTTP.Response";
     } catch (const std::exception& e) {
-        throw std::runtime_error("HTTP request failed: " + std::string(e.what()));
+        throw std::runtime_error("HTTP: Request failed: " + std::string(e.what()));
     }
 
     return result;

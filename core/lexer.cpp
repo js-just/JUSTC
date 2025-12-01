@@ -263,7 +263,7 @@ ParserToken Lexer::readIdentifier() {
         return ParserToken{"keyword", id, start};
     }
 
-    std::regex keyword_regex("^is$|^isn't$|^isif$|^then$|^elseif$|^else$|^isifn't$|^elseifn't$|^then't$|^elsen't$|^or$|^orn't$|^and$|^andn't$|^not$|^AND$|^OR$|^XOR$|^NOT$");
+    std::regex keyword_regex("^is$|^isn't$|^isif$|^then$|^elseif$|^else$|^isifn't$|^elseifn't$|^then't$|^elsen't$|^or$|^orn't$|^and$|^andn't$|^not$|^AND$|^OR$|^XOR$|^NOT$|^nand$|^nor$|^xor$|^imply$|^nimply$");
     std::regex boolean_regex("^true$|^True$|^TRUE$|^yes$|^Yes$|^YES$|^false$|^False$|^FALSE$|^no$|^No$|^NO$|^Y$|^y$|^N$|^n$");
     std::regex null_regex("^null$|^Null$|^NULL$|^nil$|^Nil$|^NIL$");
     std::regex undefined_regex("^undefined$");

@@ -19,7 +19,8 @@ function monacoJUSTClang() {
 
             "is", "isn't", "isif", "then", "elseif", "else",
             "isifn't", "elseifn't", "then't", "elsen't",
-            "or", "orn't", "and", "andn't", "not",
+            "or", "orn't", "and", "andn't", "not", "nand",
+            "nor", "xor", "imply", "nimply",
 
             "AND", "OR", "XOR", "NOT",
 

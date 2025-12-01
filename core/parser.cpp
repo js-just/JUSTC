@@ -825,7 +825,7 @@ Value Parser::parseExpression(bool doExecute) {
 }
 
 Value Parser::parseConditional(bool doExecute) {
-    Value condition = parseLogicalOR(doExecute);
+    Value condition = parseBitwiseOR(doExecute);
 
     if (match("keyword", "then") || match("==")) {
         std::string thenOp = currentToken().value;
@@ -876,11 +876,94 @@ Value Parser::parseConditional(bool doExecute) {
     return condition;
 }
 
+Value Parser::parseBitwiseOR(bool doExecute) {
+    Value left = parseBitwiseXOR(doExecute);
+
+    while (match("keyword", "OR") || match("|")) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseBitwiseXOR(doExecute);
+        left = evaluateExpression(left, op, right);
+    }
+
+    return left;
+}
+Value Parser::parseBitwiseXOR(bool doExecute) {
+    Value left = parseBitwiseAND(doExecute);
+
+    while (match("keyword", "XOR")) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseBitwiseAND(doExecute);
+        left = evaluateExpression(left, op, right);
+    }
+
+    return left;
+}
+Value Parser::parseBitwiseAND(bool doExecute) {
+    Value left = parseBitwiseSHIFT(doExecute);
+
+    while (match("keyword", "AND") || match("&")) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseBitwiseSHIFT(doExecute);
+        left = evaluateExpression(left, op, right);
+    }
+
+    return left;
+}
+Value Parser::parseBitwiseSHIFT(bool doExecute) {
+    Value left = parseBitwiseNOT(doExecute);
+
+    while (match("<<") || match(">>")) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseBitwiseNOT(doExecute);
+        left = evaluateExpression(left, op, right);
+    }
+
+    return left;
+}
+
+Value Parser::parseBitwiseNOT(bool doExecute) {
+    Value left = parseLogicalOR(doExecute);
+
+    while (match("NOT")) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseLogicalOR(doExecute);
+        left = evaluateExpression(left, op, right);
+    }
+
+    return left;
+}
+
 Value Parser::parseLogicalOR(bool doExecute) {
-    Value left = parseLogicalAND(doExecute);
+    Value left = parseLogicalXOR(doExecute);
 
     while (match("keyword", "or") || match("||") ||
-           match("keyword", "orn't") || match("!|")) {
+           match("keyword", "orn't") || match("!|") ||
+           match("keyword", "nor")
+        ) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseLogicalXOR(doExecute);
+        left = evaluateExpression(left, op, right);
+    }
+
+    return left;
+}
+
+Value Parser::parseLogicalXOR(bool doExecute) {
+    Value left = parseLogicalAND(doExecute);
+
+    while (match("keyword", "xor") || match("keyword", "xnor")) {
         std::string op = currentToken().value;
         advance();
 
@@ -892,10 +975,26 @@ Value Parser::parseLogicalOR(bool doExecute) {
 }
 
 Value Parser::parseLogicalAND(bool doExecute) {
-    Value left = parseEquality(doExecute);
+    Value left = parseLogicalIMPLY(doExecute);
 
     while (match("keyword", "and") || match("&&") ||
-           match("keyword", "andn't") || match("!&")) {
+           match("keyword", "andn't") || match("!&") ||
+           match("keyword", "nand")
+        ) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseLogicalIMPLY(doExecute);
+        left = evaluateExpression(left, op, right);
+    }
+
+    return left;
+}
+
+Value Parser::parseLogicalIMPLY(bool doExecute) {
+    Value left = parseEquality(doExecute);
+
+    while (match("keyword", "imply") || match("keyword", "nimply")) {
         std::string op = currentToken().value;
         advance();
 
@@ -1718,6 +1817,27 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     }
     else if (op == "!" || op == "not") {
         result = booleanToValue(!right.toBoolean());
+    }
+
+    bool leftBool = left.toBoolean();
+    bool rightBool = right.toBoolean();
+    else if (op == "nand") {
+        result = booleanToValue(!leftBool && !rightBool);
+    }
+    else if (op == "nor") {
+        result = booleanToValue(!leftBool || !rightBool);
+    }
+    else if (op == "xor") {
+        result = booleanToValue((leftBool && !rightBool) || (!leftBool && rightBool));
+    }
+    else if (op == "xnor") {
+        result = booleanToValue((leftBool && rightBool) || (!leftBool && !rightBool));
+    }
+    else if (op == "imply") {
+        result = booleanToValue(!leftBool || rightBool);
+    }
+    else if (op == "nimply") {
+        result = booleanToValue(leftBool && !rightBool);
     }
 
     else {

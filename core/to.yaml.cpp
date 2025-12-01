@@ -141,9 +141,15 @@ std::string YamlSerializer::serialize(const ParseResult& result) {
         return "{\"error\":\"" + JsonSerializer::escapeJsonString(result.error) + "\"}";
     } else {
         std::stringstream valuesYaml;
-        valuesYaml << "---\n";
-        for (const auto& pair : result.returnValues) {
-            valuesYaml << escapeYamlString(pair.first) << ": " << valueToYaml(pair.second) << "\n";
+        if (result.array) {
+            for (const auto& pair : result.returnValues) {
+                valuesYaml << "- " << valueToYaml(pair.second) << "\n";
+            }
+        } else {
+            valuesYaml << "---\n";
+            for (const auto& pair : result.returnValues) {
+                valuesYaml << escapeYamlString(pair.first) << ": " << valueToYaml(pair.second) << "\n";
+            }
         }
 
         std::stringstream json;
@@ -168,9 +174,15 @@ std::string YamlSerializer::serialize(const ParseResult& result) {
 
     #else
 
-    yaml << "---\n";
-    for (const auto& pair : result.returnValues) {
-        yaml << escapeYamlString(pair.first) << ": " << valueToYaml(pair.second) << "\n";
+    if (result.array) {
+        for (const auto& pair : result.returnValues) {
+            yaml << "- " << valueToYaml(pair.second) << "\n";
+        }
+    } else {
+        yaml << "---\n";
+        for (const auto& pair : result.returnValues) {
+            yaml << escapeYamlString(pair.first) << ": " << valueToYaml(pair.second) << "\n";
+        }
     }
 
     return yaml.str();

@@ -158,8 +158,9 @@ struct ParseResult {
     std::string logFileContent;
     std::string error;
     std::vector<std::vector<std::string>> importLogs;
+    bool array;
 
-    ParseResult() : logFilePath(""), logFileContent(""), error("") {}
+    ParseResult() : logFilePath(""), logFileContent(""), error(""), array(false) {}
 };
 
 struct JSONObject {
@@ -218,6 +219,10 @@ private:
 
     std::string scriptName;
     std::string scriptType;
+
+    bool asJSON;
+    bool isJSONArray;
+    std::string endOfScript;
 
     ParserToken currentToken() const;
     ParserToken peekToken(size_t offset = 1) const;

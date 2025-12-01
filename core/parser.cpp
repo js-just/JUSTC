@@ -337,7 +337,8 @@ long getCurrentTime() {
 Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau)
     : tokens(tokens), input(input), position(0), outputMode("everything"), allowJavaScript(allowJavaScript),
       globalScope(false), strictMode(false), hasLogFile(false), allowLuau(allowLuau), canAllowLuau(canAllowLuau),
-      doExecute(doExecute), runAsync(runAsync), canAllowJS(allowJavaScript ? true : canAllowJS), scriptName(scriptName), scriptType(scriptType) {}
+      doExecute(doExecute), runAsync(runAsync), canAllowJS(allowJavaScript ? true : canAllowJS), scriptName(scriptName), scriptType(scriptType),
+      asJSON(false), isJSONArray(false), endOfScript(".") {}
 
 std::string Parser::getCurrentTimestamp() {
     auto now = std::chrono::system_clock::now();
@@ -423,7 +424,17 @@ ParseResult Parser::parse(bool doExecute) {
             skipCommas();
             if (isEnd()) break;
 
-            if (match("keyword")) {
+            if ((match("{") || match("[")) && position == 0) {
+                if (match("[")) {
+                    isJSONArray = true;
+                    result.array = true;
+                    endOfScript = "]";
+                } else {
+                    endOfScript = "}";
+                }
+                advance();
+                asJSON = true;
+            } else if (match("keyword")) {
                 std::string keyword = currentToken().value;
 
                 if (keyword == "scope") {
@@ -439,12 +450,29 @@ ParseResult Parser::parse(bool doExecute) {
                 } else {
                     ast.push_back(parseStatement(doExecute));
                 }
-            } else if (match("identifier")) {
+            } else if (match("identifier") || (match("string") && !isJSONArray)) {
                 std::string identifier = currentToken().value;
+                if (match("string")) {
+                    while (tokens[position + 1].type == "..") {
+                        advance();
+                        if (isEnd() || (position + 1) > tokens.size()) throw std::runtime_error("Unexpected EOF.");
+                        if (tokens[position + 1].type == "string") {
+                            identifier += tokens[position + 1].value;
+                        } else {
+                            throw std::runtime_error("Unexpected operator \"..\" at " + Utility::position(position, input) + ". Did you mean \"" + identifier + " = " + tokens[position + 1].value + "\"?");
+                        }
+                    }
+                }
                 if (identifier == "echo" || identifier == "log" || identifier == "logfile") {
                     ast.push_back(parseCommand(doExecute));
-                } else ast.push_back(parseStatement(doExecute));
-            } else if (match(".")) {
+                } else if (!isJSONArray) {
+                    ast.push_back(parseStatement(doExecute));
+                } else {
+                    ASTNode item("ARRAY_ITEM", "", position);
+                    item.value = Value::createString(identifier);
+                    ast.push_back(item);
+                }
+            } else if (match(endOfScript)) {
                 advance();
                 if (!isEnd()) {
                     throw std::runtime_error("After end of script - Unexpected token \"" + tokens[position + 1].value + "\" at " + Utility::position(position + 1, input) + ".");
@@ -488,6 +516,15 @@ ParseResult Parser::parse(bool doExecute) {
                 }
                 ast.push_back(ASTNode("LUAU"));
                 advance();
+            } else if (isJSONArray) {
+                try {
+                    Value itemVal = parseBitwiseOR(doExecute);
+                    ASTNode item("ARRAY_ITEM", "", position);
+                    item.value = itemVal;
+                    ast.push_back(item);
+                } catch (...) {
+                    throw std::runtime_error("Unexpected token \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
+                }
             } else {
                 throw std::runtime_error("Unexpected token \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
             }
@@ -504,32 +541,39 @@ ParseResult Parser::parse(bool doExecute) {
 
         evaluateAllVariables();
 
-        if (outputMode == "specified") {
-            if (outputVariables.empty()) {
-                throw std::runtime_error("Output mode \"specified\" requires \"return\" command with variables.");
+        if (isJSONArray) {
+            long long varID = 0;
+            for (const auto& pair : variables) {
+                result.returnValues[std::string(pair.first)] = convertToDecimal(pair.second);
             }
-            for (const auto& varName : outputVariables) {
-                auto it = variables.find(varName);
-                if (it != variables.end()) {
-                    size_t index = &varName - &outputVariables[0];
-                    std::string outputName = (index < outputNames.size()) ? outputNames[index] : varName;
-                    if (outputName != "_") {
-                        result.returnValues[outputName] = convertToDecimal(it->second);
-                    } else {
-                        result.returnValues[varName] = convertToDecimal(it->second);
+        } else {
+            if (outputMode == "specified") {
+                if (outputVariables.empty()) {
+                    throw std::runtime_error("Output mode \"specified\" requires \"return\" command with variables.");
+                }
+                for (const auto& varName : outputVariables) {
+                    auto it = variables.find(varName);
+                    if (it != variables.end()) {
+                        size_t index = &varName - &outputVariables[0];
+                        std::string outputName = (index < outputNames.size()) ? outputNames[index] : varName;
+                        if (outputName != "_") {
+                            result.returnValues[outputName] = convertToDecimal(it->second);
+                        } else {
+                            result.returnValues[varName] = convertToDecimal(it->second);
+                        }
                     }
                 }
-            }
-        } else if (outputMode == "everything") {
-            if (!outputVariables.empty()) {
-                throw std::runtime_error("Got \"return\" command with output mode \"everything\". Output mode \"everything\" returns every variable without \"return\" command.");
-            }
-            for (const auto& pair : variables) {
-                result.returnValues[pair.first] = convertToDecimal(pair.second);
-            }
-        } else if (outputMode == "disabled") {
-            if (!outputVariables.empty()) {
-                throw std::runtime_error("Cannot return anything with output mode \"disabled\".");
+            } else if (outputMode == "everything") {
+                if (!outputVariables.empty()) {
+                    throw std::runtime_error("Got \"return\" command with output mode \"everything\". Output mode \"everything\" returns every variable without \"return\" command.");
+                }
+                for (const auto& pair : variables) {
+                    result.returnValues[pair.first] = convertToDecimal(pair.second);
+                }
+            } else if (outputMode == "disabled") {
+                if (!outputVariables.empty()) {
+                    throw std::runtime_error("Cannot return anything with output mode \"disabled\".");
+                }
             }
         }
 
@@ -586,6 +630,10 @@ void Parser::parseOutputCommandError(const std::string mode) {
     throw std::runtime_error("Expected output mode keyword, got \"" + mode + "\" at " + Utility::position(currentToken().start, input) + ". Output mode keywords are: \"specified\", \"everything\", \"disabled\".");
 }
 ASTNode Parser::parseOutputCommand() {
+    if (asJSON) {
+        throw std::runtime_error("Running as JSON - Cannot specify output mode at " + Utility::position(currentToken().start, input) + ".");
+    }
+
     ASTNode node("OUTPUT_COMMAND", "", currentToken().start);
     advance();
 
@@ -612,6 +660,10 @@ void Parser::parseReturnCommandError(const bool a, const bool b) {
     else throw std::runtime_error("Expected \"]\" (to close \"[\"), got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
 }
 ASTNode Parser::parseReturnCommand() {
+    if (asJSON) {
+        throw std::runtime_error("Running as JSON - Cannot parse return command at " + Utility::position(currentToken().start, input) + ".");
+    }
+
     ASTNode node("RETURN_COMMAND", "", currentToken().start);
     advance();
 
@@ -742,12 +794,12 @@ ASTNode Parser::parseStatement(bool doExecute) {
     std::string keyword = currentToken().value;
     if (keyword == "echo" || keyword == "log" || keyword == "logfile") {
         ast.push_back(parseCommand(doExecute));
-    } else if (match("identifier")) {
+    } else if (match("identifier") && !isJSONArray) {
         return parseVariableDeclaration(doExecute);
-    } else if (match("keyword", "const")) {
+    } else if (match("keyword", "const") && !isJSONArray) {
         advance();
         return parseVariableDeclaration(doExecute);
-    } else if (match("keyword", "var")) {
+    } else if (match("keyword", "var") && !isJSONArray) {
         advance();
         return parseVariableDeclaration(doExecute, false);
     } else {
@@ -1215,7 +1267,10 @@ Value Parser::parsePrimary(bool doExecute) {
         advance();
         return result;
     }
-    else if ((match(".") && tokens[position + 1].type != "number") || match(",")) {
+    else if ((
+        (endOfScript == "." && match(".") && tokens[position + 1].type != "number") ||
+        (endOfScript != "." && match(endOfScript))
+    ) || match(",")) {
         Value result;
         result.type = DataType::NULL_TYPE;
         result.string_value = "null";
@@ -1344,7 +1399,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
     std::vector<Value> args;
 
     if (doExecute && (command == "echo" || command == "logfile" || command == "log") && !match("(")) {
-        while (!match(",") && !match(".") && !isEnd()) {
+        while (!match(",") && !match(endOfScript) && !isEnd()) {
             args.push_back(parseExpression(doExecute));
         }
         if (match(",")) advance();

@@ -657,7 +657,10 @@ void Lexer::tokenize() {
 std::vector<ParserToken> Lexer::getTokens() const {
     if (!tokens.empty()) {
         const auto& lastToken = tokens.back();
-        if (lastToken.type != "." && lastToken.value != ".") {
+        if (lastToken.type != "." && lastToken.value != "." && !(
+            (tokens[0].type == "{" && lastToken.type == "}") ||
+            (tokens[0].type == "[" && lastToken.type == "]")
+        )) {
             throw std::runtime_error("Expected \".\", got EOF at " + Utility::position(lastToken.start, input));
         }
     }

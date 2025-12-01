@@ -131,14 +131,25 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
         json << "\"error\":\"" << escapeJsonString(result.error) << "\"";
     } else {
         // return values
-        json << "\"type\":\"json\",\"return\":{";
+        json << "\"type\":\"json\",\"return\":";
         bool first = true;
-        for (const auto& pair : result.returnValues) {
-            if (!first) json << ",";
-            first = false;
-            json << "\"" << escapeJsonString(pair.first) << "\":" << valueToJson(pair.second);
+        if (result.array) {
+            json << "[";
+            for (const auto& pair : result.returnValues) {
+                if (!first) json << ",";
+                first = false;
+                json << valueToJson(pair.second);
+            }
+            json << "],";
+        } else {
+            json << "{";
+            for (const auto& pair : result.returnValues) {
+                if (!first) json << ",";
+                first = false;
+                json << "\"" << escapeJsonString(pair.first) << "\":" << valueToJson(pair.second);
+            }
+            json << "},";
         }
-        json << "},";
 
         // logs array
         json << "\"logs\":";

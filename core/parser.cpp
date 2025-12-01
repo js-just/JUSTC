@@ -1485,10 +1485,10 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
             return Value::createNumber(Math::Log10(inpnum));
         }
         if (funcName == "Math::Max") {
-            return Value::createNumber(Math::Max(values2numbers(args, startPos, input)));
+            return Value::createNumber(Math::Max(values2numbers(args)));
         }
         if (funcName == "Math::Min") {
-            return Value::createNumber(Math::Min(values2numbers(args, startPos, input)));
+            return Value::createNumber(Math::Min(values2numbers(args)));
         }
         if (funcName == "Math::Pow") {
             return Value::createNumber(Math::Pow(inpnum, args[1].number_value));

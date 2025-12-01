@@ -768,9 +768,33 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
         advance();
         typeDecl = currentToken().value;
         if (!match("identifier")) {
-            throw std::runtime_error("Invalid or unexpected token \"" + typeDecl + "\" at " + Utility::position(position, input) + ".");
+            // then `:` and `=` are the same
+            Value exprValue = parseExpression(doExecute);
+            node.value = exprValue;
+            extractReferences(exprValue, node.references);
+
+            variables[identifier] = Value();
+            if (constant) {
+                constVars[identifier] = true;
+            }
+
+            return node;
         }
-        node.typeDeclaration = Utility::typeDeclaration2dataType(typeDecl, Utility::position(position, input));
+        try {
+            node.typeDeclaration = Utility::typeDeclaration2dataType(typeDecl, Utility::position(position, input));
+        } catch (...) {
+            // then `:` and `=` are the same
+            Value exprValue = parseExpression(doExecute);
+            node.value = exprValue;
+            extractReferences(exprValue, node.references);
+
+            variables[identifier] = Value();
+            if (constant) {
+                constVars[identifier] = true;
+            }
+
+            return node;
+        }
         advance();
     }
 
@@ -1051,7 +1075,7 @@ Value Parser::parseTerm(bool doExecute) {
 Value Parser::parseFactor(bool doExecute) {
     Value left = parsePower(doExecute);
 
-    while (match("*") || match("/") || match("%")) {
+    while (match("*") || match("/") || match("%") || match(":")) {
         std::string op = currentToken().value;
         advance();
 
@@ -1698,7 +1722,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     else if (op == "*" && Utility::checkNumbers(left, right)) {
         result = numberToValue(left.toNumber() * right.toNumber());
     }
-    else if (op == "/" && Utility::checkNumbers(left, right)) {
+    else if ((op == "/" || op == ":") && Utility::checkNumbers(left, right)) {
         double divisor = right.toNumber();
         if (divisor == 0) {
             result.type = DataType::INFINITE;
@@ -2060,7 +2084,6 @@ void Parser::extractReferences(const Value& value, std::vector<std::string>& ref
     if (value.type == DataType::VARIABLE) {
         references.push_back(value.string_value);
     }
-    // TODO: get links from complex things
 }
 
 std::future<Value> Parser::functionHTTPAsync(size_t startPos, const std::string& method, const std::vector<Value>& args) {

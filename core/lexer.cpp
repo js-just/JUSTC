@@ -164,12 +164,12 @@ void Lexer::readMultiLineComment() {
     }
 }
 
-ParserToken Lexer::readString() {
+ParserToken Lexer::readString(char quote) {
     size_t start = ++position;
     std::string value = "";
     while (position < input.length() &&
-           (input[position] != '"' ||
-           (input[position] == '"' && position > 0 && input[position - 1] == '\\'))) {
+           (input[position] != quote ||
+           (input[position] == quote && position > 0 && input[position - 1] == '\\'))) {
         value += input[position++];
     }
     position++;
@@ -196,14 +196,22 @@ ParserToken Lexer::readNumber() {
             isBase64Char(input[position]))) {
 
         char ch = input[position];
-        if ((std::isalnum(static_cast<unsigned char>(ch)) || ch == '.' ||
+        if (((std::isalnum(static_cast<unsigned char>(ch)) || ch == '.' || ch == ',' ||
              ch == '#' || ch == '&' || ch == 'b' || ch == 'B') &&
-            ((ch == '.' && position + 1 < input.length() &&
-              isDigit(input[position + 1]) && !point) || ch != '.')) {
+            (((ch == '.' || ch == ',') && position + 1 < input.length() &&
+              isDigit(input[position + 1]) && !point) || (ch != '.' && ch != ','))) || (
+                position - 1 > -1 && isDigit(input[position - 1]) && ch == '_' && position + 1 < input.length() && isDigit(input[position + 1])
+              )) {
 
             position++;
-            if (ch == '.') {
+            if (ch == '.' || (ch == ',' && position < input.length() && isDigit(input[position]))) {
+                if (ch == ',') {
+                    input[position - 1] = '.';
+                }
                 point = true;
+            } else if (ch == '_') {
+                input[position - 1] = '';
+                position--;
             }
         } else {
             break;
@@ -324,7 +332,7 @@ void Lexer::tokenize() {
 
         if (ch == '"' || ch == '\'') {
             addDollarBefore();
-            tokens.push_back(readString());
+            tokens.push_back(readString(ch));
             continue;
         }
 

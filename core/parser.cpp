@@ -543,8 +543,15 @@ ParseResult Parser::parse(bool doExecute) {
 
         if (isJSONArray) {
             long long varID = 0;
-            for (const auto& pair : variables) {
-                result.returnValues[std::string(pair.first)] = convertToDecimal(pair.second);
+            for (const auto& node : ast) {
+                if (node.type == "ARRAY_ITEM") {
+                    Value itemVal = node.value;
+                    if (itemVal.type == DataType::VARIABLE) {
+                        itemVal = resolveVariableValue(itemVal.string_value, true);
+                    }
+                    result.returnValues[std::to_string(varID)] = convertToDecimal(itemVal);
+                    varID++;
+                }
             }
         } else {
             if (outputMode == "specified") {

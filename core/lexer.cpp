@@ -495,10 +495,10 @@ void Lexer::tokenize() {
             continue;
         }
         if (ch == '<' && peek() == '<' && (tokens.empty() || (
-            tokens[tokens.size - 1].type != "number" &&
-            tokens[tokens.size - 1].type != "base64" &&
-            tokens[tokens.size - 1].type != "binary" &&
-            tokens[tokens.size - 1].type != "hex"
+            tokens[tokens.size() - 1].type != "number" &&
+            tokens[tokens.size() - 1].type != "base64" &&
+            tokens[tokens.size() - 1].type != "binary" &&
+            tokens[tokens.size() - 1].type != "hex"
         ))) {
             addDollarBefore();
             std::stringstream Luau;

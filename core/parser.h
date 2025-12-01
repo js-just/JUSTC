@@ -253,9 +253,9 @@ private:
     Value parseBitwiseSHIFT(bool doExecute);
     Value parseBitwiseNOT(bool doExecute);
     Value parseLogicalOR(bool doExecute);
-    Value parseLogicalXOR(bool doExecute)
+    Value parseLogicalXOR(bool doExecute);
     Value parseLogicalAND(bool doExecute);
-    Value parseLogicalIMPLY(bool doExecute)
+    Value parseLogicalIMPLY(bool doExecute);
     Value parseEquality(bool doExecute);
     Value parseComparison(bool doExecute);
     Value parseTerm(bool doExecute);

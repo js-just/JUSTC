@@ -1661,6 +1661,8 @@ Value Parser::concatenateStrings(const Value& left, const Value& right) {
 }
 Value Parser::evaluateExpression(const Value& left, const std::string& op, const Value& right) {
     Value result;
+    bool leftBool = left.toBoolean();
+    bool rightBool = right.toBoolean();
 
     if (op == "+") {
         if (
@@ -1819,8 +1821,6 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         result = booleanToValue(!right.toBoolean());
     }
 
-    bool leftBool = left.toBoolean();
-    bool rightBool = right.toBoolean();
     else if (op == "nand") {
         result = booleanToValue(!leftBool && !rightBool);
     }

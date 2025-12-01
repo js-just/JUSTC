@@ -210,7 +210,7 @@ ParserToken Lexer::readNumber() {
                 }
                 point = true;
             } else if (ch == '_') {
-                input[position - 1] = '';
+                input.erase(position - 1, 1);
                 position--;
             }
         } else {

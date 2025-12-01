@@ -35,6 +35,7 @@ SOFTWARE.
 #include <future>
 #include "lexer.h"
 #include "version.h"
+#include "utility.h"
 
 enum class DataType {
     JUSTC_OBJECT =  0,

@@ -1522,7 +1522,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
             return Value::createNumber(Math::ToRadians(inpnum));
         }
     } catch (const std::exception& e) {
-        throw std::runtime_error(e.what() + " at " + Utility::position(startPos, input) + ".");
+        throw std::runtime_error(std::string(e.what()) + " at " + Utility::position(startPos, input) + ".");
     }
 
     throw std::runtime_error("Unknown function: " + funcName);

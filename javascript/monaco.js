@@ -6,7 +6,7 @@ monacoElement.style = "height: 80vh; outline: 2px solid gray; overflow-y: clip; 
 
 function monacoJUSTClang() {
     return {
-        keywords: [
+        keywords: [ // lowercase
             "type", "global", "local", "strict",
             "import", "export", "exports", "require",
             "run", "output", "return", "specified",
@@ -22,26 +22,27 @@ function monacoJUSTClang() {
             "or", "orn't", "and", "andn't", "not", "nand",
             "nor", "xor", "imply", "nimply",
 
-            "AND", "OR", "XOR", "NOT",
-
-            "true", "false", "True", "False", "TRUE", "FALSE", "yes", "no", "Yes", "No", "YES", "NO", "Y", "N", "y", "n",
-            "null", "nil", "Null", "Nil", "NULL", "NIL",
+            "true", "false", "yes", "no", "y", "n",
+            "null", "nil",
         ],
 
-        typeKeywords: [
+        typeKeywords: [ // lowercase
             'string', 'number', 'link', 'binary', 'hexadecimal', 'octal', 'infinity', 'nan'
         ],
 
         operators: [
-            '=', ''
+            '!=', '<=', '>=', '<<', '>>', '&&', '!&', '||', '!|', '=!', '?!', '..', '::', '??', '==', '?=',
+            '=', '!', '&', '|', '/', ':', '*', '-', '+', '^', '<', '>', '?'
         ],
 
         symbols: /[=><!~?:&|+\-*\/\^%]+/,
 
         escapes: /\\(?:[abfnrtv\\"]|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
+        // should be lowercase
         builtinLowercase: /(echo|log|logfile|value|parseNum)(?=\()/,
-        builtinUppercase: /(JUSTC|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|Acos|Asin|Atan|Atan2|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|ToDegrees|ToRadians))/,
+        // optionally uppercase
+        builtinUppercase: /(True|TRUE|False|FALSE|Yes|No|YES|NO|Y|N|Null|Nil|NULL|NIL|AND|OR|XOR|NOT|JUSTC|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|Acos|Asin|Atan|Atan2|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|ToDegrees|ToRadians))/,
 
         tokenizer: {
             root: [

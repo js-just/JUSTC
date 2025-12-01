@@ -145,7 +145,7 @@ function monacoJUSTClang() {
             ],
         },
     };
-}
+};
 
 monacoScript.onload = function() {
     require.config({

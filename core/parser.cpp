@@ -794,7 +794,7 @@ ASTNode Parser::parseStatement(bool doExecute) {
     std::string keyword = currentToken().value;
     if (keyword == "echo" || keyword == "log" || keyword == "logfile") {
         ast.push_back(parseCommand(doExecute));
-    } else if (match("identifier") && !isJSONArray) {
+    } else if ((match("identifier") || match("string")) && !isJSONArray) {
         return parseVariableDeclaration(doExecute);
     } else if (match("keyword", "const") && !isJSONArray) {
         advance();

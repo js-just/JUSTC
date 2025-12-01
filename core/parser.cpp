@@ -1647,6 +1647,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             int rightInt = rightBool ? 1 : 0;
             result = booleanToValue(leftInt & rightInt);
         }
+        advance();
     }
     else if (op == "|" || op == "OR") {
         if (Utility::checkNumbers(left, right)) {
@@ -1660,8 +1661,9 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             int rightInt = rightBool ? 1 : 0;
             result = booleanToValue(leftInt | rightInt);
         }
+        advance();
     }
-    else if (op == "^" || op == "XOR") {
+    else if (op == "XOR") {
         if (Utility::checkNumbers(left, right)) {
             int leftInt = static_cast<int>(left.toNumber());
             int rightInt = static_cast<int>(right.toNumber());
@@ -1669,8 +1671,9 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else {
             throw std::runtime_error("Expected numbers for bitwise XOR operation at " + Utility::position(position, input) + ".");
         }
+        advance();
     }
-    else if (op == "~" || op == "NOT") {
+    else if (op == "NOT") {
         if (left.type == DataType::NUMBER || left.type == DataType::HEXADECIMAL ||
             left.type == DataType::BINARY || left.type == DataType::OCTAL) {
             int num = static_cast<int>(left.toNumber());
@@ -1678,6 +1681,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else {
             throw std::runtime_error("Expected numbers for bitwise NOT operation at " + Utility::position(position, input) + ".");
         }
+        advance();
     }
     else if (op == "<<") {
         if (Utility::checkNumbers(left, right)) {
@@ -1687,6 +1691,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else {
             throw std::runtime_error("Expected numbers at left shift at " + Utility::position(position, input) + ".");
         }
+        advance();
     }
     else if (op == ">>") {
         if (Utility::checkNumbers(left, right)) {
@@ -1696,9 +1701,10 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else {
             throw std::runtime_error("Expected numbers at right shift  at " + Utility::position(position, input) + ".");
         }
+        advance();
     }
 
-    else if (op == "&" || op == "and") {
+    else if (op == "&&" || op == "and") {
         result = booleanToValue(left.toBoolean() && right.toBoolean());
     }
     else if (op == "!&" || op == "andn't") {

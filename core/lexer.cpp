@@ -494,7 +494,12 @@ void Lexer::tokenize() {
             tokens.push_back(ParserToken{"JavaScript", result, startPos});
             continue;
         }
-        if (ch == '<' && peek() == '<') {
+        if (ch == '<' && peek() == '<' && (tokens.empty() || (
+            tokens[tokens.size - 1].type != "number" &&
+            tokens[tokens.size - 1].type != "base64" &&
+            tokens[tokens.size - 1].type != "binary" &&
+            tokens[tokens.size - 1].type != "hex"
+        ))) {
             addDollarBefore();
             std::stringstream Luau;
             size_t brackets = 1;
@@ -582,6 +587,20 @@ void Lexer::tokenize() {
             continue;
         }
 
+        if (ch == '<' && peek() == '<') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{"<<", "<<", position});
+            position += 2;
+            continue;
+        }
+
+        if (ch == '>' && peek() == '>') {
+            addDollarBefore();
+            tokens.push_back(ParserToken{">>", ">>", position});
+            position += 2;
+            continue;
+        }
+
         if (ch == '=' || ch == '?' || ch == '!' || ch == '<' ||
             ch == '>' || ch == '|' || ch == '&' || ch == '+' ||
             ch == '*' || ch == '/' || ch == '%' || ch == '^') {
@@ -609,20 +628,6 @@ void Lexer::tokenize() {
             addDollarBefore();
             tokens.push_back(ParserToken{"~", "~", position});
             position++;
-            continue;
-        }
-
-        if (ch == '<' && peek() == '<') {
-            addDollarBefore();
-            tokens.push_back(ParserToken{"<<", "<<", position});
-            position += 2;
-            continue;
-        }
-
-        if (ch == '>' && peek() == '>') {
-            addDollarBefore();
-            tokens.push_back(ParserToken{">>", ">>", position});
-            position += 2;
             continue;
         }
 

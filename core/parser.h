@@ -35,7 +35,6 @@ SOFTWARE.
 #include <future>
 #include "lexer.h"
 #include "version.h"
-#include "utility.h"
 
 enum class DataType {
     JUSTC_OBJECT =  0,
@@ -346,7 +345,7 @@ private:
     void parseScopeCommandError(const std::string scope);
     void parseAllowCommandError();
 
-    static std::vector<double> values2numbers(const std::vector<Value>& values, size_t position, const std::string& input) {
+    static std::vector<double> values2numbers(const std::vector<Value>& values) {
         std::vector<double> result;
         result.reserve(values.size());
 
@@ -362,8 +361,7 @@ private:
                 default:
                     throw std::runtime_error(
                         "Expected number at argument " + std::to_string(i) +
-                        ", got <" + dataTypeToString(value.type) +
-                        "> at " + Utility::position(position, input) + "."
+                        ", got <" + dataTypeToString(value.type) + ">"
                     );
                     break;
             }

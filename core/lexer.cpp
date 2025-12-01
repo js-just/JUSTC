@@ -322,7 +322,7 @@ void Lexer::tokenize() {
             continue;
         }
 
-        if (ch == '"') {
+        if (ch == '"' || ch == '\'') {
             addDollarBefore();
             tokens.push_back(readString());
             continue;

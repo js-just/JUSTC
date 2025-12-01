@@ -339,26 +339,36 @@ private:
     Value functionENV(const std::vector<Value>& args);
     Value functionCONFIG(const std::vector<Value>& args);
 
-    // math
-    Value functionV(const std::vector<Value>& args);
-    Value functionD(const std::vector<Value>& args);
-    Value functionSQ(const std::vector<Value>& args);
-    Value functionCU(const std::vector<Value>& args);
-    Value functionP(const std::vector<Value>& args);
-    Value functionM(const std::vector<Value>& args);
-    Value functionS(const std::vector<Value>& args);
-    Value functionC(const std::vector<Value>& args);
-    Value functionT(const std::vector<Value>& args);
-    Value functionN(const std::vector<Value>& args);
-    Value functionABSOLUTE(const std::vector<Value>& args);
-    Value functionCEIL(const std::vector<Value>& args);
-    Value functionFLOOR(const std::vector<Value>& args);
-
     Value onHTTPDisabled(size_t startPos, std::string args0string_value);
     void parseOutputCommandError(const std::string mode);
     void parseReturnCommandError(const bool a, const bool b = false);
     void parseScopeCommandError(const std::string scope);
     void parseAllowCommandError();
+
+    static std::vector<double> values2numbers(const std::vector<Value>& values, size_t position, const std::string& input) {
+        std::vector<double> result;
+        result.reserve(values.size());
+
+        for (size_t i = 0; i < values.size(); ++i) {
+            const auto& value = values[i];
+            switch (value.type) {
+                case DataType::NUMBER:
+                case DataType::HEXADECIMAL:
+                case DataType::BINARY:
+                case DataType::OCTAL:
+                    result.push_back(value.number_value);
+                    break;
+                default:
+                    throw std::runtime_error(
+                        "Expected number at argument " + std::to_string(i) +
+                        ", got <" + dataTypeToString(value.type) +
+                        "> at " + Utility::position(position, input) + "."
+                    );
+                    break;
+            }
+        }
+        return result;
+    }
 
 public:
     static std::string getCurrentTimestamp();

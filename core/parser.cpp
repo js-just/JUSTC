@@ -1424,59 +1424,105 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "config") return functionCONFIG(args);
 
     // math
-    if (funcName == "v") return functionV(args);
-    if (funcName == "d") return functionD(args);
-    if (funcName == "sq") return functionSQ(args);
-    if (funcName == "cu") return functionCU(args);
-    if (funcName == "p") return functionP(args);
-    if (funcName == "m") return functionM(args);
-    if (funcName == "s") return functionS(args);
-    if (funcName == "c") return functionC(args);
-    if (funcName == "t") return functionT(args);
-    if (funcName == "n") return functionN(args);
-    if (funcName == "absolute") return functionABSOLUTE(args);
-    if (funcName == "ceil") return functionCEIL(args);
-    if (funcName == "floor") return functionFLOOR(args);
-
     double inpnum = args[0].number_value;
-    if (funcName == "Math::Abs") {
-        return Value::createNumber(Math::Abs(inpnum));
-    }
-    if (funcName == "Math::Acos") {
-        return Value::createNumber(Math::Acos(inpnum));
-    }
-    if (funcName == "Math::Asin") {
-        return Value::createNumber(Math::Asin(inpnum));
-    }
-    if (funcName == "Math::Atan") {
-        return Value::createNumber(Math::Atan(inpnum));
-    }
-    if (funcName == "Math::Atan2") {
-        return Value::createNumber(Math::Atan2(inpnum, args[1].number_value));
-    }
-    if (funcName == "Math::Ceil") {
-        return Value::createNumber(Math::Ceil(inpnum));
-    }
-    if (funcName == "Math::Cos") {
-        return Value::createNumber(Math::Cos(inpnum));
-    }
-    if (funcName == "Math::Clamp") {
-        return Value::createNumber(Math::Clamp(inpnum, args[1].number_value, args[2].number_value));
-    }
-    if (funcName == "Math::Exp") {
-        return Value::createNumber(Math::Exp(inpnum));
-    }
-    if (funcName == "Math::Floor") {
-        return Value::createNumber(Math::Floor(inpnum));
-    }
-    if (funcName == "Math::Hypot") {
-        return Value::createNumber(Math::Hypot(inpnum, args[1].number_value));
-    }
-    if (funcName == "Math::Log") {
-        return Value::createNumber(Math::Log(inpnum));
-    }
-    if (funcName == "Math::Log10") {
-        return Value::createNumber(Math::Log10(inpnum));
+    try {
+        if (funcName == "Math::Abs") {
+            return Value::createNumber(Math::Abs(inpnum));
+        }
+        if (funcName == "Math::Acos") {
+            return Value::createNumber(Math::Acos(inpnum));
+        }
+        if (funcName == "Math::Asin") {
+            return Value::createNumber(Math::Asin(inpnum));
+        }
+        if (funcName == "Math::Atan") {
+            return Value::createNumber(Math::Atan(inpnum));
+        }
+        if (funcName == "Math::Atan2") {
+            return Value::createNumber(Math::Atan2(inpnum, args[1].number_value));
+        }
+        if (funcName == "Math::Ceil") {
+            return Value::createNumber(Math::Ceil(inpnum));
+        }
+        if (funcName == "Math::Cos") {
+            return Value::createNumber(Math::Cos(inpnum));
+        }
+        if (funcName == "Math::Clamp") {
+            return Value::createNumber(Math::Clamp(inpnum, args[1].number_value, args[2].number_value));
+        }
+        if (funcName == "Math::Cube") {
+            return Value::createNumber(inpnum * inpnum * inpnum);
+        }
+        if (funcName == "Math::Double") {
+            return Value::createNumber(inpnum * 2);
+        }
+        if (funcName == "Math::Exp") {
+            return Value::createNumber(Math::Exp(inpnum));
+        }
+        if (funcName == "Math::Factorial") {
+            int intValue = static_cast<int>(std::round(inpnum));
+            long long res = Math::Factorial(intValue);
+            double outVal = static_cast<double>(res);
+            return Value::createNumber(outVal);
+        }
+        if (funcName == "Math::Floor") {
+            return Value::createNumber(Math::Floor(inpnum));
+        }
+        if (funcName == "Math::Hypot") {
+            return Value::createNumber(Math::Hypot(inpnum, args[1].number_value));
+        }
+        if (funcName == "Math::IsPrime") {
+            int intValue = static_cast<int>(std::round(inpnum));
+            return Value::createBoolean(Math::IsPrime(intValue));
+        }
+        if (funcName == "Math::Lerp") {
+            return Value::createNumber(Math::Lerp(inpnum, args[1].number_value, args[2].number_value));
+        }
+        if (funcName == "Math::Log") {
+            return Value::createNumber(Math::Log(inpnum));
+        }
+        if (funcName == "Math::Log10") {
+            return Value::createNumber(Math::Log10(inpnum));
+        }
+        if (funcName == "Math::Max") {
+            return Value::createNumber(Math::Max(values2numbers(args, startPos, input)));
+        }
+        if (funcName == "Math::Min") {
+            return Value::createNumber(Math::Min(values2numbers(args, startPos, input)));
+        }
+        if (funcName == "Math::Pow") {
+            return Value::createNumber(Math::Pow(inpnum, args[1].number_value));
+        }
+        if (funcName == "Math::Random") {
+            if (args.empty()) return Value::createNumber(Math::Random());
+            return Value::createNumber(Math::Random(inpnum, args[1].number_value));
+        }
+        if (funcName == "Math::Round") {
+            return Value::createNumber(Math::Round(inpnum));
+        }
+        if (funcName == "Math::Sign") {
+            return Value::createNumber(Math::Sign(inpnum));
+        }
+        if (funcName == "Math::Sin") {
+            return Value::createNumber(Math::Sin(inpnum));
+        }
+        if (funcName == "Math::Sqrt") {
+            return Value::createNumber(Math::Sqrt(inpnum));
+        }
+        if (funcName == "Math::Square") {
+            return Value::createNumber(inpnum * inpnum);
+        }
+        if (funcName == "Math::Tan") {
+            return Value::createNumber(Math::Tan(inpnum));
+        }
+        if (funcName == "Math::ToDegrees") {
+            return Value::createNumber(Math::ToDegrees(inpnum));
+        }
+        if (funcName == "Math::ToRadians") {
+            return Value::createNumber(Math::ToRadians(inpnum));
+        }
+    } catch (const std::exception& e) {
+        throw std::runtime_error(e.what() + " at " + Utility::position(startPos, input) + ".");
     }
 
     throw std::runtime_error("Unknown function: " + funcName);
@@ -1997,73 +2043,6 @@ Value Parser::functionFILE(const std::vector<Value>& args) { return Value(); }
 Value Parser::functionSTAT(const std::vector<Value>& args) { return Value(); }
 Value Parser::functionENV(const std::vector<Value>& args) { return Value(); }
 Value Parser::functionCONFIG(const std::vector<Value>& args) { return Value(); }
-
-Value Parser::functionV(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    return numberToValue(std::sqrt(args[0].toNumber()));
-}
-
-Value Parser::functionD(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    return numberToValue(args[0].toNumber() * 2);
-}
-
-Value Parser::functionSQ(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    double num = args[0].toNumber();
-    return numberToValue(num * num);
-}
-
-Value Parser::functionCU(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    double num = args[0].toNumber();
-    return numberToValue(num * num * num);
-}
-
-Value Parser::functionP(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(1);
-    return numberToValue(args[0].toNumber() + 1);
-}
-
-Value Parser::functionM(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(-1);
-    return numberToValue(args[0].toNumber() - 1);
-}
-
-Value Parser::functionS(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    return numberToValue(std::sin(args[0].toNumber()));
-}
-
-Value Parser::functionC(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(1);
-    return numberToValue(std::cos(args[0].toNumber()));
-}
-
-Value Parser::functionT(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    return numberToValue(std::tan(args[0].toNumber()));
-}
-
-Value Parser::functionN(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    return numberToValue(-args[0].toNumber());
-}
-
-Value Parser::functionABSOLUTE(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    return numberToValue(std::abs(args[0].toNumber()));
-}
-
-Value Parser::functionCEIL(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    return numberToValue(std::ceil(args[0].toNumber()));
-}
-
-Value Parser::functionFLOOR(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-    return numberToValue(std::floor(args[0].toNumber()));
-}
 
 Value Parser::stringToValue(const std::string& str) {
     Value result;

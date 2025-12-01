@@ -51,5 +51,6 @@ const std::vector<std::string> keywords = {
     "disallow", "JavaScript", "safe", "Luau",
     "class", "function", "public", "private",
     "static", "const", "define", "undefine",
-    "echo", "log", "logfile", "space", "var"
+    "echo", "log", "logfile", "space", "var",
+    "new"
 };

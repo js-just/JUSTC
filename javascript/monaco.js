@@ -15,6 +15,7 @@ function monacoJUSTClang() {
             "class", "function", "public", "private",
             "static", "const", "define", "undefine",
             "echo", "log", "logfile", "space", "var",
+            "new",
 
             "is", "isn't", "isif", "then", "elseif", "else",
             "isifn't", "elseifn't", "then't", "elsen't",
@@ -36,8 +37,8 @@ function monacoJUSTClang() {
 
         escapes: /\\(?:[abfnrtv\\"]|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
-        builtinLowercase: /(echo|log|logfile|value)(?=\()/,
-        builtinUppercase: /(JUSTC|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|Acos|Asin|Atan|Atan2|Ceil|Cos|Clamp|Exp|Floor|Hypot|Log(10|)))/,
+        builtinLowercase: /(echo|log|logfile|value|parseNum)(?=\()/,
+        builtinUppercase: /(JUSTC|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|Acos|Asin|Atan|Atan2|Ceil|Cos|Clamp|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|ToDegrees|ToRadians))/,
 
         tokenizer: {
             root: [

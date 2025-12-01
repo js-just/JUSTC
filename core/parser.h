@@ -33,6 +33,7 @@ SOFTWARE.
 #include <unordered_map>
 #include <algorithm>
 #include <future>
+#include <cstdint>
 #include "lexer.h"
 #include "version.h"
 

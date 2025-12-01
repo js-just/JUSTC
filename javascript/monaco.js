@@ -19,7 +19,9 @@ function monacoJUSTClang() {
 
             "is", "isn't", "isif", "then", "elseif", "else",
             "isifn't", "elseifn't", "then't", "elsen't",
-            "or", "orn't", "and", "andn't",
+            "or", "orn't", "and", "andn't", "not",
+
+            "AND", "OR", "XOR", "NOT",
 
             "true", "false", "True", "False", "TRUE", "FALSE", "yes", "no", "Yes", "No", "YES", "NO", "Y", "N", "y", "n",
             "null", "nil", "Null", "Nil", "NULL", "NIL",
@@ -38,7 +40,7 @@ function monacoJUSTClang() {
         escapes: /\\(?:[abfnrtv\\"]|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
         builtinLowercase: /(echo|log|logfile|value|parseNum)(?=\()/,
-        builtinUppercase: /(JUSTC|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|Acos|Asin|Atan|Atan2|Ceil|Cos|Clamp|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|ToDegrees|ToRadians))/,
+        builtinUppercase: /(JUSTC|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|Acos|Asin|Atan|Atan2|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|ToDegrees|ToRadians))/,
 
         tokenizer: {
             root: [

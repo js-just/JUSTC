@@ -112,8 +112,8 @@ std::string Value::toString() const {
             return "x" + std::to_string(static_cast<int>(number_value));
         case DataType::BINARY: {
             int num = static_cast<int>(number_value);
-            std::string binary;
             if (num == 0) return "b0";
+            std::string binary;
             while (num > 0) {
                 binary = (num % 2 == 0 ? "0" : "1") + binary;
                 num /= 2;
@@ -894,7 +894,7 @@ Value Parser::parseLogicalOR(bool doExecute) {
 Value Parser::parseLogicalAND(bool doExecute) {
     Value left = parseEquality(doExecute);
 
-    while (match("keyword", "and") || match("&") ||
+    while (match("keyword", "and") || match("&&") ||
            match("keyword", "andn't") || match("!&")) {
         std::string op = currentToken().value;
         advance();
@@ -966,7 +966,7 @@ Value Parser::parseFactor(bool doExecute) {
 Value Parser::parsePower(bool doExecute) {
     Value left = parseUnary(doExecute);
 
-    while (match("^")) {
+    while (match("**")) {
         std::string op = currentToken().value;
         advance();
 
@@ -1424,6 +1424,9 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "config") return functionCONFIG(args);
 
     // math
+    if (args.empty()) {
+        throw std::runtime_error("Expected at least one argument, got 0 at " + Utility::position(startPos, input) + ".");
+    }
     double inpnum = args[0].number_value;
     try {
         if (funcName == "Math::Abs") {
@@ -1632,6 +1635,69 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         result = booleanToValue(left.toNumber() >= right.toNumber());
     }
 
+    else if (op == "&" || op == "AND") {
+        if (Utility::checkNumbers(left, right)) {
+            int leftInt = static_cast<int>(left.toNumber());
+            int rightInt = static_cast<int>(right.toNumber());
+            result = numberToValue(leftInt & rightInt);
+        } else {
+            bool leftBool = left.toBoolean();
+            bool rightBool = right.toBoolean();
+            int leftInt = leftBool ? 1 : 0;
+            int rightInt = rightBool ? 1 : 0;
+            result = booleanToValue(leftInt & rightInt);
+        }
+    }
+    else if (op == "|" || op == "OR") {
+        if (Utility::checkNumbers(left, right)) {
+            int leftInt = static_cast<int>(left.toNumber());
+            int rightInt = static_cast<int>(right.toNumber());
+            result = numberToValue(leftInt | rightInt);
+        } else {
+            bool leftBool = left.toBoolean();
+            bool rightBool = right.toBoolean();
+            int leftInt = leftBool ? 1 : 0;
+            int rightInt = rightBool ? 1 : 0;
+            result = booleanToValue(leftInt | rightInt);
+        }
+    }
+    else if (op == "^" || op == "XOR") {
+        if (Utility::checkNumbers(left, right)) {
+            int leftInt = static_cast<int>(left.toNumber());
+            int rightInt = static_cast<int>(right.toNumber());
+            result = numberToValue(leftInt ^ rightInt);
+        } else {
+            throw std::runtime_error("Expected numbers for bitwise XOR operation at " + Utility::position(position, input) + ".");
+        }
+    }
+    else if (op == "~" || op == "NOT") {
+        if (left.type == DataType::NUMBER || left.type == DataType::HEXADECIMAL ||
+            left.type == DataType::BINARY || left.type == DataType::OCTAL) {
+            int num = static_cast<int>(left.toNumber());
+            result = numberToValue(~num);
+        } else {
+            throw std::runtime_error("Expected numbers for bitwise NOT operation at " + Utility::position(position, input) + ".");
+        }
+    }
+    else if (op == "<<") {
+        if (Utility::checkNumbers(left, right)) {
+            int leftInt = static_cast<int>(left.toNumber());
+            int rightInt = static_cast<int>(right.toNumber());
+            result = numberToValue(leftInt << rightInt);
+        } else {
+            throw std::runtime_error("Expected numbers at left shift at " + Utility::position(position, input) + ".");
+        }
+    }
+    else if (op == ">>") {
+        if (Utility::checkNumbers(left, right)) {
+            int leftInt = static_cast<int>(left.toNumber());
+            int rightInt = static_cast<int>(right.toNumber());
+            result = numberToValue(leftInt >> rightInt);
+        } else {
+            throw std::runtime_error("Expected numbers at right shift  at " + Utility::position(position, input) + ".");
+        }
+    }
+
     else if (op == "&" || op == "and") {
         result = booleanToValue(left.toBoolean() && right.toBoolean());
     }
@@ -1644,7 +1710,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     else if (op == "!|" || op == "orn't") {
         result = booleanToValue(!(left.toBoolean() || right.toBoolean()));
     }
-    else if (op == "!") {
+    else if (op == "!" || op == "not") {
         result = booleanToValue(!right.toBoolean());
     }
 
@@ -1978,7 +2044,19 @@ Value Parser::functionTYPEOF(const std::vector<Value>& args) {
 
 Value Parser::functionECHO(const std::vector<Value>& args) {
     for (const auto& arg : args) {
-        std::string message = arg.toString();
+        std::string message;
+
+        if (arg.type == DataType::VARIABLE) {
+            Value resolved = resolveVariableValue(arg.string_value, false);
+            if (resolved.type != DataType::UNKNOWN) {
+                message = Utility::value2string(resolved);
+            } else {
+                message = arg.string_value;
+            }
+        } else {
+            message = arg.toString();
+        }
+
         addLog("ECHO", message, currentToken().start);
         std::cout << message << std::endl;
     }

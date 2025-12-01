@@ -6,7 +6,7 @@ monacoElement.style = "height: 80vh; outline: 2px solid gray; overflow-y: clip; 
 
 function monacoJUSTClang() {
     return {
-        keywords: [ // lowercase
+        keywords: [
             "type", "global", "local", "strict",
             "import", "export", "exports", "require",
             "run", "output", "return", "specified",
@@ -26,7 +26,7 @@ function monacoJUSTClang() {
             "null", "nil"
         ],
 
-        typeKeywords: [ // lowercase
+        typeKeywords: [
             'string', 'number', 'link', 'binary', 'hexadecimal',
             'octal', 'infinity', 'nan', 'boolean', 'path', 'variable'
         ],
@@ -55,34 +55,26 @@ function monacoJUSTClang() {
                 [/@numberBeforeShift/, { token: '@rematch', next: '@shiftOperator' }],
                 [/@luauEmbeddingStart/, { token: 'keyword.luau', next: '@luauEmbedded', nextEmbedded: 'lua' }],
 
-                // Comments
                 [/--.*$/, 'comment'],
                 [/-\{/, { token: 'comment', next: '@multiLineComment' }],
 
-                // Strings
                 [/"/, { token: 'string.quote', bracket: '@open', next: '@string' }],
                 [/'/, { token: 'string.quote', bracket: '@open', next: '@singleQuoteString' }],
 
-                // Links
                 [/<(?![<])/, { token: 'string.link', next: '@link' }],
 
-                // JavaScript
                 [/\{\{/, { token: 'keyword.js', next: '@jsEmbedded', nextEmbedded: 'javascript' }],
 
-                // Numbers
                 [/0[xX][0-9a-fA-F_]+/, 'number.hex'],
                 [/[xX#][0-9a-fA-F_]+/, 'number.hex'],
                 [/[bB][01_]+/, 'number.binary'],
                 [/[oO][0-7_]+/, 'number.octal'],
                 [/\d[\d_]*(\.\d[\d_]*)?([eE][+-]?\d[\d_]*)?/, 'number'],
 
-                // Built-ins
                 [/@builtinFunctions(?=\s*\()/, 'type.identifier'],
 
-                // Constants
                 [/@constants/, 'constant'],
 
-                // Keywords
                 [/[a-zA-Z_][\w']*/, {
                     cases: {
                         '@keywords': 'keyword',
@@ -91,10 +83,8 @@ function monacoJUSTClang() {
                     }
                 }],
 
-                // $
                 [/\$[a-zA-Z_][\w']*/, 'variable'],
 
-                // Operators
                 [/<</, { token: '@rematch', next: '@shiftOperator' }],
                 [/>>/, 'operator'],
                 [/[=><!~?:&|+\-*\/\^%]/, {
@@ -104,11 +94,9 @@ function monacoJUSTClang() {
                     }
                 }],
 
-                // Delimiters
                 [/[()\[\]{}]/, '@brackets'],
                 [/[,.:;]/, 'delimiter'],
 
-                // whitespace
                 { include: '@whitespace' },
             ],
 
@@ -218,9 +206,7 @@ monacoScript.onload = function() {
         var editor = monaco.editor.create(document.getElementById("editor"), {
             value: `-- Type JUSTC code here...`,
             language: "justc",
-            //theme: "vs-dark",
             fontSize: 14,
-            //wordWrap: "on",
             minimap: { enabled: true },
             scrollBeyondLastLine: false,
             automaticLayout: true,

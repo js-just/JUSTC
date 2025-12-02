@@ -95,6 +95,54 @@ public:
     static constexpr double SQRT2 = 1.4142135623730951;
     static constexpr double SQRT1_2 = 0.7071067811865476;
 
+    static double ParseNum(const std::string& str, int radix) {
+        if (radix < 2 || radix > 64) {
+            throw std::runtime_error("Radix must be between 2 and 64");
+        }
+
+        if (str.empty()) return 0.0;
+
+        size_t start = 0;
+        bool negative = false;
+        if (str[0] == '-') {
+            negative = true;
+            start = 1;
+        } else if (str[0] == '+') {
+            start = 1;
+        }
+
+        double result = 0.0;
+
+        for (size_t i = start; i < str.length(); i++) {
+            char c = str[i];
+            int digit;
+
+            if (c >= '0' && c <= '9') {
+                digit = c - '0';
+            } else if (c >= 'a' && c <= 'z') {
+                digit = 10 + (c - 'a');
+            } else if (c >= 'A' && c <= 'Z') {
+                digit = 10 + (c - 'A');
+            } else if (c == '+') {
+                digit = 62;
+            } else if (c == '/') {
+                digit = 63;
+            } else if (c == '.' || c == ',') {
+                break;
+            } else {
+                throw std::runtime_error("Invalid character for radix " + std::to_string(radix));
+            }
+
+            if (digit >= radix) {
+                throw std::runtime_error("Digit '" + std::string(1, c) + "' out of range for radix " + std::to_string(radix));
+            }
+
+            result = result * radix + digit;
+        }
+
+        return negative ? -result : result;
+    }
+
 private:
     template<typename T>
     static double minRecursive(T value) {

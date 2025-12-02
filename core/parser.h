@@ -223,6 +223,7 @@ private:
     bool asJSON;
     bool isJSONArray;
     std::string endOfScript;
+    std::vector<Value> arrayItems;
 
     ParserToken currentToken() const;
     ParserToken peekToken(size_t offset = 1) const;

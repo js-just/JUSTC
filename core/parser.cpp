@@ -471,6 +471,7 @@ ParseResult Parser::parse(bool doExecute) {
                     ASTNode item("ARRAY_ITEM", "", position);
                     item.value = Value::createString(identifier);
                     ast.push_back(item);
+                    arrayItems.push_back(item.value);
                 }
             } else if (match(endOfScript)) {
                 advance();
@@ -522,6 +523,7 @@ ParseResult Parser::parse(bool doExecute) {
                     ASTNode item("ARRAY_ITEM", "", position);
                     item.value = itemVal;
                     ast.push_back(item);
+                    arrayItems.push_back(itemVal);
                 } catch (...) {
                     throw std::runtime_error("Unexpected token \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
                 }
@@ -542,16 +544,12 @@ ParseResult Parser::parse(bool doExecute) {
         evaluateAllVariables();
 
         if (isJSONArray) {
-            long long varID = 0;
-            for (const auto& node : ast) {
-                if (node.type == "ARRAY_ITEM") {
-                    Value itemVal = node.value;
-                    if (itemVal.type == DataType::VARIABLE) {
-                        itemVal = resolveVariableValue(itemVal.string_value, true);
-                    }
-                    result.returnValues[std::to_string(varID)] = convertToDecimal(itemVal);
-                    varID++;
+            for (size_t i = 0; i < arrayItems.size(); i++) {
+                Value itemVal = arrayItems[i];
+                if (itemVal.type == DataType::VARIABLE) {
+                    itemVal = resolveVariableValue(itemVal.string_value, true);
                 }
+                result.returnValues[std::to_string(i)] = convertToDecimal(itemVal);
             }
         } else {
             if (outputMode == "specified") {
@@ -1237,7 +1235,10 @@ Value Parser::parsePrimary(bool doExecute) {
         if (varName == "$TIME" || varName == "$VERSION" || varName == "$LATEST" ||
             varName == "$DBID" || varName == "$SHA" || varName == "$NAV" ||
             varName == "$PAGES" || varName == "$CSS" || varName == "$PI" ||
-            varName == "$BACKSLASH" || varName == "$JUST_VERSION") {
+            varName == "$BACKSLASH" || varName == "$JUST_VERSION" ||
+            varName == "$E" || varName == "$LN2" || varName == "$LN10" ||
+            varName == "$SQRT2" || varName == "$SQRT1_2"
+        ) {
             advance();
             return executeFunction(varName.substr(1), {}, currentToken().start);
         }
@@ -1502,14 +1503,29 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         long timestamp = getCurrentTime();
         return numberToValue(timestamp);
     }
-    else if (funcName == "PI") {
-        return numberToValue(3.14159265358979323846);
+    else if (funcName == "Math::PI" || funcName == "PI") {
+        return numberToValue(Math::PI);
     }
     else if (funcName == "BACKSLASH") {
         return stringToValue("\\");
     }
     else if (funcName == "VERSION") {
         return stringToValue(JUSTC_VERSION);
+    }
+    else if (funcName == "Math::E" || funcName == "E") {
+        return numberToValue(Math::E);
+    }
+    else if (funcName == "Math::LN2" || funcName == "LN2") {
+        return numberToValue(Math::LN2);
+    }
+    else if (funcName == "Math::LN10" || funcName == "LN10") {
+        return numberToValue(Math::LN10);
+    }
+    else if (funcName == "Math::SQRT2" || funcName == "SQRT2") {
+        return numberToValue(Math::LN10);
+    }
+    else if (funcName == "Math::SQRT1_2" || funcName == "SQRT1_2") {
+        return numberToValue(Math::LN10);
     }
 
     // built-in
@@ -1522,11 +1538,9 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "typeid") return functionTYPEID(args);
     if (funcName == "typeof") return functionTYPEOF(args);
     if (funcName == "echo") return functionECHO(args);
-    if (funcName == "parseNum") {
+    if (funcName == "number") {
+        if (args.empty()) return numberToValue(0.0);
         return numberToValue(args[0].toNumber());
-    }
-    if (funcName == "parseInt") {
-        return numberToValue(Math::Round(args[0].toNumber()));
     }
     if (funcName == "JSON") return functionJSON(args);
     if (funcName == "HTTP::GET") {
@@ -1614,7 +1628,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "config") return functionCONFIG(args);
 
     // math
-    if (args.empty()) {
+    if (args.empty() && funcName != "Math::Random") {
         throw std::runtime_error("Expected at least one argument, got 0 at " + Utility::position(startPos, input) + ".");
     }
     double inpnum = args[0].number_value;
@@ -1688,6 +1702,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         }
         if (funcName == "Math::Random") {
             if (args.empty()) return Value::createNumber(Math::Random());
+            if (args.size() == 1) return Value::createNumber(Math::Random(0, inpnum));
             return Value::createNumber(Math::Random(inpnum, args[1].number_value));
         }
         if (funcName == "Math::Round") {
@@ -1713,6 +1728,26 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         }
         if (funcName == "Math::ToRadians") {
             return Value::createNumber(Math::ToRadians(inpnum));
+        }
+        if (funcName == "Math::ParseNum") {
+            std::string str = args[0].toString();
+            int radix = 10;
+
+            if (args.size() > 1) {
+                radix = static_cast<int>(args[1].toNumber());
+                if (radix < 2 || radix > 64) {
+                    throw std::runtime_error("Math::ParseNum: Radix must be between 2 and 64");
+                }
+            }
+
+            if (radix == 10) return numberToValue(args[0].toNumber());
+
+            try {
+                double result = Math::ParseNum(str, radix);
+                return Value::createNumber(result);
+            } catch (const std::exception& e) {
+                throw std::runtime_error("Math::ParseNum: " + std::string(e.what()));
+            }
         }
     } catch (const std::exception& e) {
         throw std::runtime_error(std::string(e.what()) + " at " + Utility::position(startPos, input) + ".");
@@ -2099,7 +2134,6 @@ Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
             }
             break;
         case DataType::BOOLEAN:
-            result.type = DataType::BOOLEAN;
             switch (result.type) {
                 case DataType::NUMBER:
                 case DataType::HEXADECIMAL:
@@ -2120,6 +2154,7 @@ Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
                     throw typeDeclarationError(result.type, typeDeclaration, node);
                     break;
             }
+            result.type = DataType::BOOLEAN;
             break;
         default:
             throw typeDeclarationError(result.type, typeDeclaration, node);

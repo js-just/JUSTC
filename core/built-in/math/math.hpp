@@ -32,6 +32,7 @@ SOFTWARE.
 #include <random>
 #include <type_traits>
 #include <initializer_list>
+#include <stdexcept>
 
 class Math {
 private:

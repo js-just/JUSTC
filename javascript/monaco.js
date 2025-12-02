@@ -4,8 +4,7 @@ const monacoElement = document.createElement('div');
 monacoElement.id = "editor";
 monacoElement.style = "height: 80vh; outline: 2px solid gray; overflow-y: clip; border-radius: 2px;";
 
-function monacoJUSTClang() {
-    return {
+const monacoJUSTClang = {
         keywords: [
             "type", "global", "local", "strict",
             "import", "export", "exports", "require",
@@ -42,7 +41,7 @@ function monacoJUSTClang() {
 
         escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
-        builtinFunctions: /\b(echo|log|logfile|value|string|number|link|binary|octal|hexadecimal|typeid|typeof|JSON|file|size|env|config|JUSTC|PARSEJUSTC|PARSEJSON|TIME|PI|BACKSLASH|VERSION|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|Acos|Asin|Atan|Atan2|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log|Log10|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|ToDegrees|ToRadians))\b/i,
+        builtinFunctions: /\b(echo|log|logfile|value|string|link|binary|octal|hexadecimal|typeid|typeof|JSON|file|size|env|config|parseNum|parseInt|JUSTC|PARSEJUSTC|PARSEJSON|TIME|PI|BACKSLASH|VERSION|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|Acos|Asin|Atan|Atan2|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log|Log10|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|ToDegrees|ToRadians))\b/i,
 
         constants: /\b(True|TRUE|False|FALSE|Yes|YES|No|NO|Y|N|Null|NULL|Nil|NIL|Infinity|NaN|undefined)\b/,
 
@@ -58,8 +57,8 @@ function monacoJUSTClang() {
                 [/--.*$/, 'comment'],
                 [/-\{/, { token: 'comment', next: '@multiLineComment' }],
 
-                [/"/, { token: 'string.quote', bracket: '@open', next: '@string' }],
-                [/'/, { token: 'string.quote', bracket: '@open', next: '@singleQuoteString' }],
+                [new RegExp(String.fromCharCode(34)), { token: 'string.quote', bracket: '@open', next: '@string' }],
+                [new RegExp(String.fromCharCode(39)), { token: 'string.quote', bracket: '@open', next: '@singleQuoteString' }],
 
                 [/<(?![<])/, { token: 'string.link', next: '@link' }],
 
@@ -109,14 +108,14 @@ function monacoJUSTClang() {
                 [/[^\\"]+/, 'string'],
                 [/@escapes/, 'string.escape'],
                 [/\\./, 'string.escape.invalid'],
-                [/"/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
+                [new RegExp(String.fromCharCode(34)), { token: 'string.quote', bracket: '@close', next: '@pop' }]
             ],
 
             singleQuoteString: [
                 [/[^\\']+/, 'string'],
                 [/@escapes/, 'string.escape'],
                 [/\\./, 'string.escape.invalid'],
-                [/'/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
+                [new RegExp(String.fromCharCode(39)), { token: 'string.quote', bracket: '@close', next: '@pop' }]
             ],
 
             link: [
@@ -145,7 +144,6 @@ function monacoJUSTClang() {
             ],
         },
     };
-};
 
 monacoScript.onload = function() {
     require.config({
@@ -167,7 +165,7 @@ monacoScript.onload = function() {
 
     require(["vs/editor/editor.main"], function() {
         monaco.languages.register({ id: 'justc' });
-        monaco.languages.setMonarchTokensProvider('justc', monacoJUSTClang());
+        monaco.languages.setMonarchTokensProvider('justc', monacoJUSTClang);
 
         monaco.languages.setLanguageConfiguration('justc', {
             brackets: [

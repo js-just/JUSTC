@@ -1516,13 +1516,18 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "value") return functionVALUE(args);
     if (funcName == "string") return functionSTRING(args);
     if (funcName == "link") return functionLINK(args);
-    if (funcName == "number") return functionNUMBER(args);
     if (funcName == "binary") return functionBINARY(args);
     if (funcName == "octal") return functionOCTAL(args);
     if (funcName == "hexadecimal") return functionHEXADECIMAL(args);
     if (funcName == "typeid") return functionTYPEID(args);
     if (funcName == "typeof") return functionTYPEOF(args);
     if (funcName == "echo") return functionECHO(args);
+    if (funcName == "parseNum") {
+        return numberToValue(args[0].toNumber());
+    }
+    if (funcName == "parseInt") {
+        return numberToValue(Math::Round(args[0].toNumber()));
+    }
     if (funcName == "JSON") return functionJSON(args);
     if (funcName == "HTTP::GET") {
         if (!doExecute) {
@@ -2184,12 +2189,6 @@ Value Parser::functionLINK(const std::vector<Value>& args) {
     }
 
     return linkToValue(str);
-}
-
-Value Parser::functionNUMBER(const std::vector<Value>& args) {
-    if (args.empty()) return numberToValue(0);
-
-    return numberToValue(args[0].toNumber());
 }
 
 Value Parser::functionBINARY(const std::vector<Value>& args) {

@@ -335,7 +335,6 @@ private:
     Value functionVALUE(const std::vector<Value>& args);
     Value functionSTRING(const std::vector<Value>& args);
     Value functionLINK(const std::vector<Value>& args);
-    Value functionNUMBER(const std::vector<Value>& args);
     Value functionBINARY(const std::vector<Value>& args);
     Value functionOCTAL(const std::vector<Value>& args);
     Value functionHEXADECIMAL(const std::vector<Value>& args);

@@ -141,9 +141,8 @@ const monacoJUSTClang = {
 
             whitespace: [
                 [/[ \t\r\n]+/, 'white'],
-            ],
-        },
-    };
+            ]
+    }};
 
 monacoScript.onload = function() {
     require.config({

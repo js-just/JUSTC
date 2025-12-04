@@ -34,6 +34,6 @@ class Binary {
         static Value FromText(const std::vector<Value>& args);
         static Value ToDataURL(const std::vector<Value>& args);
         static Value FromDataURL(const std::vector<Value>& args);
-}
+};
 
 #endif

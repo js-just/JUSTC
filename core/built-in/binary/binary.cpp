@@ -69,7 +69,7 @@ Value Binary::ToText(const std::vector<Value>& args) {
                     }
                 }
             }
-            return stringToValue(result);
+            return Parser::stringToValue(result);
         } else if (encoding == "ascii") {
             std::string result;
             for (unsigned char c : binary) {
@@ -78,7 +78,7 @@ Value Binary::ToText(const std::vector<Value>& args) {
                 }
                 result.push_back(static_cast<char>(c));
             }
-            return stringToValue(result);
+            return Parser::stringToValue(result);
         } else if (encoding == "base64") {
             const std::string base64_chars =
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -125,7 +125,7 @@ Value Binary::ToText(const std::vector<Value>& args) {
                 }
             }
 
-            return stringToValue(result);
+            return Parser::stringToValue(result);
         } else {
             throw std::runtime_error("Unsupported encoding: " + encoding);
         }
@@ -240,7 +240,7 @@ Value Binary::ToDataURL(const std::vector<Value>& args) {
         std::string base64 = base64Value.toString();
 
         std::string data_url = "data:" + mime_type + ";base64," + base64;
-        return stringToValue(data_url);
+        return Parser::stringToValue(data_url);
     } catch (const std::exception& e) {
         throw std::runtime_error("Binary::ToDataURL: " + std::string(e.what()));
     }

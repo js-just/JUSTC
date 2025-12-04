@@ -307,7 +307,6 @@ private:
     Value evaluateASTNode(const ASTNode& node);
     void extractReferences(const Value& value, std::vector<std::string>& references);
 
-    Value stringToValue(const std::string& str);
     Value numberToValue(double num);
     Value booleanToValue(bool b);
     Value linkToValue(const std::string& link);
@@ -388,6 +387,7 @@ private:
 
 public:
     static std::string getCurrentTimestamp();
+    Value stringToValue(const std::string& str);
     Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);
     ParseResult parse(bool doExecute = true);
     static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);

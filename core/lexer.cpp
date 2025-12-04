@@ -189,30 +189,67 @@ ParserToken Lexer::readLink() {
 ParserToken Lexer::readNumber() {
     size_t start = position;
     bool point = false;
-    while (position < input.length() &&
-           (isDigit(input[position]) ||
-            std::string(".#&bB").find(input[position]) != std::string::npos ||
-            isHexDigit(input[position]) ||
-            isBase64Char(input[position]))) {
+    bool isBin = false;
+    bool isOct = false;
+    bool isHex = false;
+    bool bigNumber = false;
 
+    if (position + 1 < input.length() && input[position] == '0') {
+        char next = std::tolower(input[position + 1]);
+        if (next == 'b') {
+            isBin = true;
+            position += 2;
+        } else if (next == 'o') {
+            isOct = true;
+            position += 2;
+        } else if (next == 'x') {
+            isHex = true;
+            position += 2;
+        }
+    }
+
+    while (position < input.length()) {
         char ch = input[position];
-        if (((std::isalnum(static_cast<unsigned char>(ch)) || ch == '.' || ch == ',' ||
-             ch == '#' || ch == '&' || ch == 'b' || ch == 'B') &&
-            (((ch == '.' || ch == ',') && position + 1 < input.length() &&
-              isDigit(input[position + 1]) && !point) || (ch != '.' && ch != ','))) || (
-                position - 1 > -1 && isDigit(input[position - 1]) && ch == '_' && position + 1 < input.length() && isDigit(input[position + 1])
-              )) {
+        bool isValidChar = false;
+
+        if (isBin) {
+            isValidChar = (ch == '0' || ch == '1');
+        } else if (isOct) {
+            isValidChar = (ch >= '0' && ch <= '7');
+        } else if (isHex) {
+            isValidChar = isHexDigit(ch);
+        } else {
+            isValidChar = isDigit(ch) ||
+                         ch == '.' ||
+                         ch == ',' ||
+                         ch == '_' ||
+                         (std::tolower(ch) == 'b' && position > start && isDigit(input[position - 1]));
+        }
+
+        if (isValidChar) {
+            if (std::tolower(ch) == 'b' && !isBin && !isOct && !isHex) {
+                bigNumber = true;
+            }
+
+            if (ch == ',') {
+                if (!point) {
+                    point = true;
+                    input[position] = '.';
+                } else {
+                    break;
+                }
+            } else if (ch == '.') {
+                if (!point) {
+                    point = true;
+                } else {
+                    break;
+                }
+            } else if (ch == '_') {
+                position++;
+                continue;
+            }
 
             position++;
-            if (ch == '.' || (ch == ',' && position < input.length() && isDigit(input[position]))) {
-                if (ch == ',') {
-                    input[position - 1] = '.';
-                }
-                point = true;
-            } else if (ch == '_') {
-                input.erase(position - 1, 1);
-                position--;
-            }
         } else {
             break;
         }
@@ -223,17 +260,32 @@ ParserToken Lexer::readNumber() {
     std::transform(checkstr.begin(), checkstr.end(), checkstr.begin(), ::tolower);
 
     std::string type;
-    if (checkstr[0] == '#') {
+    if (isBin) {
+        type = "binary";
+    } else if (isOct) {
+        type = "octal";
+    } else if (isHex) {
+        type = "hex";
+    } else if (checkstr[0] == '#') {
         type = "hex";
     } else if (checkstr[0] == '&') {
         type = "base64";
-    } else if (checkstr[0] == 'b') {
-        type = "binary";
     } else {
         type = "number";
+
+        if (bigNumber && !checkstr.empty() &&
+            std::tolower(checkstr.back()) == 'b') {
+            checkstr.pop_back();
+            numStr.pop_back();
+        }
     }
 
-    return ParserToken{type, numStr, start};
+    ParserToken token(type, numStr, start);
+    if (bigNumber) {
+        token.value += "B";
+    }
+
+    return token;
 }
 
 ParserToken Lexer::readIdentifier() {

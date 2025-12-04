@@ -42,9 +42,7 @@ SOFTWARE.
 #include "run.luau.hpp"
 #include <string>
 #include <unordered_map>
-
-#include "built-in/http/http.hpp"
-#include "built-in/math/math.hpp"
+#include "built-in/s.hpp"
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"
@@ -281,6 +279,14 @@ Value Value::createOctal(double num) {
     result.type = DataType::OCTAL;
     result.number_value = num;
     result.name = "o" + Utility::double2octString(num);
+    return result;
+}
+
+Value Value::createBinaryData(const std::vector<unsigned char>& data) {
+    Value result;
+    result.type = DataType::BINARY_DATA;
+    result.binary_data = data;
+    result.name = "[BinaryData size=" + std::to_string(data.size()) + "]";
     return result;
 }
 
@@ -1183,9 +1189,16 @@ Value Parser::astNodeToValue(const ASTNode& node) {
 
 Value Parser::parsePrimary(bool doExecute) {
     if (match("number")) {
-        double num = parseNumber(currentToken().value);
+        std::string numStr = currentToken().value;
+        double num = parseNumber(numStr);
         advance();
-        return numberToValue(num);
+        Value result = numberToValue(num);
+
+        if (!numStr.empty() && std::tolower(numStr.back()) == 'b') {
+            result.name = std::to_string(num) + "B";
+        }
+
+        return result;
     }
     else if (match("hex")) {
         std::string hexStr = currentToken().value;
@@ -1627,12 +1640,24 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "env") return functionENV(args);
     if (funcName == "config") return functionCONFIG(args);
 
-    // math
+    // math and binary
     if (args.empty() && funcName != "Math::Random") {
         throw std::runtime_error("Expected at least one argument, got 0 at " + Utility::position(startPos, input) + ".");
     }
     double inpnum = args[0].number_value;
     try {
+        if (funcName == "Binary::ToText") {
+            return Binary::ToText(args);
+        }
+        if (funcName == "Binary::FromText") {
+            return Binary::FromText(args);
+        }
+        if (funcName == "Binary::ToDataURL") {
+            return Binary::ToDataURL(args);
+        }
+        if (funcName == "Binary::FromDataURL") {
+            return Binary::FromDataURL(args);
+        }
         if (funcName == "Math::Abs") {
             return Value::createNumber(Math::Abs(inpnum));
         }
@@ -2379,7 +2404,15 @@ Value Parser::numberToValue(double num) {
     Value result;
     result.type = DataType::NUMBER;
     result.number_value = num;
-    result.name = num;
+
+    std::string str = std::to_string(num);
+    if (!str.empty() && std::tolower(str.back()) == 'b') {
+        str.pop_back();
+        result.name = str + "B";
+    } else {
+        result.name = str;
+    }
+
     return result;
 }
 
@@ -2412,21 +2445,44 @@ Value Parser::hexToValue(const std::string& hexStr) {
     result.type = DataType::HEXADECIMAL;
 
     std::string cleanHex = hexStr;
-    if (!cleanHex.empty() && (cleanHex[0] == '#' || cleanHex[0] == 'x' || cleanHex[0] == 'X')) {
+    bool isBigNumber = false;
+
+    if (!cleanHex.empty() && std::tolower(cleanHex.back()) == 'b') {
+        isBigNumber = true;
+        cleanHex.pop_back();
+    }
+
+    if (!cleanHex.empty() && cleanHex[0] == '0' &&
+        cleanHex.length() > 1 && std::tolower(cleanHex[1]) == 'x') {
+        cleanHex = cleanHex.substr(2);
+    } else if (!cleanHex.empty() && cleanHex[0] == '#') {
+        cleanHex = cleanHex.substr(1);
+    } else if (!cleanHex.empty() && cleanHex[0] == 'x') {
         cleanHex = cleanHex.substr(1);
     }
 
     try {
-        unsigned int num;
-        std::stringstream ss;
-        ss << std::hex << cleanHex;
-        ss >> num;
-        result.number_value = static_cast<double>(num);
+        if (isBigNumber) {
+            unsigned long long num;
+            std::stringstream ss;
+            ss << std::hex << cleanHex;
+            ss >> num;
+            result.number_value = static_cast<double>(num);
+        } else {
+            unsigned int num;
+            std::stringstream ss;
+            ss << std::hex << cleanHex;
+            ss >> num;
+            result.number_value = static_cast<double>(num);
+        }
     } catch (...) {
         result.number_value = 0.0;
     }
 
     result.name = Utility::double2hexString(result.number_value);
+    if (isBigNumber) {
+        result.name += "B";
+    }
     return result;
 }
 
@@ -2435,18 +2491,42 @@ Value Parser::binaryToValue(const std::string& binStr) {
     result.type = DataType::BINARY;
 
     std::string cleanBin = binStr;
-    if (!cleanBin.empty() && (cleanBin[0] == 'b' || cleanBin[0] == 'B')) {
+    bool isBigNumber = false;
+
+    if (!cleanBin.empty() && std::tolower(cleanBin.back()) == 'b') {
+        isBigNumber = true;
+        cleanBin.pop_back();
+    }
+
+    if (!cleanBin.empty() && cleanBin[0] == '0' &&
+        cleanBin.length() > 1 && std::tolower(cleanBin[1]) == 'b') {
+        cleanBin = cleanBin.substr(2);
+    } else if (!cleanBin.empty() && (cleanBin[0] == 'b' || cleanBin[0] == 'B')) {
         cleanBin = cleanBin.substr(1);
     }
 
     try {
-        unsigned int num = std::stoi(cleanBin, nullptr, 2);
-        result.number_value = static_cast<double>(num);
+        if (isBigNumber) {
+            unsigned long long num = 0;
+            for (char c : cleanBin) {
+                num = (num << 1) | (c == '1' ? 1 : 0);
+            }
+            result.number_value = static_cast<double>(num);
+        } else {
+            unsigned int num = 0;
+            for (char c : cleanBin) {
+                num = (num << 1) | (c == '1' ? 1 : 0);
+            }
+            result.number_value = static_cast<double>(num);
+        }
     } catch (...) {
         result.number_value = 0.0;
     }
 
     result.name = Utility::double2binString(result.number_value);
+    if (isBigNumber) {
+        result.name += "B";
+    }
     return result;
 }
 
@@ -2455,18 +2535,39 @@ Value Parser::octalToValue(const std::string& octStr) {
     result.type = DataType::OCTAL;
 
     std::string cleanOct = octStr;
-    if (!cleanOct.empty() && (cleanOct[0] == 'o' || cleanOct[0] == 'O')) {
+    bool isBigNumber = false;
+
+    if (!cleanOct.empty() && std::tolower(cleanOct.back()) == 'b') {
+        isBigNumber = true;
+        cleanOct.pop_back();
+    }
+
+    if (!cleanOct.empty() && cleanOct[0] == '0' &&
+        cleanOct.length() > 1 && std::tolower(cleanOct[1]) == 'o') {
+        cleanOct = cleanOct.substr(2);
+    } else if (!cleanOct.empty() && (cleanOct[0] == 'o' || cleanOct[0] == 'O')) {
         cleanOct = cleanOct.substr(1);
     }
 
     try {
-        unsigned int num = std::stoi(cleanOct, nullptr, 8);
-        result.number_value = static_cast<double>(num);
+        if (isBigNumber) {
+            unsigned long long num;
+            std::stringstream ss;
+            ss << std::oct << cleanOct;
+            ss >> num;
+            result.number_value = static_cast<double>(num);
+        } else {
+            unsigned int num = std::stoi(cleanOct, nullptr, 8);
+            result.number_value = static_cast<double>(num);
+        }
     } catch (...) {
         result.number_value = 0.0;
     }
 
     result.name = Utility::double2octString(result.number_value);
+    if (isBigNumber) {
+        result.name += "B";
+    }
     return result;
 }
 

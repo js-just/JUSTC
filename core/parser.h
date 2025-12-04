@@ -58,6 +58,7 @@ enum class DataType {
     OCTAL        = 20,
     CLASS        = 21,
     SPACE        = 22,
+    BINARY_DATA  = 23,
     UNKNOWN      =-1
 };
 
@@ -84,7 +85,8 @@ inline std::string dataTypeToString(DataType type) {
         case DataType::UNKNOWN:      return "unknown";
         case DataType::CLASS:        return "class";
         case DataType::SPACE:        return "space";
-        default:                     return "unknown";
+        case DataType::BINARY_DATA:  return "Binary Data";
+        default:                     return "invalid";
     }
 };
 
@@ -99,6 +101,7 @@ struct Value {
     std::shared_ptr<void> complex_value;
     std::string name;
     std::unordered_map<std::string, Value> object_value;
+    std::vector<unsigned char> binary_data;
 
     Value() : type(DataType::UNKNOWN), number_value(0), name("unknown") {}
     Value(DataType t) : type(t), number_value(0), name(dataTypeToString(t)) {}
@@ -126,6 +129,7 @@ struct Value {
     static Value createHexadecimal(double num);
     static Value createBinary(double num);
     static Value createOctal(double num);
+    static Value createBinaryData(const std::vector<unsigned char>& data);
 
     static Value createString(const std::wstring& wstr) {
         Value result;

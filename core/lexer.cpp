@@ -220,8 +220,8 @@ ParserToken Lexer::readNumber() {
             isValidChar = isHexDigit(ch);
         } else {
             isValidChar = isDigit(ch) ||
-                         ch == '.' ||
-                         ch == ',' ||
+                         (ch == '.' && position + 1 < input.length()) ||
+                         (ch == ',' && position + 1 < input.length()) ||
                          ch == '_' ||
                          (std::tolower(ch) == 'b' && position > start && isDigit(input[position - 1]));
         }
@@ -256,6 +256,7 @@ ParserToken Lexer::readNumber() {
     }
 
     std::string numStr = input.substr(start, position - start);
+    numStr.erase(std::remove(numStr.begin(), numStr.end(), '_'), numStr.end());
     std::string checkstr = numStr;
     std::transform(checkstr.begin(), checkstr.end(), checkstr.begin(), ::tolower);
 

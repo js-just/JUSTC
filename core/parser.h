@@ -387,7 +387,7 @@ private:
 
 public:
     static std::string getCurrentTimestamp();
-    Value stringToValue(const std::string& str);
+    static Value stringToValue(const std::string& str);
     Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);
     ParseResult parse(bool doExecute = true);
     static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);

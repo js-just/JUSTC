@@ -850,6 +850,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
                     }
                     else if (nextType == "minus" || nextValue == "-") {
                         advance();advance();
+                        lookaheadPos += 2;
                         continue;
                     } else {
                         break;

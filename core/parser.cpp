@@ -830,6 +830,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
         size_t lookaheadPos = position;
         std::string potentialIdentifier = identifier;
         int runs = 0;
+        bool isVarWithDashes = false;
 
         while (lookaheadPos < tokens.size() &&
             (tokens[lookaheadPos].type == "minus" || tokens[lookaheadPos].value == "-") && runs < 128) {
@@ -844,7 +845,9 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
 
                     if (nextType == "=" || nextType == ":" ||
                         (nextType == "keyword" && (nextValue == "is" || nextValue == "isn't" || nextValue == "isif")) ||
-                        nextValue == "?" || nextValue == "!=") {
+                        nextValue == "?" || nextValue == "!="
+                    ) {
+                        isVarWithDashes = true;
                         advance();advance();
                         break;
                     }
@@ -856,11 +859,15 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
                         break;
                     }
                 } else {
+                    isVarWithDashes = true;
                     break;
                 }
             } else {
                 break;
             }
+        }
+        if (isVarWithDashes) {
+            identifier = potentialIdentifier;
         }
     }
 

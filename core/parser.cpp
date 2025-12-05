@@ -825,27 +825,48 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     node.constant = constant;
     advance();
 
-    if (match("-")) {
-        bool done = false;
-        while (match("-") && !done && !isEnd()) {
-            try {
-                std::string nextnext = peekToken(2).type;
-                if (peekToken().type == "identifier" && (
-                    nextnext != "=" && nextnext != ":" && nextnext != "keyword" && !(
-                        nextnext == "-" && peekToken(3).type == "identifier" && (
-                            peekToken(4).type == endOfScript || peekToken(4).type == "," || peekToken(4).type == "." ||
-                            peekToken(4).type == "("
-                        )
-                    )
-                )) {
-                    advance();
-                    identifier += "-" + currentToken().value;
-                    advance();
+    // handle dashes in variable names
+    if (match("-") || match("minus")) {
+        size_t lookaheadPos = position;
+        std::string potentialIdentifier = identifier;
+        bool isVariableWithDashes = false;
+
+        while (lookaheadPos < tokens.size() &&
+            (tokens[lookaheadPos].type == "minus" || tokens[lookaheadPos].value == "-")) {
+
+            if (lookaheadPos + 1 < tokens.size() && tokens[lookaheadPos + 1].type == "identifier") {
+                potentialIdentifier += "-" + tokens[lookaheadPos + 1].value;
+
+                if (lookaheadPos < tokens.size()) {
+                    std::string nextType = tokens[lookaheadPos].type;
+                    std::string nextValue = tokens[lookaheadPos].value;
+
+                    if (nextType == "=" || nextType == ":" ||
+                        (nextType == "keyword" && (nextValue == "is" || nextValue == "isn't" || nextValue == "isif")) ||
+                        nextValue == "?" || nextValue == "!=") {
+                        isVariableWithDashes = true;
+                        break;
+                    }
+                    else if (nextType == "minus" || nextValue == "-") {
+                        continue;
+                    } else {
+                        break;
+                    }
                 } else {
-                    done = true;
+                    isVariableWithDashes = true;
+                    break;
                 }
-            } catch (...) {
-                done = true;
+            } else {
+                break;
+            }
+        }
+
+        if (isVariableWithDashes) {
+            identifier = potentialIdentifier;
+
+            while (match("-") || match("minus")) {
+                advance();
+                advance();
             }
         }
     }
@@ -886,7 +907,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
         advance();
     }
 
-    if (match("keyword", "is") || match("=") || match("-")) {
+    if (match("keyword", "is") || match("=") || match("-") || match("minus")) {
         assignOp = currentToken().value;
         advance();
 

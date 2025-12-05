@@ -837,8 +837,6 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
             runs++;
 
             if (lookaheadPos + 1 < tokens.size() && tokens[lookaheadPos + 1].type == "identifier") {
-                potentialIdentifier += "-" + tokens[lookaheadPos + 1].value;
-
                 if (lookaheadPos < tokens.size()) {
                     std::string nextType = tokens[lookaheadPos].type;
                     std::string nextValue = tokens[lookaheadPos].value;
@@ -848,11 +846,15 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
                         nextValue == "?" || nextValue == "!="
                     ) {
                         isVarWithDashes = true;
-                        advance();advance();
+                        advance();
+                        potentialIdentifier += "-" + currentToken().value;
+                        advance();
                         break;
                     }
                     else if (nextType == "minus" || nextValue == "-") {
-                        advance();advance();
+                        advance();
+                        potentialIdentifier += "-" + currentToken().value;
+                        advance();
                         lookaheadPos += 2;
                         continue;
                     } else {

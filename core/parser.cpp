@@ -990,22 +990,9 @@ Value Parser::parseBitwiseXOR(bool doExecute) {
     return left;
 }
 Value Parser::parseBitwiseAND(bool doExecute) {
-    Value left = parseBitwiseSHIFT(doExecute);
-
-    while (match("keyword", "AND") || match("&")) {
-        std::string op = currentToken().value;
-        advance();
-
-        Value right = parseBitwiseSHIFT(doExecute);
-        left = evaluateExpression(left, op, right);
-    }
-
-    return left;
-}
-Value Parser::parseBitwiseSHIFT(bool doExecute) {
     Value left = parseBitwiseNOT(doExecute);
 
-    while (match("<<") || match(">>")) {
+    while (match("keyword", "AND") || match("&")) {
         std::string op = currentToken().value;
         advance();
 
@@ -1015,19 +1002,30 @@ Value Parser::parseBitwiseSHIFT(bool doExecute) {
 
     return left;
 }
+Value Parser::parseBitwiseSHIFT(bool doExecute) {
+    Value left = parseBitwiseAND(doExecute);
 
-Value Parser::parseBitwiseNOT(bool doExecute) {
-    Value left = parseLogicalOR(doExecute);
-
-    while (match("NOT") || match("~")) {
+    while (match("<<") || match(">>")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalOR(doExecute);
+        Value right = parseBitwiseAND(doExecute);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
+}
+
+Value Parser::parseBitwiseNOT(bool doExecute) {
+    if (match("NOT") || match("~")) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseBitwiseNOT(doExecute);
+        return evaluateExpression(Value(), op, right);
+    }
+
+    return parseBitwiseSHIFT(doExecute);
 }
 
 Value Parser::parseLogicalOR(bool doExecute) {
@@ -1902,7 +1900,6 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             int rightInt = rightBool ? 1 : 0;
             result = booleanToValue(leftInt & rightInt);
         }
-        advance();
     }
     else if (op == "|" || op == "OR") {
         if (Utility::checkNumbers(left, right)) {
@@ -1916,7 +1913,6 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             int rightInt = rightBool ? 1 : 0;
             result = booleanToValue(leftInt | rightInt);
         }
-        advance();
     }
     else if (op == "^" || op == "XOR") {
         if (Utility::checkNumbers(left, right)) {
@@ -1926,7 +1922,6 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else {
             throw std::runtime_error("Expected numbers for bitwise XOR operation at " + Utility::position(position, input) + ".");
         }
-        advance();
     }
     else if (op == "~" || op == "NOT") {
         if (left.type == DataType::NUMBER || left.type == DataType::HEXADECIMAL ||
@@ -1936,7 +1931,6 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else {
             throw std::runtime_error("Expected numbers for bitwise NOT operation at " + Utility::position(position, input) + ".");
         }
-        advance();
     }
     else if (op == "<<") {
         if (Utility::checkNumbers(left, right)) {
@@ -1946,7 +1940,6 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else {
             throw std::runtime_error("Expected numbers at left shift at " + Utility::position(position, input) + ".");
         }
-        advance();
     }
     else if (op == ">>") {
         if (Utility::checkNumbers(left, right)) {
@@ -1956,7 +1949,6 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else {
             throw std::runtime_error("Expected numbers at right shift  at " + Utility::position(position, input) + ".");
         }
-        advance();
     }
 
     else if (op == "&&" || op == "and") {

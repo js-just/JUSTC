@@ -979,7 +979,7 @@ Value Parser::parseBitwiseOR(bool doExecute) {
 Value Parser::parseBitwiseXOR(bool doExecute) {
     Value left = parseBitwiseAND(doExecute);
 
-    while (match("keyword", "XOR")) {
+    while (match("keyword", "XOR") || match("^")) {
         std::string op = currentToken().value;
         advance();
 
@@ -1019,7 +1019,7 @@ Value Parser::parseBitwiseSHIFT(bool doExecute) {
 Value Parser::parseBitwiseNOT(bool doExecute) {
     Value left = parseLogicalOR(doExecute);
 
-    while (match("NOT")) {
+    while (match("NOT") || match("~")) {
         std::string op = currentToken().value;
         advance();
 
@@ -1658,6 +1658,9 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         if (funcName == "Binary::FromDataURL") {
             return Binary::FromDataURL(args);
         }
+        if (funcName == "Binary::Data") {
+            return Binary::Data(args);
+        }
         if (funcName == "Math::Abs") {
             return Value::createNumber(Math::Abs(inpnum));
         }
@@ -1915,7 +1918,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         }
         advance();
     }
-    else if (op == "XOR") {
+    else if (op == "^" || op == "XOR") {
         if (Utility::checkNumbers(left, right)) {
             int leftInt = static_cast<int>(left.toNumber());
             int rightInt = static_cast<int>(right.toNumber());
@@ -1925,7 +1928,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         }
         advance();
     }
-    else if (op == "NOT") {
+    else if (op == "~" || op == "NOT") {
         if (left.type == DataType::NUMBER || left.type == DataType::HEXADECIMAL ||
             left.type == DataType::BINARY || left.type == DataType::OCTAL) {
             int num = static_cast<int>(left.toNumber());
@@ -2133,6 +2136,13 @@ Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
         case DataType::HEXADECIMAL:
         case DataType::OCTAL:
         case DataType::BINARY:
+            if (typeDeclaration == DataType::BINARY_DATA && result.type == DataType::BINARY) {
+                try {
+                    result = Binary::Data(result);
+                } catch (const std::exception& e) {
+                    throw std::runtime_error("Type declaration error: " + std::string(e.what()) + " at " + Utility::position(node.startPos, input) + ".");
+                }
+            }
             switch (result.type) {
                 case DataType::NUMBER:
                 case DataType::HEXADECIMAL:
@@ -2154,7 +2164,7 @@ Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
                 if (isValidLink(result.string_value)) {
                     result.type = DataType::LINK;
                 } else {
-                    throw std::runtime_error("Type declaration error: Invalid link: " + result.string_value);
+                    throw std::runtime_error("Type declaration error: Invalid link: " + result.string_value + " at " + Utility::position(node.startPos, input) + ".");
                 }
             }
             break;

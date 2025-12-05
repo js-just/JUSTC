@@ -41,7 +41,7 @@ const monacoJUSTClang = {
 
         escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
-        builtinFunctions: /\b(echo|log|logfile|value|string|number|link|binary|octal|hexadecimal|typeid|typeof|JSON|file|size|env|config|parseInt|JUSTC|PARSEJUSTC|PARSEJSON|TIME|PI|BACKSLASH|VERSION|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|A(cos|sin|tan(2|))|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|To(Degrees|Radians)|ParseNum)|Binary::((To|From)(Text|DataURL)))\b/i,
+        builtinFunctions: /\b(echo|log|logfile|value|string|number|link|binary|octal|hexadecimal|typeid|typeof|JSON|file|size|env|config|parseInt|JUSTC|PARSEJUSTC|PARSEJSON|TIME|PI|BACKSLASH|VERSION|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|A(cos|sin|tan(2|))|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|To(Degrees|Radians)|ParseNum)|Binary::((To|From)(Text|DataURL))|Data)\b/i,
 
         constants: /\b(True|TRUE|False|FALSE|Yes|YES|No|NO|Y|N|Null|NULL|Nil|NIL|Infinity|NaN|undefined)\b/,
 

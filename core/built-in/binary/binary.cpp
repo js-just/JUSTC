@@ -275,3 +275,39 @@ Value Binary::FromDataURL(const std::vector<Value>& args) {
         throw std::runtime_error("Binary::FromDataURL: " + std::string(e.what()));
     }
 }
+
+Value Binary::Data(const std::vector<Value>& args) {
+    if (args.empty() || args[0].type != DataType::BINARY) {
+        throw std::runtime_error("Binary::Data requires a data Binary Number argument");
+    }
+
+    try {
+        double num = args[0].toNumber();
+
+        size_t byteCount = 4;
+        if (args.size() > 1) {
+            byteCount = static_cast<size_t>(args[1].toNumber());
+            if (byteCount < 1 || byteCount > 8) {
+                throw std::runtime_error("Byte count must be between 1 and 8");
+            }
+        }
+
+        unsigned long long intValue;
+        if (byteCount <= 4) {
+            intValue = static_cast<unsigned int>(num);
+        } else {
+            intValue = static_cast<unsigned long long>(num);
+        }
+
+        std::vector<unsigned char> binary;
+        for (size_t i = 0; i < byteCount; i++) {
+            unsigned char byte = static_cast<unsigned char>((intValue >> (8 * (byteCount - i - 1))) & 0xFF);
+            binary.push_back(byte);
+        }
+
+        return Value::createBinaryData(binary);
+
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Binary::Data: " + std::string(e.what()));
+    }
+}

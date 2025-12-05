@@ -419,7 +419,7 @@ bool Parser::isEnd() const {
 }
 
 void Parser::skipCommas() {
-    while (match(",")) advance();
+    while (match(",") || match(";")) advance();
 }
 
 ParseResult Parser::parse(bool doExecute) {
@@ -685,7 +685,7 @@ ASTNode Parser::parseReturnCommand() {
                 outputVariables.push_back(currentToken().value);
                 advance();
             } else parseReturnCommandError(true, true);
-            if (match(",")) advance();
+            if (match(",") || match(";")) advance();
         }
         if (match("]")) advance();
         else parseReturnCommandError(false);
@@ -700,7 +700,7 @@ ASTNode Parser::parseReturnCommand() {
                     outputNames.push_back(currentToken().value);
                     advance();
                 } else parseReturnCommandError(false, true);
-                if (match(",")) advance();
+                if (match(",") || match(";")) advance();
             }
             if (match("]")) advance();
             else parseReturnCommandError(false);
@@ -1291,7 +1291,7 @@ Value Parser::parsePrimary(bool doExecute) {
     else if ((
         (endOfScript == "." && match(".") && tokens[position + 1].type != "number") ||
         (endOfScript != "." && match(endOfScript))
-    ) || (match(",") && tokens[position + 1].type != "number")) {
+    ) || (match(",") && tokens[position + 1].type != "number") || match(";")) {
         Value result;
         result.type = DataType::NULL_TYPE;
         result.string_value = "null";
@@ -1389,7 +1389,7 @@ Value Parser::parseFunctionCall(bool doExecute) {
     std::vector<Value> args;
     while (!match(")") && !isEnd()) {
         args.push_back(parseExpression(doExecute));
-        if (match(",")) advance();
+        if (match(",") || match(";")) advance();
     }
 
     if (!match(")")) {
@@ -1420,10 +1420,10 @@ ASTNode Parser::parseCommand(bool doExecute) {
     std::vector<Value> args;
 
     if (doExecute && (command == "echo" || command == "logfile" || command == "log") && !match("(")) {
-        while (!match(",") && !match(endOfScript) && !isEnd()) {
+        while (!match(",") && !match(";") && !match(endOfScript) && !isEnd()) {
             args.push_back(parseExpression(doExecute));
         }
-        if (match(",")) advance();
+        if (match(",") || match(";")) advance();
 
         if (command == "echo") {
             for (const auto& arg : args) {
@@ -1460,7 +1460,7 @@ ASTNode Parser::parseCommand(bool doExecute) {
         advance();
         while (!match(")") && !isEnd()) {
             args.push_back(parseExpression(doExecute));
-            if (match(",")) advance();
+            if (match(",") || match(";")) advance();
         }
         if (match(")")) advance();
     }

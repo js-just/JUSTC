@@ -865,6 +865,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
         if (tokensConsumed > 0) {
             isVarWithDashes = true;
             identifier = potentialIdentifier;
+            node.identifier = identifier;
 
             for (size_t i = 0; i < tokensConsumed; i++) {
                 advance();

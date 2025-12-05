@@ -825,6 +825,31 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     node.constant = constant;
     advance();
 
+    if (match("-")) {
+        bool done = false;
+        while (match("-") && !done && !isEnd()) {
+            try {
+                std::string nextnext = peekToken(2).type;
+                if (peekToken().type == "identifier" && (
+                    nextnext != "=" && nextnext != ":" && nextnext != "keyword" && !(
+                        nextnext == "-" && peekToken(3).type == "identifier" && (
+                            peekToken(4).type == endOfScript || peekToken(4).type == "," || peekToken(4).type == "." ||
+                            peekToken(4).type == "("
+                        )
+                    )
+                )) {
+                    advance();
+                    identifier += "-" + currentToken().value;
+                    advance();
+                } else {
+                    done = true;
+                }
+            } catch (...) {
+                done = true;
+            }
+        }
+    }
+
     std::string assignOp;
     std::string typeDecl;
     if (match(":")) {
@@ -861,7 +886,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
         advance();
     }
 
-    if (match("keyword", "is") || match("=")) {
+    if (match("keyword", "is") || match("=") || match("-")) {
         assignOp = currentToken().value;
         advance();
 
@@ -895,8 +920,16 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     else {
         if (isEnd()) {
             throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got EOF.");
-        }
-        throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got \"" + currentToken().value +"\".");
+        } else if (
+            match("string") || match("number") || match("null") || match("path") || match("link") ||
+            match("hex") || match("binary") || match("boolean") || match("identifier") || match("|") ||
+            match("JavaScript") || match("Luau") || match(endOfScript) || match(".") || match(",") ||
+            match("{") || match("[")
+        ) {
+            Value exprValue = parseExpression(doExecute);
+            node.value = exprValue;
+            extractReferences(exprValue, node.references);
+        } else throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got \"" + currentToken().value +"\".");
     }
 
     variables[identifier] = Value();
@@ -1017,10 +1050,10 @@ Value Parser::parseBitwiseSHIFT(bool doExecute) {
 }
 
 Value Parser::parseBitwiseNOT(bool doExecute) {
-    if (match("NOT") || match("~")) {
+    if (match("keyword", "NOT") || match("~")) {
         Value left;
 
-        while (match("NOT") || match("~")) {
+        while (match("keyword", "NOT") || match("~")) {
             std::string op = currentToken().value;
             advance();
 

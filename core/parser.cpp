@@ -1017,17 +1017,20 @@ Value Parser::parseBitwiseSHIFT(bool doExecute) {
 }
 
 Value Parser::parseBitwiseNOT(bool doExecute) {
-    Value left;
+    if (match("NOT") || match("~")) {
+        Value left;
 
-    while (match("NOT") || match("~")) {
-        std::string op = currentToken().value;
-        advance();
+        while (match("NOT") || match("~")) {
+            std::string op = currentToken().value;
+            advance();
 
-        Value right = parseBitwiseSHIFT(doExecute);
-        left = evaluateExpression(left, op, right);
+            Value right = parseBitwiseSHIFT(doExecute);
+            left = evaluateExpression(left, op, right);
+        }
+
+        return left;
     }
-
-    return left;
+    else return parseBitwiseSHIFT(doExecute);
 }
 
 Value Parser::parseLogicalOR(bool doExecute) {
@@ -1926,12 +1929,12 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         }
     }
     else if (op == "~" || op == "NOT") {
-        if (left.type == DataType::NUMBER || left.type == DataType::HEXADECIMAL ||
-            left.type == DataType::BINARY || left.type == DataType::OCTAL) {
-            int num = static_cast<int>(left.toNumber());
+        if (right.type == DataType::NUMBER || right.type == DataType::HEXADECIMAL ||
+            right.type == DataType::BINARY || right.type == DataType::OCTAL) {
+            int num = static_cast<int>(right.toNumber());
             result = numberToValue(~num);
         } else {
-            throw std::runtime_error("Expected numbers for bitwise NOT operation at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected number for bitwise NOT operation at " + Utility::position(position, input) + ".");
         }
     }
     else if (op == "<<") {

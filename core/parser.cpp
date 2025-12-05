@@ -1861,7 +1861,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             result = numberToValue(left.toNumber() / divisor);
         }
     }
-    else if (op == "^" && Utility::checkNumbers(left, right)) {
+    else if (op == "**" && Utility::checkNumbers(left, right)) {
         result = numberToValue(std::pow(left.toNumber(), right.toNumber()));
     }
     else if (op == "%" && Utility::checkNumbers(left, right)) {

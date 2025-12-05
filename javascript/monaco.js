@@ -26,8 +26,8 @@ const monacoJUSTClang = {
         ],
 
         typeKeywords: [
-            'string', 'number', 'link', 'binary', 'hexadecimal',
-            'octal', 'infinity', 'nan', 'boolean', 'path', 'variable'
+            'number', 'string', 'boolean', 'null', 'link', 'path', 'binary', 'octal', 'hexadecimal', 'object', 'json', 'array', 'nan', 'infinity', 'data', 'auto',
+            'num', 'str', 'bool', 'nil', 'bin', 'oct', 'hex', 'obj', 'inf',
         ],
 
         operators: [

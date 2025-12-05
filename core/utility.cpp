@@ -159,6 +159,7 @@ DataType Utility::typeDeclaration2dataType(const std::string& typeDeclaration, c
         { "array",       DataType::JSON_ARRAY   },
         { "nan",         DataType::NOT_A_NUMBER },
         { "infinity",    DataType::INFINITE     },     { "inf",  DataType::INFINITE     },
+        { "data",        DataType::BINARY_DATA  },
         { "auto",        DataType::UNKNOWN      },
     };
 

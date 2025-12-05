@@ -41,7 +41,7 @@ const monacoJUSTClang = {
 
         escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
-        builtinFunctions: /\b(echo|log|logfile|value|string|number|link|binary|octal|hexadecimal|typeid|typeof|JSON|file|size|env|config|parseInt|JUSTC|PARSEJUSTC|PARSEJSON|TIME|PI|BACKSLASH|VERSION|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|Acos|Asin|Atan|Atan2|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log|Log10|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|ToDegrees|ToRadians|ParseNum))\b/i,
+        builtinFunctions: /\b(echo|log|logfile|value|string|number|link|binary|octal|hexadecimal|typeid|typeof|JSON|file|size|env|config|parseInt|JUSTC|PARSEJUSTC|PARSEJSON|TIME|PI|BACKSLASH|VERSION|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|A(cos|sin|tan(2|))|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|To(Degrees|Radians)|ParseNum)|Binary::((To|From)(Text|DataURL)))\b/i,
 
         constants: /\b(True|TRUE|False|FALSE|Yes|YES|No|NO|Y|N|Null|NULL|Nil|NIL|Infinity|NaN|undefined)\b/,
 
@@ -60,15 +60,15 @@ const monacoJUSTClang = {
                 [new RegExp(String.fromCharCode(34)), { token: 'string.quote', bracket: '@open', next: '@string' }],
                 [new RegExp(String.fromCharCode(39)), { token: 'string.quote', bracket: '@open', next: '@singleQuoteString' }],
 
-                [/<(?![<])/, { token: 'string.link', next: '@link' }],
+                [/<(?![<\s])/, { token: 'string.link', next: '@link' }],
 
                 [/\{\{/, { token: 'keyword.js', next: '@jsEmbedded', nextEmbedded: 'javascript' }],
 
-                [/0[xX][0-9a-fA-F_]+/, 'number.hex'],
-                [/[xX#][0-9a-fA-F_]+/, 'number.hex'],
-                [/[bB][01_]+/, 'number.binary'],
-                [/[oO][0-7_]+/, 'number.octal'],
-                [/\d[\d_]*(\.\d[\d_]*)?([eE][+-]?\d[\d_]*)?/, 'number'],
+                [/0[xX][0-9a-fA-F_]+(B|b|)/, 'number.hex'],
+                [/0[bB][01_]+(B|b|)/, 'number.binary'],
+                [/0[oO][0-7_]+(B|b|)/, 'number.octal'],
+                [/\d[\d_]*([\.,]\d[\d_]*)?([eE][+-]?\d[\d_]*)?(B|b|)/, 'number'],
+                [/[\.,]\d(B|b|)/, 'number'],
 
                 [/@builtinFunctions(?=\s*\()/, 'type.identifier'],
 

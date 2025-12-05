@@ -827,49 +827,50 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
 
     // handle dashes in variable names
     if (match("-") || match("minus")) {
+        size_t originalPos = position;
         size_t lookaheadPos = position;
         std::string potentialIdentifier = identifier;
         int runs = 0;
         bool isVarWithDashes = false;
+        size_t tokensConsumed = 0;
 
         while (lookaheadPos < tokens.size() &&
-            (tokens[lookaheadPos].type == "minus" || tokens[lookaheadPos].value == "-") && runs < 128) {
+            (tokens[lookaheadPos].type == "minus" || tokens[lookaheadPos].value == "-") &&
+            runs < 128) {
             runs++;
 
             if (lookaheadPos + 1 < tokens.size() && tokens[lookaheadPos + 1].type == "identifier") {
-                if (lookaheadPos < tokens.size()) {
-                    std::string nextType = tokens[lookaheadPos].type;
-                    std::string nextValue = tokens[lookaheadPos].value;
+                std::string nextType = tokens[lookaheadPos].type;
+                std::string nextValue = tokens[lookaheadPos].value;
 
-                    if (nextType == "=" || nextType == ":" ||
-                        (nextType == "keyword" && (nextValue == "is" || nextValue == "isn't" || nextValue == "isif")) ||
-                        nextValue == "?" || nextValue == "!="
-                    ) {
-                        isVarWithDashes = true;
-                        advance();
-                        potentialIdentifier += "-" + currentToken().value;
-                        advance();
-                        break;
-                    }
-                    else if (nextType == "minus" || nextValue == "-") {
-                        advance();
-                        potentialIdentifier += "-" + currentToken().value;
-                        advance();
-                        lookaheadPos += 2;
-                        continue;
-                    } else {
-                        break;
-                    }
+                if (nextType == "=" || nextType == ":" ||
+                    (nextType == "keyword" && (nextValue == "is" || nextValue == "isn't" || nextValue == "isif")) ||
+                    nextValue == "?" || nextValue == "!=") {
+                    isVarWithDashes = false;
+                    break;
+                }
+                else if (nextType == "minus" || nextValue == "-") {
+                    potentialIdentifier += "-" + tokens[lookaheadPos + 1].value;
+                    lookaheadPos += 2;
+                    tokensConsumed += 2;
+                    continue;
                 } else {
-                    isVarWithDashes = true;
                     break;
                 }
             } else {
                 break;
             }
         }
-        if (isVarWithDashes) {
+
+        if (tokensConsumed > 0) {
+            isVarWithDashes = true;
             identifier = potentialIdentifier;
+
+            for (size_t i = 0; i < tokensConsumed; i++) {
+                advance();
+            }
+        } else {
+            position = originalPos;
         }
     }
 

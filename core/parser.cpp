@@ -829,9 +829,11 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     if (match("-") || match("minus")) {
         size_t lookaheadPos = position;
         std::string potentialIdentifier = identifier;
+        int runs = 0;
 
         while (lookaheadPos < tokens.size() &&
-            (tokens[lookaheadPos].type == "minus" || tokens[lookaheadPos].value == "-")) {
+            (tokens[lookaheadPos].type == "minus" || tokens[lookaheadPos].value == "-") && runs < 128) {
+            runs++;
 
             if (lookaheadPos + 1 < tokens.size() && tokens[lookaheadPos + 1].type == "identifier") {
                 potentialIdentifier += "-" + tokens[lookaheadPos + 1].value;

@@ -2138,7 +2138,7 @@ Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
         case DataType::BINARY:
             if (typeDeclaration == DataType::BINARY_DATA && result.type == DataType::BINARY) {
                 try {
-                    result = Binary::Data(result);
+                    result = Binary::Data({result});
                 } catch (const std::exception& e) {
                     throw std::runtime_error("Type declaration error: " + std::string(e.what()) + " at " + Utility::position(node.startPos, input) + ".");
                 }

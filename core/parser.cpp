@@ -1003,13 +1003,13 @@ Value Parser::parseBitwiseAND(bool doExecute) {
     return left;
 }
 Value Parser::parseBitwiseSHIFT(bool doExecute) {
-    Value left = parseBitwiseAND(doExecute);
+    Value left = parseLogicalOR(doExecute);
 
     while (match("<<") || match(">>")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseBitwiseAND(doExecute);
+        Value right = parseLogicalOR(doExecute);
         left = evaluateExpression(left, op, right);
     }
 
@@ -1017,15 +1017,17 @@ Value Parser::parseBitwiseSHIFT(bool doExecute) {
 }
 
 Value Parser::parseBitwiseNOT(bool doExecute) {
-    if (match("NOT") || match("~")) {
+    Value left;
+
+    while (match("NOT") || match("~")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseBitwiseNOT(doExecute);
-        return evaluateExpression(Value(), op, right);
+        Value right = parseBitwiseSHIFT(doExecute);
+        left = evaluateExpression(left, op, right);
     }
 
-    return parseBitwiseSHIFT(doExecute);
+    return left;
 }
 
 Value Parser::parseLogicalOR(bool doExecute) {

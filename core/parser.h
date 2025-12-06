@@ -34,8 +34,24 @@ SOFTWARE.
 #include <algorithm>
 #include <future>
 #include <cstdint>
+#include <variant>
 #include "lexer.h"
 #include "version.h"
+
+struct Value;
+class Parser;
+
+struct ObjectContext {
+    std::shared_ptr<Parser> parser;
+    std::string outputMode;
+    std::vector<std::string> outputVariables;
+    std::unordered_map<std::string, Value> variables;
+    bool allowJavaScript;
+    bool allowLuau;
+
+    std::shared_ptr<ObjectContext> parent;
+    std::unordered_map<std::string, std::shared_ptr<ObjectContext>> childObjects;
+};
 
 enum class DataType {
     JUSTC_OBJECT =  0,
@@ -90,17 +106,6 @@ inline std::string dataTypeToString(DataType type) {
     }
 };
 
-struct ObjectContext {
-    std::shared_ptr<Parser> parser;
-    std::string outputMode;
-    std::vector<std::string> outputVariables;
-    std::unordered_map<std::string, Value> variables;
-    bool allowJavaScript;
-    bool allowLuau;
-
-    std::shared_ptr<ObjectContext> parent;
-    std::unordered_map<std::string, std::shared_ptr<ObjectContext>> childObjects;
-};
 struct Value {
     DataType type;
 
@@ -114,16 +119,14 @@ struct Value {
     std::unordered_map<std::string, Value> object_value;
     std::vector<unsigned char> binary_data;
 
-    std::vector<Value> array_value;
-    std::shared_ptr<Parser> nested_parser;
     std::shared_ptr<ObjectContext> object_context;
     std::unordered_map<std::string, Value> properties;
     std::vector<Value> array_elements;
     DataType object_type;
 
-    Value() : type(DataType::UNKNOWN), number_value(0), name("unknown") {}
-    Value(DataType t) : type(t), number_value(0), name(dataTypeToString(t)) {}
-    Value(DataType t, std::string s) : type(t), string_value(s), name(dataTypeToString(t)) {}
+    Value() : type(DataType::UNKNOWN), number_value(0), name("unknown"), object_type(DataType::UNKNOWN) {}
+    Value(DataType t) : type(t), number_value(0), name(dataTypeToString(t)), object_type(DataType::UNKNOWN) {}
+    Value(DataType t, std::string s) : type(t), string_value(s), name(dataTypeToString(t)), object_type(DataType::UNKNOWN) {}
 
     std::string toString() const;
     double toNumber() const;
@@ -135,34 +138,6 @@ struct Value {
         } catch (...) {
             return L"";
         }
-    }
-
-    static Value createNumber(double num);
-    static Value createString(const std::string& str);
-    static Value createBoolean(bool b);
-    static Value createNull();
-    static Value createLink(const std::string& link);
-    static Value createPath(const std::string& path);
-    static Value createVariable(const std::string& varName);
-    static Value createHexadecimal(double num);
-    static Value createBinary(double num);
-    static Value createOctal(double num);
-    static Value createBinaryData(const std::vector<unsigned char>& data);
-    static Value createJustcObject(const std::shared_ptr<Parser>& parser);
-    static Value createJsonObject(const std::unordered_map<std::string, Value>& obj);
-    static Value createJsonArray(const std::vector<Value>& arr);
-
-    static Value createString(const std::wstring& wstr) {
-        Value result;
-        result.type = DataType::STRING;
-        try {
-            result.string_value = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(wstr);
-            result.name = "\"" + result.string_value + "\"";
-        } catch (...) {
-            result.string_value = "";
-            result.name = "\"\"";
-        }
-        return result;
     }
 
     bool isObject() const {
@@ -181,6 +156,34 @@ struct Value {
             return &array_elements[index];
         }
         return nullptr;
+    }
+
+    static Value createNumber(double num);
+    static Value createString(const std::string& str);
+    static Value createBoolean(bool b);
+    static Value createNull();
+    static Value createLink(const std::string& link);
+    static Value createPath(const std::string& path);
+    static Value createVariable(const std::string& varName);
+    static Value createHexadecimal(double num);
+    static Value createBinary(double num);
+    static Value createOctal(double num);
+    static Value createBinaryData(const std::vector<unsigned char>& data);
+    static Value createJustcObject(const std::shared_ptr<ObjectContext>& context);
+    static Value createJsonObject(const std::unordered_map<std::string, Value>& obj);
+    static Value createJsonArray(const std::vector<Value>& arr);
+
+    static Value createString(const std::wstring& wstr) {
+        Value result;
+        result.type = DataType::STRING;
+        try {
+            result.string_value = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(wstr);
+            result.name = "\"" + result.string_value + "\"";
+        } catch (...) {
+            result.string_value = "";
+            result.name = "\"\"";
+        }
+        return result;
     }
 };
 
@@ -314,6 +317,12 @@ private:
     Value parseFunctionCall(bool doExecute);
     Value parseSpaceCall(bool doExecute);
 
+    Value parseJustcObject(bool doExecute);
+    Value parseJsonObject(bool doExecute);
+    Value parseJsonArray(bool doExecute);
+    Value parseObjectPropertyAccess(bool doExecute);
+    std::shared_ptr<ObjectContext> createObjectContext(bool inheritFromParent);
+
     ASTNode parseStatement(bool doExecute);
     ASTNode parseVariableDeclaration(bool doExecute, bool constant = true);
     ASTNode parseCommand(bool doExecute);
@@ -346,6 +355,7 @@ private:
     Value evaluateASTNode(const ASTNode& node);
     void extractReferences(const Value& value, std::vector<std::string>& references);
 
+    static Value stringToValue(const std::string& str);
     Value numberToValue(double num);
     Value booleanToValue(bool b);
     Value linkToValue(const std::string& link);
@@ -400,12 +410,6 @@ private:
     void parseScopeCommandError(const std::string scope);
     void parseAllowCommandError();
 
-    std::shared_ptr<ObjectContext> createObjectContext(bool inheritFromParent);
-    Value parseJustcObject(bool doExecute);
-    Value parseJsonObject(bool doExecute);
-    Value parseJsonArray(bool doExecute);
-    Value parseObjectPropertyAccess(bool doExecute);
-
     static std::vector<double> values2numbers(const std::vector<Value>& values) {
         std::vector<double> result;
         result.reserve(values.size());
@@ -432,7 +436,6 @@ private:
 
 public:
     static std::string getCurrentTimestamp();
-    static Value stringToValue(const std::string& str);
     Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);
     ParseResult parse(bool doExecute = true);
     static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);

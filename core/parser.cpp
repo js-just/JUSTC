@@ -43,6 +43,7 @@ SOFTWARE.
 #include <string>
 #include <unordered_map>
 #include "built-in/s.hpp"
+#include <variant>
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"
@@ -287,6 +288,33 @@ Value Value::createBinaryData(const std::vector<unsigned char>& data) {
     result.type = DataType::BINARY_DATA;
     result.binary_data = data;
     result.name = "[BinaryData size=" + std::to_string(data.size()) + "]";
+    return result;
+}
+
+Value Value::createJustcObject(const std::shared_ptr<ObjectContext>& context) {
+    Value result;
+    result.type = DataType::JUSTC_OBJECT;
+    result.object_context = context;
+    result.object_type = DataType::JUSTC_OBJECT;
+    result.name = "[JUSTC Object]";
+    return result;
+}
+
+Value Value::createJsonObject(const std::unordered_map<std::string, Value>& obj) {
+    Value result;
+    result.type = DataType::JSON_OBJECT;
+    result.object_type = DataType::JSON_OBJECT;
+    result.properties = obj;
+    result.name = "[JSON Object]";
+    return result;
+}
+
+Value Value::createJsonArray(const std::vector<Value>& arr) {
+    Value result;
+    result.type = DataType::JSON_ARRAY;
+    result.object_type = DataType::JSON_ARRAY;
+    result.array_elements = arr;
+    result.name = "[JSON Array]";
     return result;
 }
 
@@ -2748,8 +2776,6 @@ Value Parser::parseJustcObject(bool doExecute) {
     advance();
 
     auto objectContext = createObjectContext(true);
-    objectContext->parent = std::make_shared<ObjectContext>();
-    objectContext->parent->parser = shared_from_this();
 
     std::string objectContent;
     int pipeCount = 1;
@@ -2758,61 +2784,56 @@ Value Parser::parseJustcObject(bool doExecute) {
     char stringChar = 0;
 
     while (!isEnd() && pipeCount > 0) {
-        char current = input[position];
+        ParserToken current = currentToken();
+        std::string currentValue = current.value;
 
-        if (!inComment && (current == '"' || current == '\'')) {
-            if (!inString) {
-                inString = true;
-                stringChar = current;
-            } else if (current == stringChar && (position == 0 || input[position-1] != '\\')) {
-                inString = false;
-            }
-        }
-
-        if (!inString && current == '-' && peek() == '-') {
-            inComment = true;
-        }
-        if (inComment && (current == '\n' || current == '\r')) {
-            inComment = false;
+        if (!inComment && current.type == "string") {
+            inString = !inString;
         }
 
         if (!inString && !inComment) {
-            if (current == '|') {
+            if (current.type == "|") {
                 pipeCount--;
                 if (pipeCount == 0) {
                     advance();
                     break;
                 }
-            } else if (current == '{' && peek() == '{') {
-                position += 2;
+            } else if (current.type == "{" && peekToken().type == "{") {
+                advance();
+                advance();
+
                 int jsBraces = 1;
                 while (!isEnd() && jsBraces > 0) {
-                    if (input[position] == '{') jsBraces++;
-                    else if (input[position] == '}') jsBraces--;
-                    position++;
+                    if (match("{")) jsBraces++;
+                    else if (match("}")) jsBraces--;
+                    advance();
                 }
                 continue;
-            } else if (current == '<' && peek() == '<') {
-                position += 2;
+            } else if (current.type == "<" && peekToken().type == "<") {
+                advance();
+                advance();
+
                 int luauAngles = 1;
                 while (!isEnd() && luauAngles > 0) {
-                    if (input[position] == '<' && peek() == '<') {
-                        position += 2;
+                    if (match("<") && peekToken().type == "<") {
+                        advance();
+                        advance();
                         luauAngles++;
-                    } else if (input[position] == '>' && peek() == '>') {
-                        position += 2;
+                    } else if (match(">") && peekToken().type == ">") {
+                        advance();
+                        advance();
                         luauAngles--;
                     } else {
-                        position++;
+                        advance();
                     }
                 }
                 continue;
-            } else if (current == '|' && peek() == ' ') {
+            } else if (current.type == "|") {
                 pipeCount++;
             }
         }
 
-        objectContent += current;
+        objectContent += current.value + " ";
         advance();
     }
 
@@ -2840,11 +2861,10 @@ Value Parser::parseJustcObject(bool doExecute) {
     ParseResult objectResult = objectParser->parse(doExecute);
 
     objectContext->variables = objectResult.returnValues;
+    objectContext->outputMode = objectParser->outputMode;
+    objectContext->outputVariables = objectParser->outputVariables;
 
-    Value result;
-    result.type = DataType::JUSTC_OBJECT;
-    result.object_context = objectContext;
-    result.object_type = DataType::JUSTC_OBJECT;
+    Value result = Value::createJustcObject(objectContext);
 
     if (objectParser->outputMode == "everything") {
         result.properties = objectResult.returnValues;
@@ -2913,16 +2933,12 @@ Value Parser::parseJsonObject(bool doExecute) {
 
     auto jsonContext = createObjectContext(true);
 
-    Value result;
-    result.type = DataType::JSON_OBJECT;
+    Value result = Value::createJsonObject(properties);
     result.object_context = jsonContext;
-    result.object_type = DataType::JSON_OBJECT;
-    result.properties = properties;
     result.name = "[JSON Object]";
 
     return result;
 }
-
 Value Parser::parseJsonArray(bool doExecute) {
     if (!match("[")) {
         throw std::runtime_error("Expected '[' for JSON array");
@@ -2953,11 +2969,8 @@ Value Parser::parseJsonArray(bool doExecute) {
 
     auto arrayContext = createObjectContext(true);
 
-    Value result;
-    result.type = DataType::JSON_ARRAY;
+    Value result = Value::createJsonArray(elements);
     result.object_context = arrayContext;
-    result.object_type = DataType::JSON_ARRAY;
-    result.array_elements = elements;
     result.name = "[JSON Array]";
 
     return result;
@@ -3026,7 +3039,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
                     if (it != currentValue.properties.end()) {
                         currentValue = it->second;
                     } else {
-                        auto parserVars = currentValue.object_context->parser->variables;
+                        auto& parserVars = currentValue.object_context->variables;
                         auto varIt = parserVars.find(propName);
                         if (varIt != parserVars.end()) {
                             currentValue = varIt->second;

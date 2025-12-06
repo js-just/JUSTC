@@ -487,9 +487,28 @@ ParseResult Parser::parse(bool doExecute) {
             } else if (match("identifier") || ((match("string") || match("number")) && !isJSONArray)) {
                 std::string identifier = currentToken().value;
                 bool isIdentifier = true;
+
                 if (match("string") || match("number")) {
-                    identifier = parseExpression(doExecute, true).toString();
+                    isIdentifier = false;
+                    Value exprValue = parseExpression(doExecute, true);
+                    identifier = exprValue.toString();
+
+                    ParserToken parsedToken = {"string", identifier, currentToken().start};
+
+                    std::vector<ParserToken> newTokens;
+                    for (size_t i = 0; i < originalPos; i++) {
+                        newTokens.push_back(tokens[i]);
+                    }
+                    newTokens.push_back(parsedToken);
+                    for (size_t i = position; i < tokens.size(); i++) {
+                        newTokens.push_back(tokens[i]);
+                    }
+
+                    tokens = newTokens;
+
+                    position = originalPos;
                 }
+
                 if (isIdentifier && (identifier == "echo" || identifier == "log" || identifier == "logfile")) {
                     ast.push_back(parseCommand(doExecute));
                 } else if (!isJSONArray) {

@@ -24,39 +24,64 @@ param(
     [string]$Options = ""
 )
 
-Write-Host "Starting Windows compilation..." -ForegroundColor Green
+Write-Host "Compiling JUSTC for Windows..." -ForegroundColor Green
 
-if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-    Write-Host "Installing Chocolatey..." -ForegroundColor Yellow
-    Set-ExecutionPolicy Bypass -Scope Process -Force
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+$CurrentDir = Get-Location
+Write-Host "Current directory: $CurrentDir" -ForegroundColor Yellow
+
+$BuildDir = Join-Path $CurrentDir "build"
+if (-not (Test-Path $BuildDir)) {
+    New-Item -ItemType Directory -Force -Path $BuildDir
 }
 
-Write-Host "Installing required packages..." -ForegroundColor Yellow
-choco install cmake curl -y --no-progress
-
-New-Item -ItemType Directory -Force -Path "build"
-Set-Location "build"
+Set-Location $BuildDir
 
 if ($Options -eq "") {
-    $Options = "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=..\install_root"
+    $InstallPrefix = Join-Path $CurrentDir "install_root"
+    $Options = "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=`"$InstallPrefix`""
 }
 
 Write-Host "Configuring with CMake..." -ForegroundColor Yellow
+Write-Host "Options: $Options" -ForegroundColor Cyan
+
 cmake .. $Options
 
-Write-Host "Building JUSTC..." -ForegroundColor Yellow
-cmake --build . --config Release --parallel $env:NUMBER_OF_PROCESSORS
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "::error::CMake configuration failed" -ForegroundColor Red
+    exit 1
+}
 
-Write-Host "Installing..." -ForegroundColor Yellow
+Write-Host "Building JUSTC..." -ForegroundColor Yellow
+$Processors = [Environment]::ProcessorCount
+cmake --build . --config Release --parallel $Processors
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "::error::Build failed" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "Installing JUSTC..." -ForegroundColor Yellow
 cmake --install . --config Release
 
-Set-Location ".."
-if (Test-Path "install_root\bin\justc.exe") {
-    Write-Host "Installed JUSTC!" -ForegroundColor Green
-    Write-Host "Executable location: $(Resolve-Path 'install_root\bin\justc.exe')" -ForegroundColor Cyan
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "::error::Installation failed" -ForegroundColor Red
+    exit 1
+}
+
+Set-Location $CurrentDir
+$ExecutablePath = Join-Path $CurrentDir "install_root\bin\justc.exe"
+if (Test-Path $ExecutablePath) {
+    Write-Host "Done!" -ForegroundColor Green
+    Write-Host "Executable location: $ExecutablePath" -ForegroundColor Cyan
+
+    Write-Host "Testing executable..." -ForegroundColor Yellow
+    & $ExecutablePath --help
 } else {
     Write-Host "::error::CMake error." -ForegroundColor Red
+    Write-Host "Available files in bin directory:" -ForegroundColor Yellow
+    $BinDir = Join-Path $CurrentDir "install_root\bin"
+    if (Test-Path $BinDir) {
+        Get-ChildItem $BinDir
+    }
     exit 1
 }

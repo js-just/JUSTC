@@ -296,24 +296,24 @@ private:
 
     Value astNodeToValue(const ASTNode& node);
 
-    Value parseExpression(bool doExecute);
+    Value parseExpression(bool doExecute, bool noDivisionSignAndMinus = false);
     Value parsePrimary(bool doExecute);
-    Value parseConditional(bool doExecute);
-    Value parseBitwiseOR(bool doExecute);
-    Value parseBitwiseXOR(bool doExecute);
-    Value parseBitwiseAND(bool doExecute);
-    Value parseBitwiseSHIFT(bool doExecute);
-    Value parseBitwiseNOT(bool doExecute);
-    Value parseLogicalOR(bool doExecute);
-    Value parseLogicalXOR(bool doExecute);
-    Value parseLogicalAND(bool doExecute);
-    Value parseLogicalIMPLY(bool doExecute);
-    Value parseEquality(bool doExecute);
-    Value parseComparison(bool doExecute);
-    Value parseTerm(bool doExecute);
-    Value parseFactor(bool doExecute);
-    Value parsePower(bool doExecute);
-    Value parseUnary(bool doExecute);
+    Value parseConditional(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseBitwiseOR(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseBitwiseXOR(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseBitwiseAND(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseBitwiseSHIFT(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseBitwiseNOT(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseLogicalOR(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseLogicalXOR(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseLogicalAND(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseLogicalIMPLY(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseEquality(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseComparison(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseTerm(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseFactor(bool doExecute, bool noDivisionSignAndMinus);
+    Value parsePower(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseUnary(bool doExecute, bool noDivisionSignAndMinus);
     Value parseFunctionCall(bool doExecute);
     Value parseSpaceCall(bool doExecute);
 
@@ -324,6 +324,7 @@ private:
     std::shared_ptr<ObjectContext> createObjectContext(bool inheritFromParent);
 
     ASTNode parseStatement(bool doExecute);
+    bool CanIgnoreNoAssigmentOperator();
     ASTNode parseVariableDeclaration(bool doExecute, bool constant = true);
     ASTNode parseCommand(bool doExecute);
     ASTNode parseScopeCommand();

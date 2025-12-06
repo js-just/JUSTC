@@ -846,6 +846,12 @@ ASTNode Parser::parseStatement(bool doExecute) {
     }
 }
 
+bool Parser::CanIgnoreNoAssigmentOperator() {
+    return (match("string") || match("number") || match("null") || match("path") || match("link") ||
+            match("hex") || match("binary") || match("boolean") || match("identifier") || match("|") ||
+            match("JavaScript") || match("Luau") || match(endOfScript) || match(".") || match(",") ||
+            match("{") || match("["));
+}
 ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     std::string identifier = currentToken().value;
     size_t startPos = currentToken().start;
@@ -973,12 +979,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     else {
         if (isEnd()) {
             throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got EOF.");
-        } else if (
-            match("string") || match("number") || match("null") || match("path") || match("link") ||
-            match("hex") || match("binary") || match("boolean") || match("identifier") || match("|") ||
-            match("JavaScript") || match("Luau") || match(endOfScript) || match(".") || match(",") ||
-            match("{") || match("[")
-        ) {
+        } else if (CanIgnoreNoAssigmentOperator()) {
             Value exprValue = parseExpression(doExecute);
             node.value = exprValue;
             extractReferences(exprValue, node.references);
@@ -993,24 +994,24 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     return node;
 }
 
-Value Parser::parseExpression(bool doExecute) {
-    return parseConditional(doExecute);
+Value Parser::parseExpression(bool doExecute, bool noDivisionSignAndMinus) {
+    return parseConditional(doExecute, noDivisionSignAndMinus);
 }
 
-Value Parser::parseConditional(bool doExecute) {
-    Value condition = parseBitwiseOR(doExecute);
+Value Parser::parseConditional(bool doExecute, bool noDivisionSignAndMinus) {
+    Value condition = parseBitwiseOR(doExecute, noDivisionSignAndMinus);
 
     if (match("keyword", "then") || match("==")) {
         std::string thenOp = currentToken().value;
         advance();
 
-        Value thenValue = parseExpression(doExecute);
+        Value thenValue = parseExpression(doExecute, noDivisionSignAndMinus);
 
         if (match("keyword", "else") || match("?=")) {
             std::string elseOp = currentToken().value;
             advance();
 
-            Value elseValue = parseExpression(doExecute);
+            Value elseValue = parseExpression(doExecute, noDivisionSignAndMinus);
 
             return handleConditional(condition, thenValue, elseValue, thenOp, elseOp);
         } else {
@@ -1022,19 +1023,19 @@ Value Parser::parseConditional(bool doExecute) {
         std::string elseifOp = currentToken().value;
         advance();
 
-        Value elseifCondition = parseExpression(doExecute);
+        Value elseifCondition = parseExpression(doExecute, noDivisionSignAndMinus);
 
         if (match("keyword", "then") || match("==")) {
             std::string thenOp = currentToken().value;
             advance();
 
-            Value thenValue = parseExpression(doExecute);
+            Value thenValue = parseExpression(doExecute, noDivisionSignAndMinus);
 
             if (match("keyword", "else") || match("?=")) {
                 std::string elseOp = currentToken().value;
                 advance();
 
-                Value elseValue = parseExpression(doExecute);
+                Value elseValue = parseExpression(doExecute, noDivisionSignAndMinus);
 
                 Value nestedConditional = handleConditional(elseifCondition, thenValue, elseValue, thenOp, elseOp);
                 return handleConditional(condition, thenValue, nestedConditional, thenOp, elseOp);
@@ -1049,60 +1050,60 @@ Value Parser::parseConditional(bool doExecute) {
     return condition;
 }
 
-Value Parser::parseBitwiseOR(bool doExecute) {
-    Value left = parseBitwiseXOR(doExecute);
+Value Parser::parseBitwiseOR(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseBitwiseXOR(doExecute, noDivisionSignAndMinus);
 
     while (match("keyword", "OR") || match("|")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseBitwiseXOR(doExecute);
+        Value right = parseBitwiseXOR(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
-Value Parser::parseBitwiseXOR(bool doExecute) {
-    Value left = parseBitwiseAND(doExecute);
+Value Parser::parseBitwiseXOR(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseBitwiseAND(doExecute, noDivisionSignAndMinus);
 
     while (match("keyword", "XOR") || match("^")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseBitwiseAND(doExecute);
+        Value right = parseBitwiseAND(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
-Value Parser::parseBitwiseAND(bool doExecute) {
-    Value left = parseBitwiseNOT(doExecute);
+Value Parser::parseBitwiseAND(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseBitwiseNOT(doExecute, noDivisionSignAndMinus);
 
     while (match("keyword", "AND") || match("&")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseBitwiseNOT(doExecute);
+        Value right = parseBitwiseNOT(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
-Value Parser::parseBitwiseSHIFT(bool doExecute) {
-    Value left = parseLogicalOR(doExecute);
+Value Parser::parseBitwiseSHIFT(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseLogicalOR(doExecute, noDivisionSignAndMinus);
 
     while (match("<<") || match(">>")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalOR(doExecute);
+        Value right = parseLogicalOR(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseBitwiseNOT(bool doExecute) {
+Value Parser::parseBitwiseNOT(bool doExecute, bool noDivisionSignAndMinus) {
     if (match("keyword", "NOT") || match("~")) {
         Value left;
 
@@ -1110,17 +1111,17 @@ Value Parser::parseBitwiseNOT(bool doExecute) {
             std::string op = currentToken().value;
             advance();
 
-            Value right = parseBitwiseSHIFT(doExecute);
+            Value right = parseBitwiseSHIFT(doExecute, noDivisionSignAndMinus);
             left = evaluateExpression(left, op, right);
         }
 
         return left;
     }
-    else return parseBitwiseSHIFT(doExecute);
+    else return parseBitwiseSHIFT(doExecute, noDivisionSignAndMinus);
 }
 
-Value Parser::parseLogicalOR(bool doExecute) {
-    Value left = parseLogicalXOR(doExecute);
+Value Parser::parseLogicalOR(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseLogicalXOR(doExecute, noDivisionSignAndMinus);
 
     while (match("keyword", "or") || match("||") ||
            match("keyword", "orn't") || match("!|") ||
@@ -1129,29 +1130,29 @@ Value Parser::parseLogicalOR(bool doExecute) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalXOR(doExecute);
+        Value right = parseLogicalXOR(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseLogicalXOR(bool doExecute) {
-    Value left = parseLogicalAND(doExecute);
+Value Parser::parseLogicalXOR(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseLogicalAND(doExecute, noDivisionSignAndMinus);
 
     while (match("keyword", "xor") || match("keyword", "xnor")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalAND(doExecute);
+        Value right = parseLogicalAND(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseLogicalAND(bool doExecute) {
-    Value left = parseLogicalIMPLY(doExecute);
+Value Parser::parseLogicalAND(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseLogicalIMPLY(doExecute, noDivisionSignAndMinus);
 
     while (match("keyword", "and") || match("&&") ||
            match("keyword", "andn't") || match("!&") ||
@@ -1160,100 +1161,100 @@ Value Parser::parseLogicalAND(bool doExecute) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalIMPLY(doExecute);
+        Value right = parseLogicalIMPLY(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseLogicalIMPLY(bool doExecute) {
-    Value left = parseEquality(doExecute);
+Value Parser::parseLogicalIMPLY(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseEquality(doExecute, noDivisionSignAndMinus);
 
     while (match("keyword", "imply") || match("keyword", "nimply")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseEquality(doExecute);
+        Value right = parseEquality(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseEquality(bool doExecute) {
-    Value left = parseComparison(doExecute);
+Value Parser::parseEquality(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseComparison(doExecute, noDivisionSignAndMinus);
 
     while (match("keyword", "is") || match("=") ||
            match("keyword", "isn't") || match("!=")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseComparison(doExecute);
+        Value right = parseComparison(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseComparison(bool doExecute) {
-    Value left = parseTerm(doExecute);
+Value Parser::parseComparison(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseTerm(doExecute, noDivisionSignAndMinus);
 
     while (match("<") || match(">") || match("<=") || match(">=")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseTerm(doExecute);
+        Value right = parseTerm(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseTerm(bool doExecute) {
-    Value left = parseFactor(doExecute);
+Value Parser::parseTerm(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseFactor(doExecute, noDivisionSignAndMinus);
 
     while (match("+") || match("minus") || match("..")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseFactor(doExecute);
+        Value right = parseFactor(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseFactor(bool doExecute) {
-    Value left = parsePower(doExecute);
+Value Parser::parseFactor(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parsePower(doExecute, noDivisionSignAndMinus);
 
-    while (match("*") || match("/") || match("%") || match(":")) {
+    while (match("*") || match("/") || match("%") || (match(":") && !noDivisionSignAndMinus)) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parsePower(doExecute);
+        Value right = parsePower(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parsePower(bool doExecute) {
-    Value left = parseUnary(doExecute);
+Value Parser::parsePower(bool doExecute, bool noDivisionSignAndMinus) {
+    Value left = parseUnary(doExecute, noDivisionSignAndMinus);
 
     while (match("**")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseUnary(doExecute);
+        Value right = parseUnary(doExecute, noDivisionSignAndMinus);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseUnary(bool doExecute) {
-    if (match("minus") || match("+") || match("!") || match("-")) {
+Value Parser::parseUnary(bool doExecute, bool noDivisionSignAndMinus) {
+    if ((match("minus") && !noDivisionSignAndMinus) || match("+") || match("!") || (match("-") && !noDivisionSignAndMinus)) {
         std::string op = currentToken().value;
         advance();
 
@@ -2890,7 +2891,7 @@ Value Parser::parseJustcObject(bool doExecute) {
 
 Value Parser::parseJsonObject(bool doExecute) {
     if (!match("{")) {
-        throw std::runtime_error("Expected '{' for JSON object");
+        throw std::runtime_error("Expected \"{\" for JSON object");
     }
 
     size_t startPos = position;
@@ -2900,7 +2901,7 @@ Value Parser::parseJsonObject(bool doExecute) {
 
     skipCommas();
     while (!match("}") && !isEnd()) {
-        Value keyVal = parseExpression(doExecute);
+        Value keyVal = parseExpression(doExecute, true);
         std::string key;
 
         if (keyVal.type == DataType::STRING) {
@@ -2909,11 +2910,12 @@ Value Parser::parseJsonObject(bool doExecute) {
             key = keyVal.toString();
         }
 
-        if (!match(":")) {
-            throw std::runtime_error("Expected ':' after key in JSON object at " +
+        if (match(":") || match("=") || match("-") || match("keyword", "is")) {
+            advance();
+        } else if (!CanIgnoreNoAssigmentOperator()) {
+            throw std::runtime_error("Expected \":\" after key in JSON object at " +
                                     Utility::position(position, input));
         }
-        advance();
 
         Value valueVal = parseExpression(doExecute);
         properties[key] = valueVal;
@@ -2926,7 +2928,7 @@ Value Parser::parseJsonObject(bool doExecute) {
     }
 
     if (!match("}")) {
-        throw std::runtime_error("Expected '}' to close JSON object at " +
+        throw std::runtime_error("Expected \"}\" to close JSON object at " +
                                 Utility::position(startPos, input));
     }
     advance();
@@ -2986,9 +2988,8 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
         if (match(".")) {
             advance();
 
-            if (!match("identifier")) {
-                throw std::runtime_error("Expected property name after '.' at " +
-                                        Utility::position(position, input));
+            if (!match("identifier") && !isEnd()) {
+                throw std::runtime_error("Expected property name after \".\" at " + Utility::position(position, input) + ".");
             }
 
             std::string propName = currentToken().value;
@@ -2999,16 +3000,14 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
 
             Value indexVal = parseExpression(doExecute);
             if (indexVal.type != DataType::NUMBER) {
-                throw std::runtime_error("Expected numeric index in array access at " +
-                                        Utility::position(position, input));
+                throw std::runtime_error("Expected numeric index in array access, got <" + dataTypeToString(indexVal.type) + "> at " + Utility::position(position, input) + ".");
             }
 
             size_t index = static_cast<size_t>(indexVal.toNumber());
             accessChain.push_back(index);
 
             if (!match("]")) {
-                throw std::runtime_error("Expected ']' to close array access at " +
-                                        Utility::position(position, input));
+                throw std::runtime_error("Expected \"]\" to close array access, got \"" + currentToken().value + "\" at " + Utility::position(position, input) + ".");
             }
             advance();
         }
@@ -3018,8 +3017,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
     Value currentValue = resolveVariableValue(rootName, false);
 
     if (!currentValue.isObject() && accessChain.size() > 1) {
-        throw std::runtime_error(rootName + " is not an object at " +
-                                Utility::position(position, input));
+        throw std::runtime_error("\"" + rootName + "\" is not an object. Attempt to access \"" + propName + "\" at " + Utility::position(position, input) + ".");
     }
 
     for (size_t i = 1; i < accessChain.size(); i++) {
@@ -3031,8 +3029,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
                     currentValue.object_context->parser) {
 
                     if (currentValue.object_context->parser->outputMode == "disabled") {
-                        throw std::runtime_error("Cannot access property '" + propName +
-                                                "' - object has output disabled");
+                        throw std::runtime_error("Attempt to access \"" + propName + "\" of a closure (Object with output mode \"disabled\") at " + Utility::position(position, input) + ".");
                     }
 
                     auto it = currentValue.properties.find(propName);
@@ -3044,7 +3041,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
                         if (varIt != parserVars.end()) {
                             currentValue = varIt->second;
                         } else {
-                            throw std::runtime_error("Property '" + propName + "' not found in object");
+                            throw std::runtime_error("Property '" + propName + "' not found in object. Attempt to access undefined property at " + Utility::position(position, input) + ".");
                         }
                     }
                 }
@@ -3053,11 +3050,12 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
                 if (it != currentValue.properties.end()) {
                     currentValue = it->second;
                 } else {
-                    throw std::runtime_error("Property '" + propName + "' not found in JSON object");
+                    throw std::runtime_error("Property '" + propName + "' not found in JSON object. Attempt to access undefined property at " + Utility::position(position, input) + ".");
                 }
+            } else if (currentValue.type == DataType::JSON_ARRAY) {
+                throw std::runtime_error("Attempt to access \"" + propName + "\" of array at " + Utility::position(position, input) + ".");
             } else {
-                throw std::runtime_error("Cannot access property '" + propName +
-                                        "' on non-object type");
+                throw std::runtime_error("Attempt to access \"" + propName + "\" of not an object at " + Utility::position(position, input) + ".");
             }
         } else if (std::holds_alternative<size_t>(accessChain[i])) {
             size_t index = std::get<size_t>(accessChain[i]);
@@ -3066,16 +3064,15 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
                 if (index < currentValue.array_elements.size()) {
                     currentValue = currentValue.array_elements[index];
                 } else {
-                    throw std::runtime_error("Array index " + std::to_string(index) +
-                                            " out of bounds");
+                    currentValue = Value::createNull();
                 }
             } else {
-                throw std::runtime_error("Cannot use array access on non-array type");
+                throw std::runtime_error("\"" + currentValue.name "\" is not an array. Attempt to access index \"" + std::to_string(index) + "\" of not an array at " + Utility::position(position, input) + ".");
             }
         }
 
         if (i < accessChain.size() - 1 && !currentValue.isObject()) {
-            throw std::runtime_error("Cannot access property on non-object in chain");
+            throw std::runtime_error("Attempt to access \"" + propName + "\" of not an object at " + Utility::position(position, input) + ".");
         }
     }
 

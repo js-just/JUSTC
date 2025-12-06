@@ -26,21 +26,15 @@ project(JUSTC)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /EHsc")
-    add_definitions(-D_WIN32_WINNT=0x0A00)
-    add_definitions(-DNOMINMAX)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-elseif(APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -stdlib=libc++")
-else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -pipe")
-endif()
-
 include(ProcessorCount)
 ProcessorCount(NUM_PROCESSORS)
 if(NUM_PROCESSORS EQUAL 0)
     set(NUM_PROCESSORS 1)
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+if(UNIX AND NOT APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pipe")
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -173,15 +167,10 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
             ${luau_SOURCE_DIR}/Common/include
         )
 
-        if(WIN32)
-            target_compile_definitions(luau_lib PRIVATE LUA_USE_WINDOWS)
-        elseif(APPLE)
-            target_compile_definitions(luau_lib PRIVATE LUA_USE_MACOSX)
-        else()
-            target_compile_definitions(luau_lib PRIVATE LUA_USE_LINUX)
-        endif()
-
-        target_compile_definitions(luau_lib PRIVATE LUAU_FASTCALL)
+        target_compile_definitions(luau_lib PRIVATE
+            LUA_USE_LINUX
+            LUAU_FASTCALL
+        )
 
         if(MSVC)
             target_compile_options(luau_lib PRIVATE /W0)
@@ -237,14 +226,6 @@ target_include_directories(justc_core PUBLIC
     ${luau_SOURCE_DIR}/VM/include
     ${luau_SOURCE_DIR}/Common/include
 )
-
-if(WIN32)
-    target_link_libraries(justc_core PRIVATE ws2_32 winhttp crypt32)
-    target_link_libraries(justc PRIVATE ws2_32 winhttp crypt32)
-elseif(APPLE)
-    target_link_libraries(justc_core PRIVATE "-framework CoreFoundation" "-framework Security")
-    target_link_libraries(justc PRIVATE "-framework CoreFoundation" "-framework Security")
-endif()
 
 install(TARGETS justc DESTINATION bin)
 

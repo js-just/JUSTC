@@ -1376,12 +1376,12 @@ Value Parser::parsePrimary(bool doExecute) {
         result.type = DataType::VARIABLE;
         result.string_value = varName;
         advance();
-        while (match(".") && tokens[position + 1].type == "identifier") {
+        while (match(".") && tokens[position + 1].type == "identifier" && position + 2 < tokens.size()) {
             advance();
             result.string_value += "." + currentToken().value;
             advance();
             if (isEnd()) {
-                throw std::runtime_error("Unexpected EOF");
+                throw std::runtime_error("Unexpected EOF.");
             }
         }
         return result;

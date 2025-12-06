@@ -122,7 +122,7 @@ std::string JsonSerializer::valueToJson(const Value& value) {
             std::stringstream ss;
             ss << "[";
             for (size_t i = 0; i < value.binary_data.size(); i++) {
-                unsigned char binchar = value.array_elements[i];
+                unsigned char binchar = value.binary_data[i];
                 double binnum = static_cast<double>(binchar);
                 if (i > 0) ss << ",";
                 ss << binnum;

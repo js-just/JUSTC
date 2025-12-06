@@ -109,6 +109,129 @@ jobs:
       - name: Test
         run: bash test/linux/justc.sh
 
+  compile-matrix:
+    runs-on: ${{ matrix.os }}
+    needs: determine-dirpath
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            script_name: compile-windows.ps1
+            artifact_name: justc-windows.exe
+            install_prefix: ${{ github.workspace }}\install_root
+          - os: macos-latest
+            script_name: compile-macos.sh
+            artifact_name: justc-macos
+            install_prefix: ${{ github.workspace }}/install_root
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Luau for ${{ matrix.os }}
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Скачиваем и распаковываем Luau для Windows
+            choco install cmake -y
+            mkdir luau
+            cd luau
+            git clone https://github.com/Roblox/luau.git --depth 1 --branch 0.699 .
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            # Устанавливаем Luau для macOS
+            brew install luau || true
+            mkdir luau
+            cd luau
+            git clone https://github.com/Roblox/luau.git --depth 1 --branch 0.699 .
+          fi
+
+      - name: Set up CMake for ${{ matrix.os }}
+        if: matrix.os == 'windows-latest'
+        uses: jwlawson/actions-setup-cmake@v1
+        with:
+          cmake-version: '3.25.x'
+
+      - name: Install dependencies for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install curl -y
+
+      - name: Install dependencies for macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install cmake curl pkg-config
+
+      - name: Compile for ${{ matrix.os }}
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Windows compilation
+            mkdir build
+            cd build
+            cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ matrix.install_prefix }}"
+            cmake --build . --config Release --parallel
+            cmake --install . --config Release
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            # macOS compilation
+            bash macos/compile.sh "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ matrix.install_prefix }}"
+          fi
+
+      - name: Upload compiled files for ${{ matrix.os }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.install_prefix }}/bin/*
+          retention-days: 1
+
+  test-windows:
+    runs-on: windows-latest
+    needs: compile-matrix
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download compiled files
+        uses: actions/download-artifact@v4
+        with:
+          name: justc-windows.exe
+          path: ${{ github.workspace }}/downloaded_artifacts
+
+      - name: Test Windows executable
+        run: |
+          cd ${{ github.workspace }}/downloaded_artifacts
+          Get-ChildItem
+          if (Test-Path "justc.exe") {
+            .\justc.exe --help
+            Write-Host "Windows compilation successful!"
+          } else {
+            Write-Error "justc.exe not found!"
+            exit 1
+          }
+
+  test-macos:
+    runs-on: macos-latest
+    needs: compile-matrix
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download compiled files
+        uses: actions/download-artifact@v4
+        with:
+          name: justc-macos
+          path: ${{ github.workspace }}/downloaded_artifacts
+
+      - name: Test macOS executable
+        run: |
+          cd ${{ github.workspace }}/downloaded_artifacts
+          chmod +x *
+          if [ -f "justc" ]; then
+            ./justc --help
+            echo "macOS compilation successful!"
+          else
+            echo "justc not found!"
+            ls -la
+            exit 1
+          fi
+
   download-luau:
     runs-on: ubuntu-latest
     steps:

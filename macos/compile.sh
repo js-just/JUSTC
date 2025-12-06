@@ -24,55 +24,22 @@
 set -e
 OPTIONS="${1:-""}"
 
-echo "Compiling JUSTC for macOS..."
+clang++ --version || g++ --version
 
-if command -v clang++ &> /dev/null; then
-    clang++ --version
-elif command -v g++ &> /dev/null; then
-    g++ --version
-else
-    echo "::error::No C++ compiler found!"
-    exit 1
-fi
-
-echo "Installing dependencies..."
 brew install cmake pkg-config curl
 
-echo "Creating build directory..."
 mkdir -p build
 cd build
 
-echo "Configuring CMake..."
 cmake .. $OPTIONS
 
-if [ $? -ne 0 ]; then
-    echo "::error::CMake configuration failed"
-    exit 1
-fi
-
-echo "Building JUSTC..."
 CPU_COUNT=$(sysctl -n hw.ncpu)
 make -j$CPU_COUNT
 
-if [ $? -ne 0 ]; then
-    echo "::error::Build failed"
-    exit 1
-fi
-
-echo "Installing JUSTC..."
 sudo make install
 
-if [ $? -ne 0 ]; then
-    echo "::error::Installation failed"
-    exit 1
-fi
-
-cd ..
 hash -r
-if command -v justc &> /dev/null; then
-    echo "Done!"
-    justc --help
-else
+if ! command -v justc &> /dev/null; then
     echo "::error::CMake error."
     exit 1
 fi

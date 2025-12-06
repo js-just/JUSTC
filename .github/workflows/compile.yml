@@ -109,81 +109,81 @@ jobs:
       - name: Test
         run: bash test/linux/justc.sh
 
-  compile-macos:
-    runs-on: macos-latest
+  compile-matrix:
+    runs-on: ${{ matrix.os }}
+    needs: determine-dirpath
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            script_name: compile-windows.ps1
+            artifact_name: justc-windows.exe
+            install_prefix: ${{ github.workspace }}\install_root
+          - os: macos-latest
+            script_name: compile-macos.sh
+            artifact_name: justc-macos
+            install_prefix: ${{ github.workspace }}/install_root
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dependencies for macOS
-        shell: bash
+      - name: Install Luau for ${{ matrix.os }}
         run: |
-          brew install cmake pkg-config curl
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Скачиваем и распаковываем Luau для Windows
+            choco install cmake -y
+            mkdir luau
+            cd luau
+            git clone https://github.com/Roblox/luau.git --depth 1 --branch 0.699 .
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            # Устанавливаем Luau для macOS
+            brew install luau || true
+            mkdir luau
+            cd luau
+            git clone https://github.com/Roblox/luau.git --depth 1 --branch 0.699 .
+          fi
 
-      - name: Install Luau for macOS
-        shell: bash
-        run: |
-          mkdir -p luau
-          cd luau
-          git clone https://github.com/Roblox/luau.git --depth 1 --branch 0.699 .
-
-      - name: Compile for macOS
-        shell: bash
-        run: |
-          bash macos/compile.sh "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install_root"
-
-      - name: Upload compiled files for macOS
-        uses: actions/upload-artifact@v4
-        with:
-          name: justc-macos
-          path: ${{ github.workspace }}/install_root/bin/justc
-          retention-days: 1
-
-  compile-windows:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up CMake for Windows
+      - name: Set up CMake for ${{ matrix.os }}
+        if: matrix.os == 'windows-latest'
         uses: jwlawson/actions-setup-cmake@v1
         with:
           cmake-version: '3.25.x'
 
-      - name: Install Chocolatey
-        shell: powershell
-        run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-          iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-
       - name: Install dependencies for Windows
-        shell: powershell
+        if: matrix.os == 'windows-latest'
         run: |
-          choco install curl -y --no-progress
+          choco install curl -y
 
-      - name: Install Luau for Windows
-        shell: powershell
+      - name: Install dependencies for macOS
+        if: matrix.os == 'macos-latest'
         run: |
-          mkdir luau
-          cd luau
-          git clone https://github.com/Roblox/luau.git --depth 1 --branch 0.699 .
+          brew install cmake curl pkg-config
 
-      - name: Compile for Windows
-        shell: powershell
+      - name: Compile for ${{ matrix.os }}
         run: |
-          .\windows\compile.ps1
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Windows compilation
+            mkdir build
+            cd build
+            cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ matrix.install_prefix }}"
+            cmake --build . --config Release --parallel
+            cmake --install . --config Release
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            # macOS compilation
+            bash macos/compile.sh "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ matrix.install_prefix }}"
+          fi
 
-      - name: Upload compiled files for Windows
+      - name: Upload compiled files for ${{ matrix.os }}
         uses: actions/upload-artifact@v4
         with:
-          name: justc-windows.exe
-          path: ${{ github.workspace }}\install_root\bin\justc.exe
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.install_prefix }}/bin/*
           retention-days: 1
 
   test-windows:
     runs-on: windows-latest
-    needs: compile-windows
+    needs: compile-matrix
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -195,7 +195,6 @@ jobs:
           path: ${{ github.workspace }}/downloaded_artifacts
 
       - name: Test Windows executable
-        shell: powershell
         run: |
           cd ${{ github.workspace }}/downloaded_artifacts
           Get-ChildItem
@@ -209,7 +208,7 @@ jobs:
 
   test-macos:
     runs-on: macos-latest
-    needs: compile-macos
+    needs: compile-matrix
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -221,7 +220,6 @@ jobs:
           path: ${{ github.workspace }}/downloaded_artifacts
 
       - name: Test macOS executable
-        shell: bash
         run: |
           cd ${{ github.workspace }}/downloaded_artifacts
           chmod +x *
@@ -239,7 +237,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Luau
-        shell: bash
         run: bash javascript/install_luau.sh
       - name: Upload compiled files
         uses: actions/upload-artifact@v4
@@ -257,7 +254,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Move just.config.js file to the root directory and copy javascript/core.js to javascript/core.txt and copy javascript/index.d.ts to javascript/index.d.txt
-        shell: bash
         run: mv javascript/just.config.js just.config.js && cp javascript/core.js javascript/core.txt && cp javascript/index.d.ts javascript/index.d.txt
       - name: Compress core.js with Just an Ultimate Site Tool
         uses: js-just/_just@main
@@ -285,7 +281,6 @@ jobs:
           name: justc-linux
           path: ${{ github.workspace }}/downloaded_artifacts
       - name: Install JUSTC to /usr/bin
-        shell: bash
         run: |
           sudo cp ${{ github.workspace }}/downloaded_artifacts/justc /usr/bin/
           sudo chmod +x /usr/bin/justc
@@ -301,11 +296,9 @@ jobs:
       - name: Compile C++ to WASM
         env:
           OUTPUT_DIR: ${{ needs.determine-dirpath.outputs.dirpath }}
-        shell: bash
         run: bash javascript/compile.sh "${{ needs.determine-dirpath.outputs.dirpath }}"
         id: compile
       - name: Copy LICENSE and README.md
-        shell: bash
         run: cp LICENSE javascript_output/${{ needs.compile-wasm.outputs.dirpath }}/LICENSE && cp README.md javascript_output/${{ needs.compile-wasm.outputs.dirpath }}/README.md
       - name: Upload compiled files
         uses: actions/upload-artifact@v4
@@ -328,7 +321,6 @@ jobs:
         with:
           node-version: '24.x'
       - name: Test
-        shell: bash
         run: node javascript_output/${{ needs.compile-wasm.outputs.dirpath }}/test.js
 
   commit:
@@ -341,7 +333,6 @@ jobs:
           name: compiled-wasm
           path: javascript_output/${{ needs.determine-dirpath.outputs.dirpath }}/
       - name: Cleanup
-        shell: bash
         run: rm javascript_output/$OUTPUT_DIR/test.js && rm -rf javascript/JUSTC
         env:
           OUTPUT_DIR: ${{ needs.compile-wasm.outputs.dirpath }}

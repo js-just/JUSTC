@@ -1351,7 +1351,7 @@ Value Parser::parsePrimary(bool doExecute) {
     }
     else if (match("identifier")) {
         std::string varName = currentToken().value;
-        if ((peekToken().type == "." && position + 1 < tokens.size()) || peekToken().type == "[") {
+        if ((peekToken().type == "." && position + 2 < tokens.size()) || peekToken().type == "[") {
             return parseObjectPropertyAccess(doExecute);
         }
 

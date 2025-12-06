@@ -487,6 +487,7 @@ ParseResult Parser::parse(bool doExecute) {
             } else if (match("identifier") || ((match("string") || match("number")) && !isJSONArray)) {
                 std::string identifier = currentToken().value;
                 bool isIdentifier = true;
+                size_t originalPos = position;
 
                 if (match("string") || match("number")) {
                     isIdentifier = false;

@@ -488,7 +488,7 @@ ParseResult Parser::parse(bool doExecute) {
                 std::string identifier = currentToken().value;
                 bool isIdentifier = true;
                 if (match("string") || match("number")) {
-                    identifier = parseExpression(doExecute, true);
+                    identifier = parseExpression(doExecute, true).toString();
                 }
                 if (isIdentifier && (identifier == "echo" || identifier == "log" || identifier == "logfile")) {
                     ast.push_back(parseCommand(doExecute));

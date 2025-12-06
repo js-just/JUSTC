@@ -987,116 +987,118 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     return node;
 }
 
-Value Parser::parseExpression(bool doExecute, bool noDivisionSignAndMinus) {
-    return parseConditional(doExecute, noDivisionSignAndMinus);
+Value Parser::parseExpression(bool doExecute, bool identifierMode) {
+    return parseConditional(doExecute, identifierMode);
 }
 
-Value Parser::parseConditional(bool doExecute, bool noDivisionSignAndMinus) {
-    Value condition = parseBitwiseOR(doExecute, noDivisionSignAndMinus);
+Value Parser::parseConditional(bool doExecute, bool identifierMode) {
+    Value condition = parseBitwiseOR(doExecute, identifierMode);
 
-    if (match("keyword", "then") || match("==")) {
-        std::string thenOp = currentToken().value;
-        advance();
-
-        Value thenValue = parseExpression(doExecute, noDivisionSignAndMinus);
-
-        if (match("keyword", "else") || match("?=")) {
-            std::string elseOp = currentToken().value;
-            advance();
-
-            Value elseValue = parseExpression(doExecute, noDivisionSignAndMinus);
-
-            return handleConditional(condition, thenValue, elseValue, thenOp, elseOp);
-        } else {
-            throw std::runtime_error("Expected 'else' after 'then'");
-        }
-    }
-
-    if (match("keyword", "elseif") || match("??")) {
-        std::string elseifOp = currentToken().value;
-        advance();
-
-        Value elseifCondition = parseExpression(doExecute, noDivisionSignAndMinus);
-
+    if (!identifierMode) {
         if (match("keyword", "then") || match("==")) {
             std::string thenOp = currentToken().value;
             advance();
 
-            Value thenValue = parseExpression(doExecute, noDivisionSignAndMinus);
+            Value thenValue = parseExpression(doExecute, identifierMode);
 
             if (match("keyword", "else") || match("?=")) {
                 std::string elseOp = currentToken().value;
                 advance();
 
-                Value elseValue = parseExpression(doExecute, noDivisionSignAndMinus);
+                Value elseValue = parseExpression(doExecute, identifierMode);
 
-                Value nestedConditional = handleConditional(elseifCondition, thenValue, elseValue, thenOp, elseOp);
-                return handleConditional(condition, thenValue, nestedConditional, thenOp, elseOp);
+                return handleConditional(condition, thenValue, elseValue, thenOp, elseOp);
             } else {
-                throw std::runtime_error("Expected 'else' after 'then' in elseif");
+                throw std::runtime_error("Expected 'else' after 'then'");
             }
-        } else {
-            throw std::runtime_error("Expected 'then' after 'elseif'");
+        }
+
+        if (match("keyword", "elseif") || match("??")) {
+            std::string elseifOp = currentToken().value;
+            advance();
+
+            Value elseifCondition = parseExpression(doExecute, identifierMode);
+
+            if (match("keyword", "then") || match("==")) {
+                std::string thenOp = currentToken().value;
+                advance();
+
+                Value thenValue = parseExpression(doExecute, identifierMode);
+
+                if (match("keyword", "else") || match("?=")) {
+                    std::string elseOp = currentToken().value;
+                    advance();
+
+                    Value elseValue = parseExpression(doExecute, identifierMode);
+
+                    Value nestedConditional = handleConditional(elseifCondition, thenValue, elseValue, thenOp, elseOp);
+                    return handleConditional(condition, thenValue, nestedConditional, thenOp, elseOp);
+                } else {
+                    throw std::runtime_error("Expected 'else' after 'then' in elseif");
+                }
+            } else {
+                throw std::runtime_error("Expected 'then' after 'elseif'");
+            }
         }
     }
 
     return condition;
 }
 
-Value Parser::parseBitwiseOR(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseBitwiseXOR(doExecute, noDivisionSignAndMinus);
+Value Parser::parseBitwiseOR(bool doExecute, bool identifierMode) {
+    Value left = parseBitwiseXOR(doExecute, identifierMode);
 
     while (match("keyword", "OR") || match("|")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseBitwiseXOR(doExecute, noDivisionSignAndMinus);
+        Value right = parseBitwiseXOR(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
-Value Parser::parseBitwiseXOR(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseBitwiseAND(doExecute, noDivisionSignAndMinus);
+Value Parser::parseBitwiseXOR(bool doExecute, bool identifierMode) {
+    Value left = parseBitwiseAND(doExecute, identifierMode);
 
     while (match("keyword", "XOR") || match("^")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseBitwiseAND(doExecute, noDivisionSignAndMinus);
+        Value right = parseBitwiseAND(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
-Value Parser::parseBitwiseAND(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseBitwiseNOT(doExecute, noDivisionSignAndMinus);
+Value Parser::parseBitwiseAND(bool doExecute, bool identifierMode) {
+    Value left = parseBitwiseNOT(doExecute, identifierMode);
 
     while (match("keyword", "AND") || match("&")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseBitwiseNOT(doExecute, noDivisionSignAndMinus);
+        Value right = parseBitwiseNOT(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
-Value Parser::parseBitwiseSHIFT(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseLogicalOR(doExecute, noDivisionSignAndMinus);
+Value Parser::parseBitwiseSHIFT(bool doExecute, bool identifierMode) {
+    Value left = parseLogicalOR(doExecute, identifierMode);
 
     while (match("<<") || match(">>")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalOR(doExecute, noDivisionSignAndMinus);
+        Value right = parseLogicalOR(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseBitwiseNOT(bool doExecute, bool noDivisionSignAndMinus) {
+Value Parser::parseBitwiseNOT(bool doExecute, bool identifierMode) {
     if (match("keyword", "NOT") || match("~")) {
         Value left;
 
@@ -1104,17 +1106,17 @@ Value Parser::parseBitwiseNOT(bool doExecute, bool noDivisionSignAndMinus) {
             std::string op = currentToken().value;
             advance();
 
-            Value right = parseBitwiseSHIFT(doExecute, noDivisionSignAndMinus);
+            Value right = parseBitwiseSHIFT(doExecute, identifierMode);
             left = evaluateExpression(left, op, right);
         }
 
         return left;
     }
-    else return parseBitwiseSHIFT(doExecute, noDivisionSignAndMinus);
+    else return parseBitwiseSHIFT(doExecute, identifierMode);
 }
 
-Value Parser::parseLogicalOR(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseLogicalXOR(doExecute, noDivisionSignAndMinus);
+Value Parser::parseLogicalOR(bool doExecute, bool identifierMode) {
+    Value left = parseLogicalXOR(doExecute, identifierMode);
 
     while (match("keyword", "or") || match("||") ||
            match("keyword", "orn't") || match("!|") ||
@@ -1123,29 +1125,29 @@ Value Parser::parseLogicalOR(bool doExecute, bool noDivisionSignAndMinus) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalXOR(doExecute, noDivisionSignAndMinus);
+        Value right = parseLogicalXOR(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseLogicalXOR(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseLogicalAND(doExecute, noDivisionSignAndMinus);
+Value Parser::parseLogicalXOR(bool doExecute, bool identifierMode) {
+    Value left = parseLogicalAND(doExecute, identifierMode);
 
     while (match("keyword", "xor") || match("keyword", "xnor")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalAND(doExecute, noDivisionSignAndMinus);
+        Value right = parseLogicalAND(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseLogicalAND(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseLogicalIMPLY(doExecute, noDivisionSignAndMinus);
+Value Parser::parseLogicalAND(bool doExecute, bool identifierMode) {
+    Value left = parseLogicalIMPLY(doExecute, identifierMode);
 
     while (match("keyword", "and") || match("&&") ||
            match("keyword", "andn't") || match("!&") ||
@@ -1154,104 +1156,106 @@ Value Parser::parseLogicalAND(bool doExecute, bool noDivisionSignAndMinus) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalIMPLY(doExecute, noDivisionSignAndMinus);
+        Value right = parseLogicalIMPLY(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseLogicalIMPLY(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseEquality(doExecute, noDivisionSignAndMinus);
+Value Parser::parseLogicalIMPLY(bool doExecute, bool identifierMode) {
+    Value left = parseEquality(doExecute, identifierMode);
 
     while (match("keyword", "imply") || match("keyword", "nimply")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseEquality(doExecute, noDivisionSignAndMinus);
+        Value right = parseEquality(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseEquality(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseComparison(doExecute, noDivisionSignAndMinus);
+Value Parser::parseEquality(bool doExecute, bool identifierMode) {
+    Value left = parseComparison(doExecute, identifierMode);
 
-    while (match("keyword", "is") || match("=") ||
-           match("keyword", "isn't") || match("!=")) {
-        std::string op = currentToken().value;
-        advance();
+    if (!identifierMode) {
+        while (match("keyword", "is") || match("=") ||
+            match("keyword", "isn't") || match("!=")) {
+            std::string op = currentToken().value;
+            advance();
 
-        Value right = parseComparison(doExecute, noDivisionSignAndMinus);
-        left = evaluateExpression(left, op, right);
+            Value right = parseComparison(doExecute, identifierMode);
+            left = evaluateExpression(left, op, right);
+        }
     }
 
     return left;
 }
 
-Value Parser::parseComparison(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseTerm(doExecute, noDivisionSignAndMinus);
+Value Parser::parseComparison(bool doExecute, bool identifierMode) {
+    Value left = parseTerm(doExecute, identifierMode);
 
     while (match("<") || match(">") || match("<=") || match(">=")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseTerm(doExecute, noDivisionSignAndMinus);
+        Value right = parseTerm(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseTerm(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseFactor(doExecute, noDivisionSignAndMinus);
+Value Parser::parseTerm(bool doExecute, bool identifierMode) {
+    Value left = parseFactor(doExecute, identifierMode);
 
     while (match("+") || match("minus") || match("..")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseFactor(doExecute, noDivisionSignAndMinus);
+        Value right = parseFactor(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseFactor(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parsePower(doExecute, noDivisionSignAndMinus);
+Value Parser::parseFactor(bool doExecute, bool identifierMode) {
+    Value left = parsePower(doExecute, identifierMode);
 
-    while (match("*") || match("/") || match("%") || (match(":") && !noDivisionSignAndMinus)) {
+    while (match("*") || match("/") || match("%") || (match(":") && !identifierMode)) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parsePower(doExecute, noDivisionSignAndMinus);
+        Value right = parsePower(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parsePower(bool doExecute, bool noDivisionSignAndMinus) {
-    Value left = parseUnary(doExecute, noDivisionSignAndMinus);
+Value Parser::parsePower(bool doExecute, bool identifierMode) {
+    Value left = parseUnary(doExecute, identifierMode);
 
     while (match("**")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseUnary(doExecute, noDivisionSignAndMinus);
+        Value right = parseUnary(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
     return left;
 }
 
-Value Parser::parseUnary(bool doExecute, bool noDivisionSignAndMinus) {
-    if ((match("minus") && !noDivisionSignAndMinus) || match("+") || match("!") || (match("-") && !noDivisionSignAndMinus)) {
+Value Parser::parseUnary(bool doExecute, bool identifierMode) {
+    if ((match("minus") && !identifierMode) || match("+") || match("!") || (match("-") && !identifierMode)) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseUnary(doExecute);
+        Value right = parseUnary(doExecute, identifierMode);
         return evaluateExpression(Value(), op, right);
     }
 

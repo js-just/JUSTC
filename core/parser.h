@@ -296,24 +296,24 @@ private:
 
     Value astNodeToValue(const ASTNode& node);
 
-    Value parseExpression(bool doExecute, bool noDivisionSignAndMinus = false);
+    Value parseExpression(bool doExecute, bool identifierMode = false);
     Value parsePrimary(bool doExecute);
-    Value parseConditional(bool doExecute, bool noDivisionSignAndMinus = false);
-    Value parseBitwiseOR(bool doExecute, bool noDivisionSignAndMinus = false);
-    Value parseBitwiseXOR(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseBitwiseAND(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseBitwiseSHIFT(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseBitwiseNOT(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseLogicalOR(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseLogicalXOR(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseLogicalAND(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseLogicalIMPLY(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseEquality(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseComparison(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseTerm(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseFactor(bool doExecute, bool noDivisionSignAndMinus);
-    Value parsePower(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseUnary(bool doExecute, bool noDivisionSignAndMinus = false);
+    Value parseConditional(bool doExecute, bool identifierMode = false);
+    Value parseBitwiseOR(bool doExecute, bool identifierMode = false);
+    Value parseBitwiseXOR(bool doExecute, bool identifierMode);
+    Value parseBitwiseAND(bool doExecute, bool identifierMode);
+    Value parseBitwiseSHIFT(bool doExecute, bool identifierMode);
+    Value parseBitwiseNOT(bool doExecute, bool identifierMode);
+    Value parseLogicalOR(bool doExecute, bool identifierMode);
+    Value parseLogicalXOR(bool doExecute, bool identifierMode);
+    Value parseLogicalAND(bool doExecute, bool identifierMode);
+    Value parseLogicalIMPLY(bool doExecute, bool identifierMode);
+    Value parseEquality(bool doExecute, bool identifierMode);
+    Value parseComparison(bool doExecute, bool identifierMode);
+    Value parseTerm(bool doExecute, bool identifierMode);
+    Value parseFactor(bool doExecute, bool identifierMode);
+    Value parsePower(bool doExecute, bool identifierMode);
+    Value parseUnary(bool doExecute, bool identifierMode = false);
     Value parseFunctionCall(bool doExecute);
     Value parseSpaceCall(bool doExecute);
 

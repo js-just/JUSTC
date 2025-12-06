@@ -3001,7 +3001,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
     accessChain.push_back(firstIdentifier);
     advance();
 
-    while (match(".") || match("[")) {
+    while ((match(".") || match("[")) && position + 1 < tokens.size()) {
         if (match(".")) {
             advance();
 

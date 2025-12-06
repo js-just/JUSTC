@@ -90,6 +90,17 @@ inline std::string dataTypeToString(DataType type) {
     }
 };
 
+struct ObjectContext {
+    std::shared_ptr<Parser> parser;
+    std::string outputMode;
+    std::vector<std::string> outputVariables;
+    std::unordered_map<std::string, Value> variables;
+    bool allowJavaScript;
+    bool allowLuau;
+
+    std::shared_ptr<ObjectContext> parent;
+    std::unordered_map<std::string, std::shared_ptr<ObjectContext>> childObjects;
+};
 struct Value {
     DataType type;
 
@@ -102,6 +113,13 @@ struct Value {
     std::string name;
     std::unordered_map<std::string, Value> object_value;
     std::vector<unsigned char> binary_data;
+
+    std::vector<Value> array_value;
+    std::shared_ptr<Parser> nested_parser;
+    std::shared_ptr<ObjectContext> object_context;
+    std::unordered_map<std::string, Value> properties;
+    std::vector<Value> array_elements;
+    DataType object_type;
 
     Value() : type(DataType::UNKNOWN), number_value(0), name("unknown") {}
     Value(DataType t) : type(t), number_value(0), name(dataTypeToString(t)) {}
@@ -130,6 +148,9 @@ struct Value {
     static Value createBinary(double num);
     static Value createOctal(double num);
     static Value createBinaryData(const std::vector<unsigned char>& data);
+    static Value createJustcObject(const std::shared_ptr<Parser>& parser);
+    static Value createJsonObject(const std::unordered_map<std::string, Value>& obj);
+    static Value createJsonArray(const std::vector<Value>& arr);
 
     static Value createString(const std::wstring& wstr) {
         Value result;
@@ -142,6 +163,24 @@ struct Value {
             result.name = "\"\"";
         }
         return result;
+    }
+
+    bool isObject() const {
+        return type == DataType::JUSTC_OBJECT ||
+               type == DataType::JSON_OBJECT ||
+               type == DataType::JSON_ARRAY;
+    }
+    Value* getProperty(const std::string& name) {
+        if (properties.find(name) != properties.end()) {
+            return &properties[name];
+        }
+        return nullptr;
+    }
+    Value* getArrayElement(size_t index) {
+        if (type == DataType::JSON_ARRAY && index < array_elements.size()) {
+            return &array_elements[index];
+        }
+        return nullptr;
     }
 };
 
@@ -360,6 +399,12 @@ private:
     void parseReturnCommandError(const bool a, const bool b = false);
     void parseScopeCommandError(const std::string scope);
     void parseAllowCommandError();
+
+    std::shared_ptr<ObjectContext> createObjectContext(bool inheritFromParent);
+    Value parseJustcObject(bool doExecute);
+    Value parseJsonObject(bool doExecute);
+    Value parseJsonArray(bool doExecute);
+    Value parseObjectPropertyAccess(bool doExecute);
 
     static std::vector<double> values2numbers(const std::vector<Value>& values) {
         std::vector<double> result;

@@ -1305,6 +1305,9 @@ Value Parser::parsePrimary(bool doExecute) {
     }
     else if (match("identifier")) {
         std::string varName = currentToken().value;
+        if (peekToken().type == "." || peekToken().type == "[") {
+            return parseObjectPropertyAccess(doExecute);
+        }
 
         if (varName == "$TIME" || varName == "$VERSION" || varName == "$LATEST" ||
             varName == "$DBID" || varName == "$SHA" || varName == "$NAV" ||
@@ -1369,6 +1372,15 @@ Value Parser::parsePrimary(bool doExecute) {
         return numberToValue(num);
     }
     else if (match("|")) {
+        return parseJustcObject(doExecute);
+    }
+    else if (match("{")) {
+        return parseJsonObject(doExecute);
+    }
+    else if (match("[")) {
+        return parseJsonArray(doExecute);
+    }/*
+    else if (match("|")) {
         advance();
         std::stringstream object;
         while (!match(".")) {
@@ -1385,7 +1397,7 @@ Value Parser::parsePrimary(bool doExecute) {
         result.type = DataType::JUSTC_OBJECT;
         result.name = objectstr;
         return result;
-    }
+    }*/
     else if (match("JavaScript") && doExecute && allowJavaScript) {
         #ifdef __EMSCRIPTEN__
 
@@ -2711,6 +2723,350 @@ void Parser::evaluateAllVariablesAsync() {
 #else
     evaluateAllVariablesSync();
 #endif
+}
+
+std::shared_ptr<ObjectContext> Parser::createObjectContext(bool inheritFromParent) {
+    auto context = std::make_shared<ObjectContext>();
+
+    if (inheritFromParent) {
+        context->allowJavaScript = allowJavaScript;
+        context->allowLuau = allowLuau;
+    } else {
+        context->allowJavaScript = true;
+        context->allowLuau = true;
+    }
+
+    context->outputMode = "everything";
+    return context;
+}
+Value Parser::parseJustcObject(bool doExecute) {
+    if (!match("|")) {
+        throw std::runtime_error("Expected '|' for JUSTC object");
+    }
+
+    size_t startPos = position;
+    advance();
+
+    auto objectContext = createObjectContext(true);
+    objectContext->parent = std::make_shared<ObjectContext>();
+    objectContext->parent->parser = shared_from_this();
+
+    std::string objectContent;
+    int pipeCount = 1;
+    bool inString = false;
+    bool inComment = false;
+    char stringChar = 0;
+
+    while (!isEnd() && pipeCount > 0) {
+        char current = input[position];
+
+        if (!inComment && (current == '"' || current == '\'')) {
+            if (!inString) {
+                inString = true;
+                stringChar = current;
+            } else if (current == stringChar && (position == 0 || input[position-1] != '\\')) {
+                inString = false;
+            }
+        }
+
+        if (!inString && current == '-' && peek() == '-') {
+            inComment = true;
+        }
+        if (inComment && (current == '\n' || current == '\r')) {
+            inComment = false;
+        }
+
+        if (!inString && !inComment) {
+            if (current == '|') {
+                pipeCount--;
+                if (pipeCount == 0) {
+                    advance();
+                    break;
+                }
+            } else if (current == '{' && peek() == '{') {
+                position += 2;
+                int jsBraces = 1;
+                while (!isEnd() && jsBraces > 0) {
+                    if (input[position] == '{') jsBraces++;
+                    else if (input[position] == '}') jsBraces--;
+                    position++;
+                }
+                continue;
+            } else if (current == '<' && peek() == '<') {
+                position += 2;
+                int luauAngles = 1;
+                while (!isEnd() && luauAngles > 0) {
+                    if (input[position] == '<' && peek() == '<') {
+                        position += 2;
+                        luauAngles++;
+                    } else if (input[position] == '>' && peek() == '>') {
+                        position += 2;
+                        luauAngles--;
+                    } else {
+                        position++;
+                    }
+                }
+                continue;
+            } else if (current == '|' && peek() == ' ') {
+                pipeCount++;
+            }
+        }
+
+        objectContent += current;
+        advance();
+    }
+
+    if (pipeCount > 0) {
+        throw std::runtime_error("Unclosed JUSTC object at " + Utility::position(startPos, input));
+    }
+
+    auto lexerResult = Lexer::parse(objectContent, false);
+
+    auto objectParser = std::make_shared<Parser>(
+        lexerResult.second,
+        doExecute,
+        runAsync,
+        objectContent,
+        objectContext->allowJavaScript,
+        canAllowJS,
+        scriptName + "::object",
+        "object",
+        objectContext->allowLuau,
+        canAllowLuau
+    );
+
+    objectContext->parser = objectParser;
+
+    ParseResult objectResult = objectParser->parse(doExecute);
+
+    objectContext->variables = objectResult.returnValues;
+
+    Value result;
+    result.type = DataType::JUSTC_OBJECT;
+    result.object_context = objectContext;
+    result.object_type = DataType::JUSTC_OBJECT;
+
+    if (objectParser->outputMode == "everything") {
+        result.properties = objectResult.returnValues;
+    } else if (objectParser->outputMode == "specified") {
+        for (size_t i = 0; i < objectParser->outputVariables.size(); i++) {
+            const auto& varName = objectParser->outputVariables[i];
+            std::string outputName = (i < objectParser->outputNames.size()) ?
+                                     objectParser->outputNames[i] : varName;
+
+            if (objectResult.returnValues.find(varName) != objectResult.returnValues.end()) {
+                if (outputName != "_") {
+                    result.properties[outputName] = objectResult.returnValues.at(varName);
+                } else {
+                    result.properties[varName] = objectResult.returnValues.at(varName);
+                }
+            }
+        }
+    }
+
+    result.name = "[JUSTC Object]";
+    return result;
+}
+
+Value Parser::parseJsonObject(bool doExecute) {
+    if (!match("{")) {
+        throw std::runtime_error("Expected '{' for JSON object");
+    }
+
+    size_t startPos = position;
+    advance();
+
+    std::unordered_map<std::string, Value> properties;
+
+    skipCommas();
+    while (!match("}") && !isEnd()) {
+        Value keyVal = parseExpression(doExecute);
+        std::string key;
+
+        if (keyVal.type == DataType::STRING) {
+            key = keyVal.string_value;
+        } else {
+            key = keyVal.toString();
+        }
+
+        if (!match(":")) {
+            throw std::runtime_error("Expected ':' after key in JSON object at " +
+                                    Utility::position(position, input));
+        }
+        advance();
+
+        Value valueVal = parseExpression(doExecute);
+        properties[key] = valueVal;
+
+        skipCommas();
+        if (match(",")) {
+            advance();
+            skipCommas();
+        }
+    }
+
+    if (!match("}")) {
+        throw std::runtime_error("Expected '}' to close JSON object at " +
+                                Utility::position(startPos, input));
+    }
+    advance();
+
+    auto jsonContext = createObjectContext(true);
+
+    Value result;
+    result.type = DataType::JSON_OBJECT;
+    result.object_context = jsonContext;
+    result.object_type = DataType::JSON_OBJECT;
+    result.properties = properties;
+    result.name = "[JSON Object]";
+
+    return result;
+}
+
+Value Parser::parseJsonArray(bool doExecute) {
+    if (!match("[")) {
+        throw std::runtime_error("Expected '[' for JSON array");
+    }
+
+    size_t startPos = position;
+    advance();
+
+    std::vector<Value> elements;
+
+    skipCommas();
+    while (!match("]") && !isEnd()) {
+        Value element = parseExpression(doExecute);
+        elements.push_back(element);
+
+        skipCommas();
+        if (match(",")) {
+            advance();
+            skipCommas();
+        }
+    }
+
+    if (!match("]")) {
+        throw std::runtime_error("Expected ']' to close JSON array at " +
+                                Utility::position(startPos, input));
+    }
+    advance();
+
+    auto arrayContext = createObjectContext(true);
+
+    Value result;
+    result.type = DataType::JSON_ARRAY;
+    result.object_context = arrayContext;
+    result.object_type = DataType::JSON_ARRAY;
+    result.array_elements = elements;
+    result.name = "[JSON Array]";
+
+    return result;
+}
+Value Parser::parseObjectPropertyAccess(bool doExecute) {
+    std::vector<std::variant<std::string, size_t>> accessChain;
+
+    std::string firstIdentifier = currentToken().value;
+    accessChain.push_back(firstIdentifier);
+    advance();
+
+    while (match(".") || match("[")) {
+        if (match(".")) {
+            advance();
+
+            if (!match("identifier")) {
+                throw std::runtime_error("Expected property name after '.' at " +
+                                        Utility::position(position, input));
+            }
+
+            std::string propName = currentToken().value;
+            accessChain.push_back(propName);
+            advance();
+        } else if (match("[")) {
+            advance();
+
+            Value indexVal = parseExpression(doExecute);
+            if (indexVal.type != DataType::NUMBER) {
+                throw std::runtime_error("Expected numeric index in array access at " +
+                                        Utility::position(position, input));
+            }
+
+            size_t index = static_cast<size_t>(indexVal.toNumber());
+            accessChain.push_back(index);
+
+            if (!match("]")) {
+                throw std::runtime_error("Expected ']' to close array access at " +
+                                        Utility::position(position, input));
+            }
+            advance();
+        }
+    }
+
+    std::string rootName = std::get<std::string>(accessChain[0]);
+    Value currentValue = resolveVariableValue(rootName, false);
+
+    if (!currentValue.isObject() && accessChain.size() > 1) {
+        throw std::runtime_error(rootName + " is not an object at " +
+                                Utility::position(position, input));
+    }
+
+    for (size_t i = 1; i < accessChain.size(); i++) {
+        if (std::holds_alternative<std::string>(accessChain[i])) {
+            std::string propName = std::get<std::string>(accessChain[i]);
+
+            if (currentValue.type == DataType::JUSTC_OBJECT) {
+                if (currentValue.object_context &&
+                    currentValue.object_context->parser) {
+
+                    if (currentValue.object_context->parser->outputMode == "disabled") {
+                        throw std::runtime_error("Cannot access property '" + propName +
+                                                "' - object has output disabled");
+                    }
+
+                    auto it = currentValue.properties.find(propName);
+                    if (it != currentValue.properties.end()) {
+                        currentValue = it->second;
+                    } else {
+                        auto parserVars = currentValue.object_context->parser->variables;
+                        auto varIt = parserVars.find(propName);
+                        if (varIt != parserVars.end()) {
+                            currentValue = varIt->second;
+                        } else {
+                            throw std::runtime_error("Property '" + propName + "' not found in object");
+                        }
+                    }
+                }
+            } else if (currentValue.type == DataType::JSON_OBJECT) {
+                auto it = currentValue.properties.find(propName);
+                if (it != currentValue.properties.end()) {
+                    currentValue = it->second;
+                } else {
+                    throw std::runtime_error("Property '" + propName + "' not found in JSON object");
+                }
+            } else {
+                throw std::runtime_error("Cannot access property '" + propName +
+                                        "' on non-object type");
+            }
+        } else if (std::holds_alternative<size_t>(accessChain[i])) {
+            size_t index = std::get<size_t>(accessChain[i]);
+
+            if (currentValue.type == DataType::JSON_ARRAY) {
+                if (index < currentValue.array_elements.size()) {
+                    currentValue = currentValue.array_elements[index];
+                } else {
+                    throw std::runtime_error("Array index " + std::to_string(index) +
+                                            " out of bounds");
+                }
+            } else {
+                throw std::runtime_error("Cannot use array access on non-array type");
+            }
+        }
+
+        if (i < accessChain.size() - 1 && !currentValue.isObject()) {
+            throw std::runtime_error("Cannot access property on non-object in chain");
+        }
+    }
+
+    return currentValue;
 }
 
 ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau) {

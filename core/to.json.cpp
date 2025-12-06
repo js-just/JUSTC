@@ -76,6 +76,30 @@ std::string JsonSerializer::escapeJsonString(const std::string& str) {
 
 std::string JsonSerializer::valueToJson(const Value& value) {
     switch (value.type) {
+        case DataType::JUSTC_OBJECT:
+        case DataType::JSON_OBJECT: {
+            std::stringstream ss;
+            ss << "{";
+            bool first = true;
+            for (const auto& pair : value.properties) {
+                if (!first) ss << ",";
+                first = false;
+                ss << "\"" << escapeJsonString(pair.first) << "\":"
+                   << valueToJson(pair.second);
+            }
+            ss << "}";
+            return ss.str();
+        }
+        case DataType::JSON_ARRAY: {
+            std::stringstream ss;
+            ss << "[";
+            for (size_t i = 0; i < value.array_elements.size(); i++) {
+                if (i > 0) ss << ",";
+                ss << valueToJson(value.array_elements[i]);
+            }
+            ss << "]";
+            return ss.str();
+        }
         case DataType::NUMBER:
         case DataType::HEXADECIMAL:
         case DataType::BINARY:
@@ -94,8 +118,20 @@ std::string JsonSerializer::valueToJson(const Value& value) {
             return "\"NaN\"";
         case DataType::INFINITE:
             return "\"Infinity\"";
+        case DataType::BINARY_DATA: {
+            std::stringstream ss;
+            ss << "[";
+            for (size_t i = 0; i < value.binary_data.size(); i++) {
+                unsigned char binchar = value.array_elements[i];
+                double binnum = static_cast<double>(binchar);
+                if (i > 0) ss << ",";
+                ss << binnum;
+            }
+            ss << "]";
+            return ss.str();
+        }
         default:
-            return "\"unknown\"";
+            return "\"invalid\"";
     }
 }
 

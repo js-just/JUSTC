@@ -298,8 +298,8 @@ private:
 
     Value parseExpression(bool doExecute, bool noDivisionSignAndMinus = false);
     Value parsePrimary(bool doExecute);
-    Value parseConditional(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseBitwiseOR(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseConditional(bool doExecute, bool noDivisionSignAndMinus = false);
+    Value parseBitwiseOR(bool doExecute, bool noDivisionSignAndMinus = false);
     Value parseBitwiseXOR(bool doExecute, bool noDivisionSignAndMinus);
     Value parseBitwiseAND(bool doExecute, bool noDivisionSignAndMinus);
     Value parseBitwiseSHIFT(bool doExecute, bool noDivisionSignAndMinus);
@@ -313,7 +313,7 @@ private:
     Value parseTerm(bool doExecute, bool noDivisionSignAndMinus);
     Value parseFactor(bool doExecute, bool noDivisionSignAndMinus);
     Value parsePower(bool doExecute, bool noDivisionSignAndMinus);
-    Value parseUnary(bool doExecute, bool noDivisionSignAndMinus);
+    Value parseUnary(bool doExecute, bool noDivisionSignAndMinus = false);
     Value parseFunctionCall(bool doExecute);
     Value parseSpaceCall(bool doExecute);
 

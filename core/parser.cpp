@@ -3017,7 +3017,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
     Value currentValue = resolveVariableValue(rootName, false);
 
     if (!currentValue.isObject() && accessChain.size() > 1) {
-        throw std::runtime_error("\"" + rootName + "\" is not an object. Attempt to access \"" + propName + "\" at " + Utility::position(position, input) + ".");
+        throw std::runtime_error("\"" + rootName + "\" is not an object. Attempt to access propery or index of not an object at " + Utility::position(position, input) + ".");
     }
 
     for (size_t i = 1; i < accessChain.size(); i++) {
@@ -3067,12 +3067,12 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
                     currentValue = Value::createNull();
                 }
             } else {
-                throw std::runtime_error("\"" + currentValue.name "\" is not an array. Attempt to access index \"" + std::to_string(index) + "\" of not an array at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("\"" + currentValue.name + "\" is not an array. Attempt to access index \"" + std::to_string(index) + "\" of not an array at " + Utility::position(position, input) + ".");
             }
         }
 
         if (i < accessChain.size() - 1 && !currentValue.isObject()) {
-            throw std::runtime_error("Attempt to access \"" + propName + "\" of not an object at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Attempt to access property or index of not an object at " + Utility::position(position, input) + ".");
         }
     }
 

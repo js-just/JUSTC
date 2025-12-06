@@ -484,20 +484,13 @@ ParseResult Parser::parse(bool doExecute) {
                 } else {
                     ast.push_back(parseStatement(doExecute));
                 }
-            } else if (match("identifier") || (match("string") && !isJSONArray)) {
+            } else if (match("identifier") || ((match("string") || match("number")) && !isJSONArray)) {
                 std::string identifier = currentToken().value;
-                if (match("string")) {
-                    while (tokens[position + 1].type == "..") {
-                        advance();
-                        if (isEnd() || (position + 1) > tokens.size()) throw std::runtime_error("Unexpected EOF.");
-                        if (tokens[position + 1].type == "string") {
-                            identifier += tokens[position + 1].value;
-                        } else {
-                            throw std::runtime_error("Unexpected operator \"..\" at " + Utility::position(position, input) + ". Did you mean \"" + identifier + " = " + tokens[position + 1].value + "\"?");
-                        }
-                    }
+                bool isIdentifier = true;
+                if (match("string") || match("number")) {
+                    identifier = parseExpression(doExecute, true);
                 }
-                if (identifier == "echo" || identifier == "log" || identifier == "logfile") {
+                if (isIdentifier && (identifier == "echo" || identifier == "log" || identifier == "logfile")) {
                     ast.push_back(parseCommand(doExecute));
                 } else if (!isJSONArray) {
                     ast.push_back(parseStatement(doExecute));
@@ -1334,7 +1327,7 @@ Value Parser::parsePrimary(bool doExecute) {
     }
     else if (match("identifier")) {
         std::string varName = currentToken().value;
-        if (peekToken().type == "." || peekToken().type == "[") {
+        if ((peekToken().type == "." && position + 1 < tokens.size()) || peekToken().type == "[") {
             return parseObjectPropertyAccess(doExecute);
         }
 

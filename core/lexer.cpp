@@ -315,7 +315,7 @@ ParserToken Lexer::readIdentifier() {
     while (position < input.length()) {
         char ch = input[position];
 
-        if (isIdentifierContinue(ch) || (ch == ' ' && position > start && !id.empty())) {
+        if (isIdentifierContinue(ch)) {
             if (isUnicodeLetter(ch)) {
                 size_t before = position;
                 std::string unicodeChar = readUnicodeChar();

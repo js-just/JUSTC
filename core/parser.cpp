@@ -1271,15 +1271,69 @@ Value Parser::parsePower(bool doExecute, bool identifierMode) {
 }
 
 Value Parser::parseUnary(bool doExecute, bool identifierMode) {
-    if ((match("minus") && !identifierMode) || match("+") || match("!") || (match("-") && !identifierMode)) {
+    if ((match("minus") && !identifierMode) || match("+") || match("!") ||
+        (match("-") && !identifierMode) || match("#")) {
         std::string op = currentToken().value;
         advance();
 
         Value right = parseUnary(doExecute, identifierMode);
+
+        if (op == "#") {
+            return evaluateLengthOperator(right);
+        }
+
         return evaluateExpression(Value(), op, right);
     }
 
     return parsePrimary(doExecute);
+}
+
+Value Parser::evaluateLengthOperator(const Value& value) {
+    Value result;
+
+    switch (value.type) {
+        case DataType::STRING:
+            result.type = DataType::NUMBER;
+            result.number_value = static_cast<double>(value.string_value.length());
+            result.name = std::to_string(value.string_value.length());
+            break;
+
+        case DataType::JSON_ARRAY:
+            result.type = DataType::NUMBER;
+            result.number_value = static_cast<double>(value.array_elements.size());
+            result.name = std::to_string(value.array_elements.size());
+            break;
+
+        case DataType::JSON_OBJECT:
+            result.type = DataType::NUMBER;
+            result.number_value = static_cast<double>(value.properties.size());
+            result.name = std::to_string(value.properties.size());
+            break;
+
+        case DataType::BINARY_DATA:
+            result.type = DataType::NUMBER;
+            result.number_value = static_cast<double>(value.binary_data.size());
+            result.name = std::to_string(value.binary_data.size());
+            break;
+
+        case DataType::NUMBER: {
+            // For numbers, get digit count
+            std::string str = std::to_string(static_cast<int>(value.number_value));
+            str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+            if (str.back() == '.') str.pop_back();
+            result.type = DataType::NUMBER;
+            result.number_value = static_cast<double>(str.length());
+            result.name = std::to_string(str.length());
+            break;
+        }
+
+        default:
+            throw std::runtime_error("Cannot apply length operator to type " +
+                                   dataTypeToString(value.type) + " at " +
+                                   Utility::position(position, input) + ".");
+    }
+
+    return result;
 }
 
 Value Parser::astNodeToValue(const ASTNode& node) {
@@ -1421,7 +1475,16 @@ Value Parser::parsePrimary(bool doExecute) {
         return parseJustcObject(doExecute);
     }
     else if (match("{")) {
-        return parseJsonObject(doExecute);
+        size_t savedPos = position;
+        try {
+            return parseLuauStyleArray(doExecute);
+        } catch (const std::runtime_error& e) {
+            if (std::string(e.what()).find("Object detected") != std::string::npos) {
+                position = savedPos;
+                return parseJsonObject(doExecute);
+            }
+            throw;
+        }
     }
     else if (match("[")) {
         return parseJsonArray(doExecute);
@@ -1616,6 +1679,57 @@ ASTNode Parser::parseCommand(bool doExecute) {
     }
 
     return node;
+}
+
+Value Parser::parseLuauStyleArray(bool doExecute) {
+    if (!match("{")) {
+        throw std::runtime_error("Expected '{' for Luau-style array");
+    }
+
+    size_t startPos = position;
+    advance();
+
+    std::vector<Value> elements;
+
+    skipCommas();
+    while (!match("}") && !isEnd()) {
+        size_t savedPos = position;
+        try {
+            Value key = parseExpression(doExecute, true);
+
+            if ((match(":") || match("=") || match("-") || match("keyword", "is")) &&
+                !match("}") && !match(",") && !match(";")) {
+                position = savedPos;
+                throw std::runtime_error("Object detected, not array");
+            }
+
+            elements.push_back(key);
+        } catch (...) {
+            position = savedPos;
+            Value element = parseExpression(doExecute);
+            elements.push_back(element);
+        }
+
+        skipCommas();
+        if (match(",") || match(";")) {
+            advance();
+            skipCommas();
+        }
+    }
+
+    if (!match("}")) {
+        throw std::runtime_error("Expected '}' to close Luau-style array at " +
+                                Utility::position(startPos, input));
+    }
+    advance();
+
+    auto arrayContext = createObjectContext(true);
+
+    Value result = Value::createJsonArray(elements);
+    result.object_context = arrayContext;
+    result.name = "[Array]";
+
+    return result;
 }
 
 Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
@@ -2699,13 +2813,13 @@ void Parser::evaluateAllVariablesSync() {
     int passes = 0;
     const int MAX_PASSES = 100;
 
-    std::unordered_map<std::string, bool> variableMutability;
+    std::unordered_map<std::string, std::pair<bool, Value>> variableData;
+
     for (auto& node : ast) {
         if (node.type == "VARIABLE_DECLARATION") {
             std::string varName = node.identifier;
-            if (variableMutability.find(varName) == variableMutability.end()) {
-                variableMutability[varName] = !node.constant;
-            }
+            bool isMutable = !node.constant;
+            variableData[varName] = std::make_pair(isMutable, Value());
         }
     }
 
@@ -2716,25 +2830,28 @@ void Parser::evaluateAllVariablesSync() {
         for (auto& node : ast) {
             if (node.type == "VARIABLE_DECLARATION") {
                 std::string varName = node.identifier;
-                Value oldValue = variables[varName];
+                auto& varInfo = variableData[varName];
+                bool isMutable = varInfo.first;
+                Value oldValue = varInfo.second;
                 Value newValue = evaluateASTNode(node);
 
                 if (newValue.type == DataType::VARIABLE && newValue.string_value == varName) {
                     throw std::runtime_error("Variable cannot reference itself: " + varName);
                 }
 
-                bool isMutable = variableMutability[varName];
-                if (!isMutable && oldValue.type != DataType::UNKNOWN && newValue.type != DataType::UNKNOWN) {
+                if (isMutable || oldValue.type == DataType::UNKNOWN) {
+                    if (newValue.type != DataType::UNKNOWN &&
+                        (oldValue.type == DataType::UNKNOWN ||
+                         oldValue.toString() != newValue.toString())) {
+                        varInfo.second = newValue;
+                        variables[varName] = newValue;
+                        changed = true;
+                    }
+                } else if (oldValue.type != DataType::UNKNOWN &&
+                          newValue.type != DataType::UNKNOWN) {
                     if (oldValue.toString() != newValue.toString()) {
                         throw std::runtime_error("Attempt to redefine \"" + varName + "\" at " + Utility::position(node.startPos, input) + ".");
                     }
-                }
-
-                if (newValue.type != DataType::UNKNOWN &&
-                    (oldValue.type == DataType::UNKNOWN ||
-                     oldValue.toString() != newValue.toString())) {
-                    variables[varName] = newValue;
-                    changed = true;
                 }
             }
         }

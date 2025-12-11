@@ -193,6 +193,20 @@ ParserToken Lexer::readNumber() {
     bool isOct = false;
     bool isHex = false;
     bool bigNumber = false;
+    bool allowCommaDecimal = true;
+
+    int braceDepth = 0;
+    int bracketDepth = 0;
+    for (size_t i = 0; i < position; i++) {
+        if (input[i] == '{') braceDepth++;
+        else if (input[i] == '}') braceDepth--;
+        else if (input[i] == '[') bracketDepth++;
+        else if (input[i] == ']') bracketDepth--;
+    }
+
+    if (braceDepth > 0 || bracketDepth > 0) {
+        allowCommaDecimal = false;
+    }
 
     if (position + 1 < input.length() && input[position] == '0') {
         char next = std::tolower(input[position + 1]);
@@ -221,7 +235,7 @@ ParserToken Lexer::readNumber() {
         } else {
             isValidChar = isDigit(ch) ||
                          (ch == '.' && position + 1 < input.length()) ||
-                         (ch == ',' && position + 1 < input.length()) ||
+                         (ch == ',' && allowCommaDecimal && position + 1 < input.length()) ||
                          ch == '_' ||
                          (std::tolower(ch) == 'b' && position > start && isDigit(input[position - 1]));
         }
@@ -232,7 +246,7 @@ ParserToken Lexer::readNumber() {
             }
 
             if (ch == ',') {
-                if (!point) {
+                if (!point && allowCommaDecimal) {
                     point = true;
                     input[position] = '.';
                 } else {
@@ -301,7 +315,7 @@ ParserToken Lexer::readIdentifier() {
     while (position < input.length()) {
         char ch = input[position];
 
-        if (isIdentifierContinue(ch)) {
+        if (isIdentifierContinue(ch) || (ch == ' ' && position > start && !id.empty())) {
             if (isUnicodeLetter(ch)) {
                 size_t before = position;
                 std::string unicodeChar = readUnicodeChar();
@@ -310,6 +324,8 @@ ParserToken Lexer::readIdentifier() {
                 id += ch;
                 position++;
             }
+        } else if (ch == ',' || ch == ';' || ch == '.' || ch == '=' || ch == ':' || ch == '-') {
+            break;
         } else {
             break;
         }
@@ -338,7 +354,19 @@ ParserToken Lexer::readIdentifier() {
     } else if (std::regex_match(idWithoutDollar, undefined_regex)) {
         return ParserToken{"undefined", id, start};
     } else {
-        return ParserToken{"identifier", id, start};
+        bool isAllDigits = !id.empty();
+        for (char c : id) {
+            if (!std::isdigit(c)) {
+                isAllDigits = false;
+                break;
+            }
+        }
+
+        if (isAllDigits) {
+            return ParserToken{"number", id, start};
+        } else {
+            return ParserToken{"identifier", id, start};
+        }
     }
 }
 
@@ -380,6 +408,32 @@ void Lexer::tokenize() {
         if (ch == '-' && peek() == '{') {
             addDollarBefore();
             readMultiLineComment();
+            continue;
+        }
+
+        // C-style single line comment: // comment
+        if (ch == '/' && peek() == '/') {
+            addDollarBefore();
+            position += 2;
+            while (position < input.length() && input[position] != '\n') {
+                position++;
+            }
+            if (position < input.length() && input[position] == '\n') {
+                position++;
+            }
+            continue;
+        }
+        // C-style multi-line comment: /* comment */
+        if (ch == '/' && peek() == '*') {
+            addDollarBefore();
+            position += 2;
+            while (position < input.length()) {
+                if (input[position] == '*' && peek() == '/') {
+                    position += 2;
+                    break;
+                }
+                position++;
+            }
             continue;
         }
 
@@ -533,10 +587,10 @@ void Lexer::tokenize() {
                     str = 0;
                 } else if (input[position] == '/' && peek() == '/' && str == 0 && comment == 0) {
                     comment = 1;
-                } else if (((input[position] == '\r' && peek() == '\n') || input[position] == '\n' || input[position] == '\r') && str == 0 && comment == 1) {
-                    comment = 0;
                 } else if (input[position] == '/' && peek() == '*' && str == 0 && comment == 0) {
                     comment = 2;
+                } else if (((input[position] == '\r' && peek() == '\n') || input[position] == '\n' || input[position] == '\r') && str == 0 && comment == 1) {
+                    comment = 0;
                 } else if (input[position] == '*' && peek() == '/' && str == 0 && comment == 2) {
                     comment = 0;
                 }

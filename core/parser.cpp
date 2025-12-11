@@ -1285,6 +1285,19 @@ Value Parser::parseUnary(bool doExecute, bool identifierMode) {
         return evaluateExpression(Value(), op, right);
     }
 
+    if (
+        match("**") || match("*") || match("/") || match("%") || match("..") || (!identifierMode && (
+            match(":") || match("=") || match("!=") || match("keyword", "is") || match("keyword", "isn't")
+        )) || match("keyword", "imply") || match("keyword", "nimply") || match("&&") || match("!&") ||
+        match("keyword", "and") || match("keyword", "nand") || match("keyword", "andn't") ||
+        match("keyword", "xor") || match("keyword", "xnor") || match("||") || match("!|") ||
+        match("keyword", "or") || match("keyword", "nor") || match("keyword", "orn't") || match("~") ||
+        match("keyword", "NOT") || match("<<") || match(">>") || match("keyword", "AND") || match("&") ||
+        match("keyword", "XOR") || match("^") || match("keyword", "OR") || match("|")
+    ) {
+        return parseBitwiseOR(doExecute, identifierMode);
+    }
+
     return parsePrimary(doExecute);
 }
 

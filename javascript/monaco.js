@@ -233,3 +233,5 @@ monacoScript.onerror = function() {
 
 document.head.appendChild(monacoScript);
 document.body.appendChild(monacoElement);
+
+document.body.appendChild(document.createElement('hr'));

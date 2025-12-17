@@ -30,7 +30,9 @@ const package = {
         "index.js",
         "index.d.ts",
         "justc.node.js",
-        "justc.node.wasm"
+        "justc.node.wasm",
+        "cli.js",
+        "help.js",
     ],
     keywords: [
         "just", "an", "ultimate", "site", "tool", "configuration", "language",

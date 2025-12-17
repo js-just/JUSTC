@@ -115,7 +115,6 @@ sed -i 's/justc\.core\.wasm/justc.wasm/g' javascript/$SAFE_DIR/justc.core.js
 mv javascript/$SAFE_DIR/justc.core.js $JSOUT_DIR/justc.core.js
 mv javascript/core.js $JSOUT_DIR/justc.js
 mv javascript/test.js $JSOUT_DIR/test.js
-mv javascript/cli.js $JSOUT_DIR/cli.js
 
 JUSTC_VERSION=$(justc -v 2>/dev/null || echo "undefined")
 JUSTC_NAME="Just an Ultimate Site Tool Configuration language"
@@ -162,9 +161,9 @@ JSONString() {
 
     echo -n "$result"
 }
-echo "console.log(\"$(JSONString "$JUSTC_HELP")\");" > $JSOUT_DIR/help.js
+echo "console.log(\"$(JSONString "$JUSTC_HELP")\");" > javascript/help.js
 
-for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js $JSOUT_DIR/cli.js $JSOUT_DIR/help.js; do
+for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js $JSOUT_DIR/help.js; do
     printf "/*\n\n%s\n\n*/\n\n/*\n\n$JUSTC_NAME v$OUTPUT_VERSION\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
 done
 for file in justc justc.node; do
@@ -202,18 +201,26 @@ head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
 echo "]}" >> $srcfile
 cp javascript/core.txt $JSOUT_DIR/JUSTC/javascript/core.js
 cp javascript/index.d.txt $JSOUT_DIR/JUSTC/javascript/core.d.ts
+cp javascript/cli.js $JSOUT_DIR/JUSTC/javascript/cli.js
+cp javascript/help.js $JSOUT_DIR/JUSTC/javascript/help.js
 OUTPUT_URL="https://just.js.org/justc/$SAFE_DIR"
 echo "{\"version\":3,\"file\":\"$OUTPUT_URL/justc.js\",\"sources\":[\"$OUTPUT_URL/JUSTC/javascript/core.js\",\"$OUTPUT_URL/JUSTC/javascript/core.d.ts\"],\"mappings\":\"\"}" > $JSOUT_DIR/justc.js.map
 printf "%s\n//# sourceMappingURL=$OUTPUT_URL/justc.js.map" "$(cat $JSOUT_DIR/justc.js)" > temp.js && mv temp.js "$JSOUT_DIR/justc.js"
 
 mv javascript/test.html $JSOUT_DIR/test.html
+mv javascript/test.css $JSOUT_DIR/docs.css
 mv javascript/test.justc $JSOUT_DIR/test.justc
 rm $JSOUT_DIR/compress.js
 
 cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
+mv javascript/cli.js $JSOUT_DIR/cli.js
+mv javascript/help.js $JSOUT_DIR/help.js
 node javascript/npm.js "$JUSTC_VERSION" && mv javascript/package.json $JSOUT_DIR/package.json
 mv javascript/monaco.js $JSOUT_DIR/monaco.js
+
+cp README.md $JSOUT_DIR/JUSTC/javascript/README.md
+cp README.md $JSOUT_DIR/README.md
 
 printf "#!/usr/bin/env node\n\n%s" "$(cat $JSOUT_DIR/cli.js)" > temp.js && mv temp.js "$JSOUT_DIR/cli.js"
 

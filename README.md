@@ -9,13 +9,21 @@ JUSTC (Just an Ultimate Site Tool Configuration language) is a powerful, small, 
 ```
 npm i -g justc
 ```
-> [!NOTE]
-> You can remove `-g` flag if you don't want to install JUSTC globally.
 
-CLI or Bash on Linux:
+CLI:
 ```
 justc --help
 ```
+
+> [!NOTE]
+> You can remove `-g` flag if you don't want to install JUSTC globally.
+> ```
+> npm i justc
+> ```
+> CLI:
+> ```
+> npx justc --help
+> ```
 
 JavaScript (Node.js):
 ```js

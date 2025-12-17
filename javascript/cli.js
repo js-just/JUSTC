@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-const JUSTC = require('./justc.js');
+const JUSTC = require('./index.js');
 const fs = require('fs');
 const path = require('path');
 

@@ -163,7 +163,7 @@ JSONString() {
 }
 echo "console.log(\"$(JSONString "$JUSTC_HELP")\");" > javascript/help.js
 
-for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js $JSOUT_DIR/help.js; do
+for file in $JSOUT_DIR/justc.core.js $JSOUT_DIR/justc.js $JSOUT_DIR/justc.node.js javascript/help.js; do
     printf "/*\n\n%s\n\n*/\n\n/*\n\n$JUSTC_NAME v$OUTPUT_VERSION\n\n*/\n\n" "$(cat LICENSE)" | cat - "$file" > temp.js && mv temp.js "$file"
 done
 for file in justc justc.node; do
@@ -201,7 +201,7 @@ head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
 echo "]}" >> $srcfile
 cp javascript/core.txt $JSOUT_DIR/JUSTC/javascript/core.js
 cp javascript/index.d.txt $JSOUT_DIR/JUSTC/javascript/core.d.ts
-cp javascript/cli.js $JSOUT_DIR/JUSTC/javascript/cli.js
+cp javascript/cli.js.txt $JSOUT_DIR/JUSTC/javascript/cli.js
 cp javascript/help.js $JSOUT_DIR/JUSTC/javascript/help.js
 OUTPUT_URL="https://just.js.org/justc/$SAFE_DIR"
 echo "{\"version\":3,\"file\":\"$OUTPUT_URL/justc.js\",\"sources\":[\"$OUTPUT_URL/JUSTC/javascript/core.js\",\"$OUTPUT_URL/JUSTC/javascript/core.d.ts\"],\"mappings\":\"\"}" > $JSOUT_DIR/justc.js.map
@@ -214,7 +214,7 @@ rm $JSOUT_DIR/compress.js
 
 cp $JSOUT_DIR/justc.js $JSOUT_DIR/index.js
 mv javascript/index.d.ts $JSOUT_DIR/index.d.ts
-mv javascript/cli.js $JSOUT_DIR/cli.js
+mv javascript/cli.js.txt $JSOUT_DIR/cli.js
 mv javascript/help.js $JSOUT_DIR/help.js
 node javascript/npm.js "$JUSTC_VERSION" && mv javascript/package.json $JSOUT_DIR/package.json
 mv javascript/monaco.js $JSOUT_DIR/monaco.js

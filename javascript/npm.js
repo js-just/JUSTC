@@ -33,6 +33,8 @@ const package = {
         "justc.node.wasm",
         "cli.js",
         "help.js",
+        "justc.core.js",
+        "justc.wasm"
     ],
     keywords: [
         "just", "an", "ultimate", "site", "tool", "configuration", "language",

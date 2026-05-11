@@ -69,23 +69,16 @@ else()
 endif()
 
 message(STATUS "Installing QuickJS CMake...")
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
+if(NOT MSVC)
     FetchContent_Declare(quickjscmake
         GIT_REPOSITORY https://github.com/robloach/quickjs-cmake.git
-        GIT_TAG 2021.3.27
+        GIT_TAG master
     )
     FetchContent_MakeAvailable(quickjscmake)
-else()
-    find_library(QUICKJS_LIB quickjs)
-    find_path(QUICKJS_INCLUDE quickjs.h)
-    if(QUICKJS_LIB AND QUICKJS_INCLUDE)
-        add_library(quickjs INTERFACE)
-        target_include_directories(quickjs INTERFACE ${QUICKJS_INCLUDE})
-        target_link_libraries(quickjs INTERFACE ${QUICKJS_LIB})
-        message(STATUS "Found system QuickJS")
-    else()
-        message(WARNING "QuickJS not found. Please install QuickJS development packages")
-    endif()
+endif()
+
+if(NOT MSVC)
+    # MSVC compatibility for QuickJS - not needed since disabled
 endif()
 
 message(STATUS "Installing Luau...")
@@ -186,7 +179,7 @@ endif()
 
 include_directories(third-party)
 
-add_library(justc_core STATIC
+set(CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/lexer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/keywords.cpp
@@ -205,20 +198,36 @@ add_library(justc_core STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/binary/binary.cpp
 )
 
+if(MSVC)
+    list(REMOVE_ITEM CORE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/core/run.js.cpp)
+endif()
+
+add_library(justc_core STATIC ${CORE_SOURCES})
+
 add_executable(justc ${CMAKE_CURRENT_SOURCE_DIR}/core/main.cpp)
 
 target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
-if(CPR_BUILT_LOCALLY)
+if(NOT MSVC)
     target_link_libraries(justc_core PRIVATE cpr)
 else()
     target_link_libraries(justc_core PRIVATE cpr::cpr)
 endif()
 
-target_link_libraries(justc_core PRIVATE quickjs luau_lib)
-target_link_libraries(justc PRIVATE justc_core quickjs luau_lib)
+if(NOT MSVC)
+    target_link_libraries(justc_core PRIVATE quickjs)
+endif()
+
+target_link_libraries(justc_core PRIVATE luau_lib)
+target_link_libraries(justc PRIVATE justc_core)
+
+if(NOT MSVC)
+    target_link_libraries(justc PRIVATE quickjs)
+endif()
+
+target_link_libraries(justc PRIVATE luau_lib)
 
 target_include_directories(justc_core PUBLIC
     ${luau_SOURCE_DIR}/Ast/include

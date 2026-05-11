@@ -91,6 +91,28 @@ jobs:
           path: ${{ github.workspace }}/install_root/bin/justc
           retention-days: 1
 
+  compile-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install CMake
+        uses: kitware/cmake-action@v2
+        with:
+          cmake-version: '3.28'
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v2
+      - name: Configure CMake
+        run: cmake -B build -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --target ALL_BUILD -j 20
+      - name: Upload compiled files
+        uses: actions/upload-artifact@v4
+        with:
+          name: justc-windows
+          path: ${{ github.workspace }}/build/Release/justc.exe
+          retention-days: 1
+
   test-linux:
     runs-on: ubuntu-latest
     needs: compile-linux
@@ -108,6 +130,22 @@ jobs:
           sudo chmod +x /usr/bin/justc
       - name: Test
         run: bash test/linux/justc.sh
+
+  test-windows:
+    runs-on: windows-latest
+    needs: compile-windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download compiled files
+        uses: actions/download-artifact@v4
+        with:
+          name: justc-windows
+          path: ${{ github.workspace }}/downloaded_artifacts
+      - name: Test
+        run: |
+          Copy-Item ${{ github.workspace }}/downloaded_artifacts/justc.exe C:\
+          & C:\justc.exe example.justc
 
   download-luau:
     runs-on: ubuntu-latest

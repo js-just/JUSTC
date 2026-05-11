@@ -97,7 +97,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install CMake
-        uses: kitware/cmake-action@v2
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: '3.28'
       - name: Setup MSVC

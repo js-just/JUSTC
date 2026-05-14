@@ -27,11 +27,11 @@ OPTIONS="${1:-""}"
 g++ --version
 
 sudo apt-get update
-sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config
+sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config zip
 
 sudo apt-get install -y libluau-dev libluau0 || echo "Luau not available in packages, will build from source"
 
-mkdir build
+mkdir -p build
 cd build
 cmake .. $OPTIONS
 make -j$(nproc)
@@ -48,3 +48,8 @@ if [[ "$OPTIONS" == "" ]] && ! command -v justc &> /dev/null; then
 fi
 
 sudo ldconfig
+
+echo "Built files:"
+
+find . -name "*.so"
+find . -name "justc"

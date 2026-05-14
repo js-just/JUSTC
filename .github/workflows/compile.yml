@@ -84,11 +84,17 @@ jobs:
         uses: actions/checkout@v4
       - name: CMake
         run: bash linux/compile.sh "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install_root"
-      - name: Upload compiled files
+      - name: Upload CLI
         uses: actions/upload-artifact@v4
         with:
-          name: justc-linux
+          name: justc-linux-cli
           path: ${{ github.workspace }}/install_root/bin/justc
+          retention-days: 1
+      - name: "Upload .so"
+        uses: actions/upload-artifact@v4
+        with:
+          name: justc-linux-so
+          path: ${{ github.workspace }}/install_root/bin/libjustc.so
           retention-days: 1
 
   compile-windows:
@@ -106,11 +112,38 @@ jobs:
         run: cmake -B build -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: cmake --build build --config Release --target ALL_BUILD -j 20
-      - name: Upload compiled files
+      - name: Upload CLI
         uses: actions/upload-artifact@v4
         with:
-          name: justc-windows
+          name: justc-windows-cli
           path: ${{ github.workspace }}/build/Release/justc.exe
+          retention-days: 1
+      - name: "Upload .dll"
+        uses: actions/upload-artifact@v4
+        with:
+          name: justc-windows-dll
+          path: ${{ github.workspace }}/build/Release/justc.dll
+          retention-days: 1
+
+  compile-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Upload CLI
+        uses: actions/upload-artifact@v4
+        with:
+          name: justc-macos-cli
+          path: ${{ github.workspace }}/build/justc
+          retention-days: 1
+      - name: "Upload .dylib"
+        uses: actions/upload-artifact@v4
+        with:
+          name: justc-macos-dylib
+          path: ${{ github.workspace }}/build/libjustc.dylib
           retention-days: 1
 
   test-linux:
@@ -122,7 +155,7 @@ jobs:
       - name: Download compiled files
         uses: actions/download-artifact@v4
         with:
-          name: justc-linux
+          name: justc-linux-cli
           path: ${{ github.workspace }}/downloaded_artifacts
       - name: Install JUSTC to /usr/bin
         run: |
@@ -140,7 +173,7 @@ jobs:
       - name: Download compiled files
         uses: actions/download-artifact@v4
         with:
-          name: justc-windows
+          name: justc-windows-cli
           path: ${{ github.workspace }}/downloaded_artifacts
       - name: Test
         run: |
@@ -193,7 +226,7 @@ jobs:
       - name: Download compiled files
         uses: actions/download-artifact@v4
         with:
-          name: justc-linux
+          name: justc-linux-cli
           path: ${{ github.workspace }}/downloaded_artifacts
       - name: Install JUSTC to /usr/bin
         run: |
@@ -272,3 +305,39 @@ jobs:
           destination-repository-name: JUSTC.js
           user-email: "support@juststudio.is-a.dev"
           target-branch: main
+
+  release-assets:
+    if: github.event_name == 'release'
+    needs:
+      [
+        compile-linux,
+        compile-windows,
+        compile-macos,
+        compile-wasm
+      ]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    - run: |
+        mkdir release
+
+        cp artifacts/**/justc* release/ || true
+        cp artifacts/**/*.dll release/ || true
+        cp artifacts/**/*.so release/ || true
+        cp artifacts/**/*.dylib release/ || true
+
+        mkdir js
+
+        cp -r javascript_output/* js/
+
+        cd js
+        zip -r ../justc-js.zip .
+        cd ..
+
+    - uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          release/*
+          justc-js.zip

@@ -204,43 +204,79 @@ endif()
 
 add_library(justc_core STATIC ${CORE_SOURCES})
 
-add_executable(justc ${CMAKE_CURRENT_SOURCE_DIR}/core/main.cpp)
-
 target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
-if(NOT MSVC)
-    target_link_libraries(justc_core PRIVATE cpr)
-else()
-    target_link_libraries(justc_core PRIVATE cpr::cpr)
-endif()
-
-if(NOT MSVC)
-    target_link_libraries(justc_core PRIVATE quickjs)
-endif()
-
-target_link_libraries(justc_core PRIVATE luau_lib)
-target_link_libraries(justc PRIVATE justc_core)
-
-if(NOT MSVC)
-    target_link_libraries(justc PRIVATE quickjs)
-endif()
-
-target_link_libraries(justc PRIVATE luau_lib)
-
-target_include_directories(justc_core PUBLIC
-    ${luau_SOURCE_DIR}/Ast/include
-    ${luau_SOURCE_DIR}/Compiler/include
-    ${luau_SOURCE_DIR}/VM/include
-    ${luau_SOURCE_DIR}/Common/include
+target_link_libraries(justc_core PRIVATE
+    luau_lib
 )
 
-install(TARGETS justc DESTINATION bin)
-
-if(WIN32)
-    add_custom_command(TARGET justc POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:justc> ${CMAKE_BINARY_DIR}
+if(NOT MSVC)
+    target_link_libraries(justc_core PRIVATE
+        quickjs
+        cpr
+    )
+else()
+    target_link_libraries(justc_core PRIVATE
+        cpr::cpr
     )
 endif()
+
+add_library(justc_lib SHARED
+    core/lib.cpp
+)
+
+target_compile_definitions(
+    justc_lib
+    PRIVATE
+    JUSTC_BUILD
+)
+
+target_include_directories(justc_lib PUBLIC
+    core
+)
+
+target_link_libraries(justc_lib PUBLIC
+    justc_core
+)
+
+set_target_properties(justc_lib PROPERTIES
+    OUTPUT_NAME "justc"
+)
+
+add_executable(
+    justc_cli
+    core/main.cpp
+)
+
+target_link_libraries(
+    justc_cli
+    PRIVATE
+    justc_core
+)
+
+set_target_properties(
+    justc_cli
+    PROPERTIES OUTPUT_NAME "justc"
+)
+
+install(
+    TARGETS
+    justc_cli
+    RUNTIME DESTINATION bin
+)
+
+install(
+    TARGETS
+    justc_lib
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
+install(
+    FILES
+    core/lib.hpp
+    DESTINATION include/justc
+)

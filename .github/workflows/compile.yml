@@ -94,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: justc-linux-so
-          path: ${{ github.workspace }}/install_root/bin/libjustc.so
+          path: ./libjustc.so
           retention-days: 1
 
   compile-windows:
@@ -129,6 +129,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: brew install libidn2 pkg-config
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
       - name: Fix QuickJS version conflict
@@ -139,13 +141,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: justc-macos-cli
-          path: ${{ github.workspace }}/build/justc
+          path: build/justc
           retention-days: 1
       - name: "Upload .dylib"
         uses: actions/upload-artifact@v4
         with:
           name: justc-macos-dylib
-          path: ${{ github.workspace }}/build/libjustc.dylib
+          path: build/libjustc.dylib
           retention-days: 1
 
   test-linux:

@@ -131,6 +131,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Fix QuickJS version conflict
+        run: rm -f build/_deps/quickjs-src/version
       - name: Build
         run: cmake --build build --config Release
       - name: Upload CLI

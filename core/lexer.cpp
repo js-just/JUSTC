@@ -745,7 +745,7 @@ void Lexer::tokenize() {
 
                     continue;
                 } catch (...) {
-                    throw std::runtime_error("Invalid goto usage at " + Utility::position(currPos, input)) + ".";
+                    throw std::runtime_error("Invalid goto usage at " + Utility::position(currPos, input) + ".");
                 }
             }
 

@@ -116,6 +116,10 @@ jobs:
             vcpkg
             build/vcpkg_installed
             build/_deps
+            vcpkg/downloads
+            vcpkg/packages
+            vcpkg/installed
+            vcpkg_cache
           key: ${{ runner.os }}-vcpkg-${{ hashFiles('CMakeLists.txt') }}
           restore-keys: |
             ${{ runner.os }}-vcpkg-
@@ -126,6 +130,10 @@ jobs:
           key: ${{ runner.os }}-vcpkg-binary-${{ hashFiles('vcpkg.json','CMakeLists.txt') }}
           restore-keys: |
             ${{ runner.os }}-vcpkg-binary-
+      - name: Create vcpkg cache directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path vcpkg_cache
       - name: Install Boost
         run: |
           if (!(Test-Path "vcpkg")) {

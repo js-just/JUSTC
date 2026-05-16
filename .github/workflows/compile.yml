@@ -113,6 +113,10 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.bat
           ./vcpkg/vcpkg install boost-multiprecision
+      - name: Install dependencies
+        run: |
+          vcpkg install cpr:x64-windows
+          vcpkg install libidn2:x64-windows
       - name: Configure CMake
         run: cmake -B build -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
       - name: Build

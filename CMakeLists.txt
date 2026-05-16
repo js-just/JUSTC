@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(JUSTC)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -32,19 +32,36 @@ ProcessorCount(NUM_PROCESSORS)
 if(NUM_PROCESSORS EQUAL 0)
     set(NUM_PROCESSORS 1)
 endif()
+set(CMAKE_BUILD_PARALLEL_LEVEL ${NUM_PROCESSORS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
-if(UNIX AND NOT APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pipe")
+if(MSVC)
+    add_compile_options(
+        /O2
+        /MP
+        /EHsc
+    )
+else()
+    add_compile_options(
+        -O3
+        -pipe
+    )
 endif()
 
 if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported)
+if(ipo_supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+endif()
+
 include(FetchContent)
 
 find_package(cpr QUIET)
+
+find_package(Boost REQUIRED)
 
 if(NOT cpr_FOUND)
     message(STATUS "CPR not found in system, building from source...")
@@ -223,6 +240,10 @@ else()
         cpr::cpr
     )
 endif()
+
+target_include_directories(justc_core SYSTEM PRIVATE
+    ${Boost_INCLUDE_DIRS}
+)
 
 add_library(justc_lib SHARED
     core/lib.cpp

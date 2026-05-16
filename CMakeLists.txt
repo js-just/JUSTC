@@ -27,6 +27,10 @@ project(JUSTC)
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY
         "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+    add_compile_options(
+        /MT$<$<CONFIG:Debug>:d>
+    )
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -283,6 +287,15 @@ add_executable(
     justc_cli
     core/main.cpp
 )
+
+set_property(TARGET justc_core PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+set_property(TARGET justc_lib PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+set_property(TARGET justc_cli PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_link_libraries(
     justc_cli

@@ -21,7 +21,14 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.14)
+
 project(JUSTC)
+
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY
+        "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(CMAKE_CXX_STANDARD 17)

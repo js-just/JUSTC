@@ -35,5 +35,8 @@ EM_JS(void, warn_lexer_js, (const char* timestamp, const char* position), {
 EM_JS(void, warn_lexer_luau, (const char* timestamp, const char* position), {
     console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Luau may be corrupted in the lexer output.', '('+UTF8ToString(position)+')');
 });
+EM_JS(void, warn_lexer_goto, (const char* timestamp, const char* position), {
+    console.warn('[JUSTC] (' + UTF8ToString(timestamp) + ') Found goto loop at ' + UTF8ToString(position)+'.');
+});
 
 #endif

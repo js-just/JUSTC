@@ -312,23 +312,23 @@ ParserToken Lexer::readNumber() {
             numStr.pop_back();
             switch (bigtype) {
                 case BigType::BigNum:
-                    type = "big"
+                    type = "big";
                     break;
 
                 case BigType::LargeNum:
-                    type = "large"
+                    type = "large";
                     break;
 
                 case BigType::HugeNum:
-                    type = "huge"
+                    type = "huge";
                     break;
 
                 case BigType::GiantNum:
-                    type = "giant"
+                    type = "giant";
                     break;
 
                 case BigType::ColossalNum:
-                    type = "colossal"
+                    type = "colossal";
                     break;
             }
         }
@@ -721,11 +721,11 @@ void Lexer::tokenize() {
 
         if (isIdentifierStart(ch)) {
             const ParserToken currToken = readIdentifier();
-            if (currentToken.type == "keyword" && currentToken.value == "goto") {
+            if (currToken.type == "keyword" && currToken.value == "goto") {
                 position = std::stod(readNumber().value);
                 continue;
             }
-            tokens.push_back(currentToken);
+            tokens.push_back(currToken);
             continue;
         }
 

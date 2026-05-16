@@ -14,7 +14,7 @@ const monacoJUSTClang = {
             "class", "function", "public", "private",
             "static", "const", "define", "undefine",
             "echo", "log", "logfile", "space", "var",
-            "new",
+            "new", "goto",
 
             "is", "isn't", "isif", "then", "elseif", "else",
             "isifn't", "elseifn't", "then't", "elsen't",

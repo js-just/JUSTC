@@ -65,7 +65,8 @@ include(FetchContent)
 
 find_package(cpr QUIET)
 
-find_package(Boost REQUIRED)
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost CONFIG REQUIRED)
 
 if(NOT cpr_FOUND)
     message(STATUS "CPR not found in system, building from source...")

@@ -141,13 +141,13 @@ jobs:
           }
 
           ./vcpkg/bootstrap-vcpkg.bat
-          ./vcpkg/vcpkg install boost-multiprecision
+          ./vcpkg/vcpkg install boost-multiprecision:x64-windows-static
       - name: Install dependencies
         run: |
           ./vcpkg/vcpkg install cpr:x64-windows-static
           ./vcpkg/vcpkg install libidn2:x64-windows-static
       - name: Configure CMake
-        run: cmake -B build -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static
+        run: cmake -B build -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DBoost_USE_STATIC_LIBS=ON
       - name: Build
         run: cmake --build build --config Release --target ALL_BUILD -j 20
       - name: Upload CLI

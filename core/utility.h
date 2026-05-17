@@ -78,7 +78,7 @@ public:
     static bool greaterOrEqual(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
 
     template<typename T>
-    std::string Utility::numberToString(const T& num) {
+    static std::string numberToString(const T& num) {
         std::ostringstream out;
 
         out << std::setprecision(std::numeric_limits<T>::digits10)

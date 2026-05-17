@@ -38,7 +38,6 @@ SOFTWARE.
 #include "lexer.h"
 #include "version.h"
 #include "number.hpp"
-#include "utility.h"
 
 struct Value;
 class Parser;
@@ -203,6 +202,8 @@ struct Value {
         return result;
     }
 };
+
+#include "utility.h"
 
 struct LogEntry {
     std::string type;

@@ -57,6 +57,11 @@ namespace multiprecision {
 }
 }
 
+template<>
+std::string Utility::numberToString<JUSTCnum>(const JUSTCnum& num) {
+    return numToString(num);
+}
+
 std::string Utility::numberValue2string(const Value& value) {
     return std::visit([](auto&& num) {
         return numberToString(num);

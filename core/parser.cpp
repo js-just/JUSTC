@@ -163,7 +163,7 @@ JUSTCnum Value::toNumber() const {
             return number_value;
         case DataType::STRING:
             try {
-                return Utility::longToJUSTCnum(std::stod(string_value), DataType::NUMBER);
+                return Utility::longToJUSTCnum(static_cast<long>(std::stod(string_value)), DataType::NUMBER);
             } catch (...) {
                 return 0.0;
             }
@@ -2335,7 +2335,10 @@ Value Parser::handleInequality(const Value& value) {
 
     switch (value.type) {
         case DataType::NUMBER:
-            result = booleanToValue(value.toNumber() > 0);
+            result = booleanToValue(Utility::greaterThan(
+                value.toNumber(), 0.0,
+                value.type, DataType::NUMBER
+            ));
             break;
         case DataType::LINK:
             result = stringToValue(value.toString());

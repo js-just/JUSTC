@@ -509,11 +509,42 @@ JUSTCnum Utility::mod(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Data
     JUSTCnum aPromoted = promoteToType(a, resultType);
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
-    return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
-        using T = std::decay_t<decltype(x)>;
+    auto visitor = [resultType](auto&& x, auto&& y) -> JUSTCnum {
+        using T1 = std::decay_t<decltype(x)>;
+        using T2 = std::decay_t<decltype(y)>;
 
-        if constexpr (std::is_same_v<T, double>) {
-            double result = std::fmod(x, y);
+        if constexpr (std::is_same_v<T1, T2>) {
+            if constexpr (std::is_same_v<T1, double>) {
+                double result = std::fmod(x, y);
+                switch (resultType) {
+                    case DataType::NUMBER: return result;
+                    case DataType::BIGNUM: return BigNum(result);
+                    case DataType::LARGENUM: return LargeNum(result);
+                    case DataType::HUGENUM: return HugeNum(result);
+                    case DataType::GIANTNUM: return GiantNum(result);
+                    case DataType::COLOSSALNUM: return ColossalNum(result);
+                    default: return result;
+                }
+            } else {
+                auto result = boost::multiprecision::fmod(x, y);
+                std::stringstream ss;
+                ss << result;
+                T1 evaluated;
+                ss >> evaluated;
+                switch (resultType) {
+                    case DataType::NUMBER: return static_cast<double>(evaluated);
+                    case DataType::BIGNUM: return BigNum(evaluated);
+                    case DataType::LARGENUM: return LargeNum(evaluated);
+                    case DataType::HUGENUM: return HugeNum(evaluated);
+                    case DataType::GIANTNUM: return GiantNum(evaluated);
+                    case DataType::COLOSSALNUM: return ColossalNum(evaluated);
+                    default: return static_cast<double>(evaluated);
+                }
+            }
+        } else {
+            double xd = static_cast<double>(x);
+            double yd = static_cast<double>(y);
+            double result = std::fmod(xd, yd);
             switch (resultType) {
                 case DataType::NUMBER: return result;
                 case DataType::BIGNUM: return BigNum(result);
@@ -524,24 +555,9 @@ JUSTCnum Utility::mod(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Data
                 default: return result;
             }
         }
-        else {
-            auto expr_result = boost::multiprecision::fmod(x, y);
-            T evaluated_result;
-            std::stringstream ss;
-            ss << expr_result;
-            ss >> evaluated_result;
+    };
 
-            switch (resultType) {
-                case DataType::NUMBER: return static_cast<double>(evaluated_result);
-                case DataType::BIGNUM: return BigNum(evaluated_result);
-                case DataType::LARGENUM: return LargeNum(evaluated_result);
-                case DataType::HUGENUM: return HugeNum(evaluated_result);
-                case DataType::GIANTNUM: return GiantNum(evaluated_result);
-                case DataType::COLOSSALNUM: return ColossalNum(evaluated_result);
-                default: return static_cast<double>(evaluated_result);
-            }
-        }
-    }, aPromoted, bPromoted);
+    return std::visit(visitor, aPromoted, bPromoted);
 }
 
 JUSTCnum Utility::power(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {

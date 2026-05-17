@@ -363,44 +363,43 @@ JUSTCnum Utility::promoteToType(const JUSTCnum& num, DataType targetType) {
     return std::visit([targetType](auto&& value) -> JUSTCnum {
         using T = std::decay_t<decltype(value)>;
 
-        switch (targetType) {
-            case DataType::NUMBER:
-                return static_cast<double>(value);
-            case DataType::BIGNUM:
-                return BigNum(value);
-            case DataType::LARGENUM:
-                return LargeNum(value);
-            case DataType::HUGENUM:
-                return HugeNum(value);
-            case DataType::GIANTNUM:
-                return GiantNum(value);
-            case DataType::COLOSSALNUM:
-                return ColossalNum(value);
-            default:
-                return value;
+        if constexpr (!std::is_arithmetic_v<T>) {
+            auto evaluated = T(value);
+            switch (targetType) {
+                case DataType::NUMBER:
+                    return static_cast<double>(evaluated);
+                case DataType::BIGNUM:
+                    return BigNum(evaluated);
+                case DataType::LARGENUM:
+                    return LargeNum(evaluated);
+                case DataType::HUGENUM:
+                    return HugeNum(evaluated);
+                case DataType::GIANTNUM:
+                    return GiantNum(evaluated);
+                case DataType::COLOSSALNUM:
+                    return ColossalNum(evaluated);
+                default:
+                    return static_cast<double>(evaluated);
+            }
+        } else {
+            switch (targetType) {
+                case DataType::NUMBER:
+                    return static_cast<double>(value);
+                case DataType::BIGNUM:
+                    return BigNum(value);
+                case DataType::LARGENUM:
+                    return LargeNum(value);
+                case DataType::HUGENUM:
+                    return HugeNum(value);
+                case DataType::GIANTNUM:
+                    return GiantNum(value);
+                case DataType::COLOSSALNUM:
+                    return ColossalNum(value);
+                default:
+                    return static_cast<double>(value);
+            }
         }
     }, num);
-}
-
-template<typename Expr>
-static JUSTCnum promoteExpressionToType(Expr&& expr, DataType targetType) {
-    using T = std::decay_t<Expr>;
-    switch (targetType) {
-        case DataType::NUMBER:
-            return static_cast<double>(expr);
-        case DataType::BIGNUM:
-            return BigNum(expr);
-        case DataType::LARGENUM:
-            return LargeNum(expr);
-        case DataType::HUGENUM:
-            return HugeNum(expr);
-        case DataType::GIANTNUM:
-            return GiantNum(expr);
-        case DataType::COLOSSALNUM:
-            return ColossalNum(expr);
-        default:
-            return static_cast<double>(expr);
-    }
 }
 
 JUSTCnum Utility::add(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
@@ -409,8 +408,15 @@ JUSTCnum Utility::add(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Data
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+        using T = std::decay_t<decltype(x)>;
         auto result = x + y;
-        return promoteExpressionToType(result, resultType);
+
+        if constexpr (std::is_same_v<T, double>) {
+            return promoteToType(result, resultType);
+        } else {
+            using ResultType = std::decay_t<decltype(result)>;
+            return promoteToType(ResultType(result), resultType);
+        }
     }, aPromoted, bPromoted);
 }
 
@@ -420,8 +426,15 @@ JUSTCnum Utility::subtract(const JUSTCnum& a, const JUSTCnum& b, DataType aType,
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+        using T = std::decay_t<decltype(x)>;
         auto result = x - y;
-        return promoteExpressionToType(result, resultType);
+
+        if constexpr (std::is_same_v<T, double>) {
+            return promoteToType(result, resultType);
+        } else {
+            using ResultType = std::decay_t<decltype(result)>;
+            return promoteToType(ResultType(result), resultType);
+        }
     }, aPromoted, bPromoted);
 }
 
@@ -431,8 +444,15 @@ JUSTCnum Utility::multiply(const JUSTCnum& a, const JUSTCnum& b, DataType aType,
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+        using T = std::decay_t<decltype(x)>;
         auto result = x * y;
-        return promoteExpressionToType(result, resultType);
+
+        if constexpr (std::is_same_v<T, double>) {
+            return promoteToType(result, resultType);
+        } else {
+            using ResultType = std::decay_t<decltype(result)>;
+            return promoteToType(ResultType(result), resultType);
+        }
     }, aPromoted, bPromoted);
 }
 
@@ -442,8 +462,15 @@ JUSTCnum Utility::divide(const JUSTCnum& a, const JUSTCnum& b, DataType aType, D
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+        using T = std::decay_t<decltype(x)>;
         auto result = x / y;
-        return promoteExpressionToType(result, resultType);
+
+        if constexpr (std::is_same_v<T, double>) {
+            return promoteToType(result, resultType);
+        } else {
+            using ResultType = std::decay_t<decltype(result)>;
+            return promoteToType(ResultType(result), resultType);
+        }
     }, aPromoted, bPromoted);
 }
 
@@ -455,12 +482,13 @@ JUSTCnum Utility::mod(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Data
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
         using T = std::decay_t<decltype(x)>;
 
-        if constexpr (requires { x.str(); }) {
-            auto result = boost::multiprecision::fmod(x, y);
-            return promoteExpressionToType(result, resultType);
-        } else {
+        if constexpr (std::is_same_v<T, double>) {
             auto result = std::fmod(x, y);
             return promoteToType(result, resultType);
+        } else {
+            auto result = boost::multiprecision::fmod(x, y);
+            using ResultType = std::decay_t<decltype(result)>;
+            return promoteToType(ResultType(result), resultType);
         }
     }, aPromoted, bPromoted);
 }
@@ -473,12 +501,13 @@ JUSTCnum Utility::power(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Da
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
         using T = std::decay_t<decltype(x)>;
 
-        if constexpr (requires { x.str(); }) {
-            auto result = boost::multiprecision::pow(x, y);
-            return promoteExpressionToType(result, resultType);
-        } else {
+        if constexpr (std::is_same_v<T, double>) {
             auto result = std::pow(x, static_cast<double>(y));
             return promoteToType(result, resultType);
+        } else {
+            auto result = boost::multiprecision::pow(x, y);
+            using ResultType = std::decay_t<decltype(result)>;
+            return promoteToType(ResultType(result), resultType);
         }
     }, aPromoted, bPromoted);
 }

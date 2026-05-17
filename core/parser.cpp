@@ -1412,9 +1412,14 @@ Value Parser::evaluateLengthOperator(const Value& value) {
             result.name = std::to_string(value.binary_data.size());
             break;
 
-        case DataType::NUMBER: {
+        case DataType::NUMBER:
+        case DataType::BIGNUM:
+        case DataType::LARGENUM:
+        case DataType::HUGENUM:
+        case DataType::GIANTNUM:
+        case DataType::COLOSSALNUM: {
             // For numbers, get digit count
-            std::string str = std::to_string(static_cast<int>(value.number_value));
+            std::string str = Utility::numberToString(value.number_value);
             str.erase(str.find_last_not_of('0') + 1, std::string::npos);
             if (str.back() == '.') str.pop_back();
             result.type = DataType::NUMBER;
@@ -1958,7 +1963,9 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (args.empty() && funcName != "Math::Random") {
         throw std::runtime_error("Expected at least one argument, got 0 at " + Utility::position(startPos, input) + ".");
     }
-    double inpnum = args[0].number_value;
+    double inpnum = std::visit([](auto&& arg) -> double {
+        return static_cast<double>(arg);
+    }, args[0].number_value);
     try {
         if (funcName == "Binary::ToText") {
             return Binary::ToText(args);
@@ -2877,7 +2884,9 @@ Value Parser::octalToValue(const std::string& octStr) {
         result.number_value = 0.0;
     }
 
-    result.name = Utility::double2octString(result.number_value);
+    result.name = Utility::double2octString(std::visit([](auto&& arg) -> double {
+        return static_cast<double>(arg);
+    }, result.number_value));
     if (isBigNumber) {
         result.name += "B";
     }

@@ -134,8 +134,8 @@ struct Value {
     std::vector<Value> array_elements;
     DataType object_type;
 
-    Value() : type(DataType::UNKNOWN), number_value(0), boolean_value(false), name("unknown"), object_type(DataType::UNKNOWN) {}
-    Value(DataType t) : type(t), number_value(0), boolean_value(false), name(dataTypeToString(t)), object_type(DataType::UNKNOWN) {}
+    Value() : type(DataType::UNKNOWN), number_value(0.0), boolean_value(false), name("unknown"), object_type(DataType::UNKNOWN) {}
+    Value(DataType t) : type(t), number_value(0.0), boolean_value(false), name(dataTypeToString(t)), object_type(DataType::UNKNOWN) {}
     Value(DataType t, std::string s) : type(t), string_value(s), name(dataTypeToString(t)), object_type(DataType::UNKNOWN) {}
 
     std::string toString() const;

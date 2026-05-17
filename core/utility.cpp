@@ -39,6 +39,24 @@ SOFTWARE.
 #include "utility.emscripten.h"
 #endif
 
+#include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+namespace boost {
+namespace multiprecision {
+    template<typename Backend, expression_template_option ET>
+    inline number<Backend, ET> fmod(const number<Backend, ET>& a, const number<Backend, ET>& b) {
+        using value_type = number<Backend, ET>;
+        if constexpr (std::is_floating_point<typename Backend::value_type>::value) {
+            value_type int_part;
+            return modf(a / b, &int_part) * b;
+        }
+        else {
+            return a % b;
+        }
+    }
+}
+}
+
 std::string Utility::numberValue2string(const Value& value) {
     return std::visit([](auto&& num) {
         return numberToString(num);
@@ -257,4 +275,234 @@ void Utility::Warn(const std::string& warning) {
         std::cout << "JUSTC: Warning: " + warning << std::endl;
     }
     #endif
+}
+
+double Utility::numToDouble(const JUSTCnum& num) {
+    return std::visit([](auto&& arg) -> double {
+        return static_cast<double>(arg);
+    }, num);
+}
+
+bool Utility::numIsZero(const JUSTCnum& num) {
+    return std::visit([](auto&& arg) -> bool {
+        return arg == 0;
+    }, num);
+}
+
+int Utility::numToInt(const JUSTCnum& num) {
+    return std::visit([](auto&& arg) -> int {
+        return static_cast<int>(arg);
+    }, num);
+}
+
+JUSTCnum Utility::doubleToJUSTCnum(double num, DataType type) {
+    switch (type) {
+        case DataType::BIGNUM:
+            return BigNum(num);
+        case DataType::LARGENUM:
+            return LargeNum(num);
+        case DataType::HUGENUM:
+            return HugeNum(num);
+        case DataType::GIANTNUM:
+            return GiantNum(num);
+        case DataType::COLOSSALNUM:
+            return ColossalNum(num);
+        default:
+            return num;
+    }
+}
+
+std::string Utility::numToString(const JUSTCnum& num) {
+    return std::visit([](auto&& arg) -> std::string {
+        return numberToString(arg);
+    }, num);
+}
+
+DataType Utility::getLargestType(DataType a, DataType b) {
+    static const std::vector<DataType> typePriority = {
+        DataType::NUMBER,
+        DataType::BIGNUM,
+        DataType::LARGENUM,
+        DataType::HUGENUM,
+        DataType::GIANTNUM,
+        DataType::COLOSSALNUM
+    };
+
+    auto findPriority = [](DataType t) -> int {
+        for (size_t i = 0; i < typePriority.size(); ++i) {
+            if (typePriority[i] == t) return static_cast<int>(i);
+        }
+        return -1;
+    };
+
+    int prioA = findPriority(a);
+    int prioB = findPriority(b);
+
+    if (prioA >= prioB) return a;
+    return b;
+}
+
+JUSTCnum Utility::promoteToType(const JUSTCnum& num, DataType targetType) {
+    return std::visit([targetType](auto&& value) -> JUSTCnum {
+        using T = std::decay_t<decltype(value)>;
+
+        switch (targetType) {
+            case DataType::NUMBER:
+                return static_cast<double>(value);
+            case DataType::BIGNUM:
+                return BigNum(value);
+            case DataType::LARGENUM:
+                return LargeNum(value);
+            case DataType::HUGENUM:
+                return HugeNum(value);
+            case DataType::GIANTNUM:
+                return GiantNum(value);
+            case DataType::COLOSSALNUM:
+                return ColossalNum(value);
+            default:
+                return value;
+        }
+    }, num);
+}
+
+JUSTCnum Utility::add(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+        return promoteToType(x + y, resultType);
+    }, aPromoted, bPromoted);
+}
+JUSTCnum Utility::subtract(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+        return promoteToType(x - y, resultType);
+    }, aPromoted, bPromoted);
+}
+JUSTCnum Utility::multiply(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+        return promoteToType(x * y, resultType);
+    }, aPromoted, bPromoted);
+}
+JUSTCnum Utility::divide(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+        return promoteToType(x / y, resultType);
+    }, aPromoted, bPromoted);
+}
+
+JUSTCnum Utility::mod(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([](auto&& x, auto&& y) -> JUSTCnum {
+        using T = std::decay_t<decltype(x)>;
+
+        if constexpr (std::is_same_v<T, double>) {
+            return std::fmod(x, y);
+        }
+        else {
+            if constexpr (std::is_same_v<T, BigNum> ||
+                          std::is_same_v<T, LargeNum> ||
+                          std::is_same_v<T, HugeNum> ||
+                          std::is_same_v<T, GiantNum> ||
+                          std::is_same_v<T, ColossalNum>) {
+                return fmod(x, y);
+            } else {
+                return x % y;
+            }
+        }
+    }, aPromoted, bPromoted);
+}
+
+JUSTCnum Utility::power(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([](auto&& x, auto&& y) -> JUSTCnum {
+        using T = std::decay_t<decltype(x)>;
+
+        if constexpr (std::is_same_v<T, double>) {
+            return std::pow(x, y);
+        }
+        else {
+            return boost::multiprecision::pow(x, y);
+        }
+    }, aPromoted, bPromoted);
+}
+
+JUSTCnum Utility::longToJUSTCnum(long value, DataType type) {
+    switch (type) {
+        case DataType::BIGNUM:
+            return BigNum(value);
+        case DataType::LARGENUM:
+            return LargeNum(value);
+        case DataType::HUGENUM:
+            return HugeNum(value);
+        case DataType::GIANTNUM:
+            return GiantNum(value);
+        case DataType::COLOSSALNUM:
+            return ColossalNum(value);
+        default:
+            return static_cast<double>(value);
+    }
+}
+
+bool Utility::equals(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([](auto&& x, auto&& y) -> bool {
+        return x == y;
+    }, aPromoted, bPromoted);
+}
+bool Utility::lessThan(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([](auto&& x, auto&& y) -> bool {
+        return x < y;
+    }, aPromoted, bPromoted);
+}
+bool Utility::greaterThan(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([](auto&& x, auto&& y) -> bool {
+        return x > y;
+    }, aPromoted, bPromoted);
+}
+bool Utility::lessOrEqual(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([](auto&& x, auto&& y) -> bool {
+        return x <= y;
+    }, aPromoted, bPromoted);
+}
+bool Utility::greaterOrEqual(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
+    DataType resultType = getLargestType(aType, bType);
+    JUSTCnum aPromoted = promoteToType(a, resultType);
+    JUSTCnum bPromoted = promoteToType(b, resultType);
+
+    return std::visit([](auto&& x, auto&& y) -> bool {
+        return x >= y;
+    }, aPromoted, bPromoted);
 }

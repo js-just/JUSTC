@@ -64,7 +64,8 @@ body::after {
     '* bitwise or: "|", "OR"' "\A        "
     '* bitwise xor: "^", "XOR"' "\A        "
     '* bitwise left shift: "<<"' "\A        "
-    '* bitwise right shift: ">>"' "\A        ";
+    '* bitwise right shift: ">>"' "\A        "
+    "\A" 'Copyright © 2025-2026 JustStudio.';
     white-space: pre-wrap;
     font-family: monospace;
 }

@@ -120,10 +120,9 @@ inline std::string dataTypeToString(DataType type) {
 struct Value {
     DataType type;
 
-    union {
-        JUSTCnum number_value;
-        bool boolean_value;
-    };
+    JUSTCnum number_value;
+    bool boolean_value = false;
+
     std::string string_value;
     std::shared_ptr<void> complex_value;
     std::string name;
@@ -135,12 +134,12 @@ struct Value {
     std::vector<Value> array_elements;
     DataType object_type;
 
-    Value() : type(DataType::UNKNOWN), number_value(0), name("unknown"), object_type(DataType::UNKNOWN) {}
-    Value(DataType t) : type(t), number_value(0), name(dataTypeToString(t)), object_type(DataType::UNKNOWN) {}
+    Value() : type(DataType::UNKNOWN), number_value(0), boolean_value(false), name("unknown"), object_type(DataType::UNKNOWN) {}
+    Value(DataType t) : type(t), number_value(0), boolean_value(false), name(dataTypeToString(t)), object_type(DataType::UNKNOWN) {}
     Value(DataType t, std::string s) : type(t), string_value(s), name(dataTypeToString(t)), object_type(DataType::UNKNOWN) {}
 
     std::string toString() const;
-    double toNumber() const;
+    JUSTCnum toNumber() const;
     bool toBoolean() const;
 
     std::wstring toWString() const {
@@ -449,7 +448,11 @@ private:
                 case DataType::HUGENUM:
                 case DataType::GIANTNUM:
                 case DataType::COLOSSALNUM:
-                    result.push_back(value.number_value.convert_to<double>());
+                    result.push_back(
+                        std::visit([](auto&& n){
+                            return static_cast<double>(n);
+                        }, value.number_value)
+                    );
                     break;
 
                 default:

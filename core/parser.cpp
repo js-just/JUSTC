@@ -107,7 +107,12 @@ std::string Value::toString() const {
         case DataType::VARIABLE:
             return string_value;
         case DataType::NUMBER:
-            return std::to_string(number_value);
+        case DataType::BIGNUM:
+        case DataType::LARGENUM:
+        case DataType::HUGENUM:
+        case DataType::GIANTNUM:
+        case DataType::COLOSSALNUM:
+            return Utility::numberToString(number_value);
         case DataType::HEXADECIMAL:
             return "x" + std::to_string(static_cast<int>(number_value));
         case DataType::BINARY: {
@@ -144,12 +149,17 @@ std::string Value::toString() const {
     }
 }
 
-double Value::toNumber() const {
+JUSTCnum Value::toNumber() const {
     switch (type) {
         case DataType::NUMBER:
         case DataType::HEXADECIMAL:
         case DataType::BINARY:
         case DataType::OCTAL:
+        case DataType::BIGNUM:
+        case DataType::LARGENUM:
+        case DataType::HUGENUM:
+        case DataType::GIANTNUM:
+        case DataType::COLOSSALNUM:
             return number_value;
         case DataType::STRING:
             try {
@@ -323,35 +333,35 @@ Value Value::createBigNum(BigNum num) {
     Value result;
     result.type = DataType::BIGNUM;
     result.number_value = num;
-    result.name = std::to_string(num);
+    result.name = Utility::numberToString(num);
     return result;
 }
 Value Value::createLargeNum(LargeNum num) {
     Value result;
     result.type = DataType::LARGENUM;
     result.number_value = num;
-    result.name = std::to_string(num);
+    result.name = Utility::numberToString(num);
     return result;
 }
 Value Value::createHugeNum(HugeNum num) {
     Value result;
     result.type = DataType::HUGENUM;
     result.number_value = num;
-    result.name = std::to_string(num);
+    result.name = Utility::numberToString(num);
     return result;
 }
 Value Value::createGiantNum(GiantNum num) {
     Value result;
     result.type = DataType::GIANTNUM;
     result.number_value = num;
-    result.name = std::to_string(num);
+    result.name = Utility::numberToString(num);
     return result;
 }
 Value Value::createColossalNum(ColossalNum num) {
     Value result;
     result.type = DataType::COLOSSALNUM;
     result.number_value = num;
-    result.name = std::to_string(num);
+    result.name = Utility::numberToString(num);
     return result;
 }
 
@@ -2577,7 +2587,7 @@ Value Parser::functionLINK(const std::vector<Value>& args) {
 Value Parser::functionBINARY(const std::vector<Value>& args) {
     if (args.empty()) return binaryToValue("0");
 
-    double num = args[0].toNumber();
+    JUSTCnum num = args[0].toNumber();
     std::string binary;
     int intNum = static_cast<int>(num);
 
@@ -2594,7 +2604,7 @@ Value Parser::functionBINARY(const std::vector<Value>& args) {
 Value Parser::functionOCTAL(const std::vector<Value>& args) {
     if (args.empty()) return octalToValue("0");
 
-    double num = args[0].toNumber();
+    JUSTCnum num = args[0].toNumber();
     std::stringstream ss;
     ss << std::oct << static_cast<int>(num);
     return octalToValue(ss.str());
@@ -2603,7 +2613,7 @@ Value Parser::functionOCTAL(const std::vector<Value>& args) {
 Value Parser::functionHEXADECIMAL(const std::vector<Value>& args) {
     if (args.empty()) return hexToValue("0");
 
-    double num = args[0].toNumber();
+    JUSTCnum num = args[0].toNumber();
     std::stringstream ss;
     ss << std::hex << static_cast<int>(num);
     return hexToValue(ss.str());

@@ -78,6 +78,7 @@ find_package(cpr QUIET)
 
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost CONFIG REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
 
 if(NOT cpr_FOUND)
     message(STATUS "CPR not found in system, building from source...")

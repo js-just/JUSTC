@@ -359,6 +359,35 @@ DataType Utility::getLargestType(DataType a, DataType b) {
     return b;
 }
 
+template<typename T, typename = std::enable_if_t<
+    std::is_same_v<std::decay_t<T>, BigNum> ||
+    std::is_same_v<std::decay_t<T>, LargeNum> ||
+    std::is_same_v<std::decay_t<T>, HugeNum> ||
+    std::is_same_v<std::decay_t<T>, GiantNum> ||
+    std::is_same_v<std::decay_t<T>, ColossalNum>
+>>
+static JUSTCnum promoteToType(T&& value, DataType targetType) {
+    using ValueType = std::decay_t<T>;
+    ValueType evaluated = std::forward<T>(value);
+
+    switch (targetType) {
+        case DataType::NUMBER:
+            return static_cast<double>(evaluated);
+        case DataType::BIGNUM:
+            return BigNum(evaluated);
+        case DataType::LARGENUM:
+            return LargeNum(evaluated);
+        case DataType::HUGENUM:
+            return HugeNum(evaluated);
+        case DataType::GIANTNUM:
+            return GiantNum(evaluated);
+        case DataType::COLOSSALNUM:
+            return ColossalNum(evaluated);
+        default:
+            return static_cast<double>(evaluated);
+    }
+}
+
 JUSTCnum Utility::promoteToType(const JUSTCnum& num, DataType targetType) {
     return std::visit([targetType](auto&& value) -> JUSTCnum {
         using T = std::decay_t<decltype(value)>;

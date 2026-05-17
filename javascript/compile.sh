@@ -28,10 +28,10 @@ OUTPUT_DIR="${1:-development}"
 SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
 mkdir -p "javascript/$SAFE_DIR"
 
-wget -q https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.tar.gz
-tar -xzf boost-1.84.0.tar.gz
-mv boost-1.84.0/boost ./
-rm -rf boost-1.84.0 boost-1.84.0.tar.gz
+curl -L -o boost.tar.gz https://archives.boost.io/release/1.84.0/source/boost_1_84_0.tar.gz
+tar -xzf boost.tar.gz
+mv boost_1_84_0/boost ./
+rm -rf boost_1_84_0 boost.tar.gz
 
 emcc --version
 EMCCVERSION=$(emcc --version)

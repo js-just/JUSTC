@@ -526,7 +526,11 @@ JUSTCnum Utility::mod(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Data
         }
         else {
             auto expr_result = boost::multiprecision::fmod(x, y);
-            T evaluated_result = expr_result;
+            T evaluated_result;
+            std::stringstream ss;
+            ss << expr_result;
+            ss >> evaluated_result;
+
             switch (resultType) {
                 case DataType::NUMBER: return static_cast<double>(evaluated_result);
                 case DataType::BIGNUM: return BigNum(evaluated_result);

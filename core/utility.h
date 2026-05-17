@@ -33,7 +33,8 @@ SOFTWARE.
 #include <codecvt>
 #include <locale>
 
-enum class DataType;
+#include "datatype.hpp"
+
 struct Value;
 struct ParseResult;
 

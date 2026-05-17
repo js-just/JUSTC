@@ -3315,6 +3315,36 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
     return currentValue;
 }
 
+std::vector<double> Parser::values2numbers(const std::vector<Value>& values) {
+    std::vector<double> result;
+    result.reserve(values.size());
+
+    for (size_t i = 0; i < values.size(); ++i) {
+        const auto& value = values[i];
+        switch (value.type) {
+            case DataType::NUMBER:
+            case DataType::HEXADECIMAL:
+            case DataType::BINARY:
+            case DataType::OCTAL:
+            case DataType::BIGNUM:
+            case DataType::LARGENUM:
+            case DataType::HUGENUM:
+            case DataType::GIANTNUM:
+            case DataType::COLOSSALNUM:
+                result.push_back(Utility::numToDouble(value.number_value));
+                break;
+
+            default:
+                throw std::runtime_error(
+                    "Expected number at argument " + std::to_string(i) +
+                    ", got <" + dataTypeToString(value.type) + ">"
+                );
+                break;
+        }
+    }
+    return result;
+}
+
 ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau) {
     Parser parser(tokens, doExecute, runAsync, input, allowJavaScript, canAllowJS, scriptName, scriptType, allowLuau, canAllowLuau);
     return parser.parse(doExecute);

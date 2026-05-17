@@ -41,7 +41,6 @@ SOFTWARE.
 
 struct Value;
 class Parser;
-class Utility;
 
 struct ObjectContext {
     std::shared_ptr<Parser> parser;
@@ -55,35 +54,7 @@ struct ObjectContext {
     std::unordered_map<std::string, std::shared_ptr<ObjectContext>> childObjects;
 };
 
-enum class DataType {
-    JUSTC_OBJECT =  0,
-    NUMBER       =  1,
-    STRING       =  2,
-    LINK         =  3,
-    BOOLEAN      =  4,
-    JSON_OBJECT  =  5,
-    JSON_ARRAY   =  6,
-    NULL_TYPE    =  7,
-    HEXADECIMAL  =  9,
-    BINARY       = 11,
-    PATH         = 12,
-    ERROR        = 13,
-    VARIABLE     = 14,
-    FUNCTION     = 15,
-    NOT_A_NUMBER = 17,
-    INFINITE     = 18,
-    SYNTAX_ERROR = 19,
-    OCTAL        = 20,
-    CLASS        = 21,
-    SPACE        = 22,
-    BINARY_DATA  = 23,
-    BIGNUM       = 24,
-    LARGENUM     = 25,
-    HUGENUM      = 26,
-    GIANTNUM     = 27,
-    COLOSSALNUM  = 28,
-    UNKNOWN      = -1
-};
+#include "datatype.hpp"
 
 inline std::string dataTypeToString(DataType type) {
     switch (type) {
@@ -429,35 +400,7 @@ private:
 
     Value evaluateLengthOperator(const Value& value);
 
-    static std::vector<double> values2numbers(const std::vector<Value>& values) {
-        std::vector<double> result;
-        result.reserve(values.size());
-
-        for (size_t i = 0; i < values.size(); ++i) {
-            const auto& value = values[i];
-            switch (value.type) {
-                case DataType::NUMBER:
-                case DataType::HEXADECIMAL:
-                case DataType::BINARY:
-                case DataType::OCTAL:
-                case DataType::BIGNUM:
-                case DataType::LARGENUM:
-                case DataType::HUGENUM:
-                case DataType::GIANTNUM:
-                case DataType::COLOSSALNUM:
-                    result.push_back(Utility::numToDouble(value.number_value));
-                    break;
-
-                default:
-                    throw std::runtime_error(
-                        "Expected number at argument " + std::to_string(i) +
-                        ", got <" + dataTypeToString(value.type) + ">"
-                    );
-                    break;
-            }
-        }
-        return result;
-    }
+    static std::vector<double> values2numbers(const std::vector<Value>& values);
 
 public:
     static std::string getCurrentTimestamp();
@@ -466,7 +409,5 @@ public:
     ParseResult parse(bool doExecute = true);
     static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);
 };
-
-#include "utility.h"
 
 #endif

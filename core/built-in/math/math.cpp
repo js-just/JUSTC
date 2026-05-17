@@ -28,6 +28,7 @@ SOFTWARE.
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include "../../number.hpp"
 
 std::random_device Math::rd;
 std::mt19937 Math::gen(Math::rd());

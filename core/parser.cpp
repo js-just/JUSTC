@@ -44,6 +44,7 @@ SOFTWARE.
 #include <unordered_map>
 #include "built-in/s.hpp"
 #include <variant>
+#include "number.hpp"
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"
@@ -318,6 +319,42 @@ Value Value::createJsonArray(const std::vector<Value>& arr) {
     return result;
 }
 
+Value Value::createBigNum(BigNum num) {
+    Value result;
+    result.type = DataType::BIGNUM;
+    result.number_value = num;
+    result.name = std::to_string(num);
+    return result;
+}
+Value Value::createLargeNum(LargeNum num) {
+    Value result;
+    result.type = DataType::LARGENUM;
+    result.number_value = num;
+    result.name = std::to_string(num);
+    return result;
+}
+Value Value::createHugeNum(HugeNum num) {
+    Value result;
+    result.type = DataType::HUGENUM;
+    result.number_value = num;
+    result.name = std::to_string(num);
+    return result;
+}
+Value Value::createGiantNum(GiantNum num) {
+    Value result;
+    result.type = DataType::GIANTNUM;
+    result.number_value = num;
+    result.name = std::to_string(num);
+    return result;
+}
+Value Value::createColossalNum(ColossalNum num) {
+    Value result;
+    result.type = DataType::COLOSSALNUM;
+    result.number_value = num;
+    result.name = std::to_string(num);
+    return result;
+}
+
 namespace {
 
 std::string toLower(const std::string& str) {
@@ -350,6 +387,41 @@ bool isOctalDigit(char c) {
 double parseNumber(const std::string& str) {
     try {
         return std::stod(str);
+    } catch (...) {
+        return 0.0;
+    }
+}
+BigNum parseNumber(const std::string& str) {
+    try {
+        return BigNum(str);
+    } catch (...) {
+        return 0.0;
+    }
+}
+LargeNum parseNumber(const std::string& str) {
+    try {
+        return LargeNum(str);
+    } catch (...) {
+        return 0.0;
+    }
+}
+HugeNum parseNumber(const std::string& str) {
+    try {
+        return HugeNum(str);
+    } catch (...) {
+        return 0.0;
+    }
+}
+GiantNum parseNumber(const std::string& str) {
+    try {
+        return GiantNum(str);
+    } catch (...) {
+        return 0.0;
+    }
+}
+ColossalNum parseNumber(const std::string& str) {
+    try {
+        return ColossalNum(str);
     } catch (...) {
         return 0.0;
     }
@@ -863,7 +935,8 @@ bool Parser::CanIgnoreNoAssigmentOperator() {
     return (match("string") || match("number") || match("null") || match("path") || match("link") ||
             match("hex") || match("binary") || match("boolean") || match("identifier") || match("|") ||
             match("JavaScript") || match("Luau") || match(endOfScript) || match(".") || match(",") ||
-            match("{") || match("["));
+            match("{") || match("[") || match("bignum") || match("largenum") || match("hugenum") ||
+            match("giantnum") || match("colossalnum"));
 }
 ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     std::string identifier = currentToken().value;
@@ -1366,13 +1439,37 @@ Value Parser::parsePrimary(bool doExecute) {
         std::string numStr = currentToken().value;
         double num = parseNumber(numStr);
         advance();
-        Value result = numberToValue(num);
-
-        if (!numStr.empty() && std::tolower(numStr.back()) == 'b') {
-            result.name = std::to_string(num) + "B";
-        }
-
-        return result;
+        return numberToValue(num);
+    }
+    else if (match("bignum")) {
+        std::string numStr = currentToken().value;
+        BigNum num = parseNumber(numStr);
+        advance();
+        return numberToValue(num, DataType::BIGNUM);
+    }
+    else if (match("largenum")) {
+        std::string numStr = currentToken().value;
+        LargeNum num = parseNumber(numStr);
+        advance();
+        return numberToValue(num, DataType::LARGENUM);
+    }
+    else if (match("hugenum")) {
+        std::string numStr = currentToken().value;
+        HugeNum num = parseNumber(numStr);
+        advance();
+        return numberToValue(num, DataType::HUGENUM);
+    }
+    else if (match("giantnum")) {
+        std::string numStr = currentToken().value;
+        GiantNum num = parseNumber(numStr);
+        advance();
+        return numberToValue(num, DataType::GIANTNUM);
+    }
+    else if (match("colossalnum")) {
+        std::string numStr = currentToken().value;
+        ColossalNum num = parseNumber(numStr);
+        advance();
+        return numberToValue(num, DataType::COLOSSALNUM);
     }
     else if (match("hex")) {
         std::string hexStr = currentToken().value;
@@ -1741,6 +1838,26 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     if (funcName == "number") {
         if (args.empty()) return numberToValue(0.0);
         return numberToValue(args[0].toNumber());
+    }
+    if (funcName == "bignum") {
+        if (args.empty()) return numberToValue(BigNum(0.0), DataType::BIGNUM);
+        return numberToValue(BigNum(args[0].string_value), DataType::BIGNUM);
+    }
+    if (funcName == "largenum") {
+        if (args.empty()) return numberToValue(LargeNum(0.0), DataType::LARGENUM);
+        return numberToValue(LargeNum(args[0].string_value), DataType::LARGENUM);
+    }
+    if (funcName == "hugenum") {
+        if (args.empty()) return numberToValue(HugeNum(0.0), DataType::HUGENUM);
+        return numberToValue(HugeNum(args[0].string_value), DataType::HUGENUM);
+    }
+    if (funcName == "giantnum") {
+        if (args.empty()) return numberToValue(GiantNum(0.0), DataType::GIANTNUM);
+        return numberToValue(GiantNum(args[0].string_value), DataType::GIANTNUM);
+    }
+    if (funcName == "colossalnum") {
+        if (args.empty()) return numberToValue(ColossalNum(0.0), DataType::COLOSSALNUM);
+        return numberToValue(ColossalNum(args[0].string_value), DataType::COLOSSALNUM);
     }
     if (funcName == "JSON") return functionJSON(args);
     if (funcName == "HTTP::GET") {
@@ -2317,6 +2434,11 @@ Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
         case DataType::HEXADECIMAL:
         case DataType::OCTAL:
         case DataType::BINARY:
+        case DataType::BIGNUM:
+        case DataType::LARGENUM:
+        case DataType::HUGENUM:
+        case DataType::GIANTNUM:
+        case DataType::COLOSSALNUM:
             if (typeDeclaration == DataType::BINARY_DATA && result.type == DataType::BINARY) {
                 try {
                     result = Binary::Data({result});
@@ -2329,6 +2451,11 @@ Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
                 case DataType::HEXADECIMAL:
                 case DataType::OCTAL:
                 case DataType::BINARY:
+                case DataType::BIGNUM:
+                case DataType::LARGENUM:
+                case DataType::HUGENUM:
+                case DataType::GIANTNUM:
+                case DataType::COLOSSALNUM:
                     result = Utility::convert(result, typeDeclaration);
                     break;
                 default:
@@ -2355,6 +2482,11 @@ Value Parser::applyTypeDeclaration(const Value value, const ASTNode node) {
                 case DataType::HEXADECIMAL:
                 case DataType::OCTAL:
                 case DataType::BINARY:
+                case DataType::BIGNUM:
+                case DataType::LARGENUM:
+                case DataType::HUGENUM:
+                case DataType::GIANTNUM:
+                case DataType::COLOSSALNUM:
                     result.boolean_value = (value.number_value > 0);
                     break;
                 case DataType::STRING:
@@ -2486,21 +2618,7 @@ Value Parser::functionTYPEID(const std::vector<Value>& args) {
 Value Parser::functionTYPEOF(const std::vector<Value>& args) {
     if (args.empty()) return stringToValue("unknown");
 
-    switch (args[0].type) {
-        case DataType::JUSTC_OBJECT: return stringToValue("justc_object");
-        case DataType::NUMBER: return stringToValue("number");
-        case DataType::STRING: return stringToValue("string");
-        case DataType::LINK: return stringToValue("link");
-        case DataType::BOOLEAN: return stringToValue("boolean");
-        case DataType::JSON_OBJECT: return stringToValue("json_object");
-        case DataType::JSON_ARRAY: return stringToValue("json_array");
-        case DataType::NULL_TYPE: return stringToValue("null");
-        case DataType::HEXADECIMAL: return stringToValue("hexadecimal");
-        case DataType::BINARY: return stringToValue("binary");
-        case DataType::PATH: return stringToValue("path");
-        case DataType::OCTAL: return stringToValue("octal");
-        default: return stringToValue("unknown");
-    }
+    return stringToValue(dataTypeToString(args[0].type));
 }
 
 Value Parser::functionECHO(const std::vector<Value>& args) {
@@ -2591,18 +2709,12 @@ Value Parser::stringToValue(const std::string& str) {
     return result;
 }
 
-Value Parser::numberToValue(double num) {
+Value Parser::numberToValue(JUSTCnum num, DataType type) {
     Value result;
-    result.type = DataType::NUMBER;
+    result.type = type;
     result.number_value = num;
 
-    std::string str = std::to_string(num);
-    if (!str.empty() && std::tolower(str.back()) == 'b') {
-        str.pop_back();
-        result.name = str + "B";
-    } else {
-        result.name = str;
-    }
+    std::string str = Utility::numberToString(num);
 
     return result;
 }

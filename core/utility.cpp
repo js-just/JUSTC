@@ -39,12 +39,29 @@ SOFTWARE.
 #include "utility.emscripten.h"
 #endif
 
-std::string Utility::numberValue2string(const Value& value) {
-    if (value.number_value == std::floor(value.number_value)) {
-        return std::to_string(static_cast<long long>(value.number_value));
-    } else {
-        return std::to_string(value.number_value);
+std::string Utility::numberToString(const T& num) {
+    std::ostringstream out;
+
+    out << std::setprecision(std::numeric_limits<T>::digits10)
+        << num;
+
+    std::string s = out.str();
+
+    if (s.find('.') != std::string::npos)
+    {
+        s.erase(s.find_last_not_of('0') + 1);
+
+        if (s.back()=='.')
+            s.pop_back();
     }
+
+    return s;
+}
+
+std::string Utility::numberValue2string(const Value& value) {
+    return std::visit([](auto&& num) {
+        return numberToString(num);
+    }, value.number_value);
 }
 
 std::string Utility::value2string(const Value& value) {
@@ -53,6 +70,11 @@ std::string Utility::value2string(const Value& value) {
         case DataType::HEXADECIMAL:
         case DataType::BINARY:
         case DataType::OCTAL:
+        case DataType::BIGNUM:
+        case DataType::LARGENUM:
+        case DataType::HUGENUM:
+        case DataType::GIANTNUM:
+        case DataType::COLOSSALNUM:
             return numberValue2string(value);
         case DataType::JUSTC_OBJECT:
             if (value.name == "HTTP.Responce") {
@@ -92,12 +114,22 @@ bool Utility::checkNumbers(const Value& left, const Value& right) {
         left.type == DataType::NUMBER ||
         left.type == DataType::HEXADECIMAL ||
         left.type == DataType::BINARY ||
-        left.type == DataType::OCTAL
+        left.type == DataType::OCTAL ||
+        left.type == DataType::BIGNUM ||
+        left.type == DataType::LARGENUM ||
+        left.type == DataType::HUGENUM ||
+        left.type == DataType::GIANTNUM ||
+        left.type == DataType::COLOSSALNUM
     ) && (
         right.type == DataType::NUMBER ||
         right.type == DataType::HEXADECIMAL ||
         right.type == DataType::BINARY ||
-        right.type == DataType::OCTAL
+        right.type == DataType::OCTAL ||
+        right.type == DataType::BIGNUM ||
+        right.type == DataType::LARGENUM ||
+        right.type == DataType::HUGENUM ||
+        right.type == DataType::GIANTNUM ||
+        right.type == DataType::COLOSSALNUM
     ));
 }
 
@@ -145,22 +177,27 @@ std::string Utility::position(const size_t& pos_, const std::string& script) {
 
 DataType Utility::typeDeclaration2dataType(const std::string& typeDeclaration, const std::string& position) {
     static const std::unordered_map<std::string, DataType> typeMap = {
-        { "number",      DataType::NUMBER       },     { "num",  DataType::NUMBER       },
-        { "string",      DataType::STRING       },     { "str",  DataType::STRING       },
-        { "boolean",     DataType::BOOLEAN      },     { "bool", DataType::BOOLEAN      },
-        { "null",        DataType::NULL_TYPE    },     { "nil",  DataType::NULL_TYPE    },
+        { "number",      DataType::NUMBER       },     { "num",      DataType::NUMBER       },
+        { "string",      DataType::STRING       },     { "str",      DataType::STRING       },
+        { "boolean",     DataType::BOOLEAN      },     { "bool",     DataType::BOOLEAN      },
+        { "null",        DataType::NULL_TYPE    },     { "nil",      DataType::NULL_TYPE    },
         { "link",        DataType::LINK         },
         { "path",        DataType::PATH         },
-        { "binary",      DataType::BINARY       },     { "bin",  DataType::BINARY       },
-        { "octal",       DataType::OCTAL        },     { "oct",  DataType::OCTAL        },
-        { "hexadecimal", DataType::HEXADECIMAL  },     { "hex",  DataType::HEXADECIMAL  },
-        { "object",      DataType::JUSTC_OBJECT },     { "obj",  DataType::JUSTC_OBJECT },
+        { "binary",      DataType::BINARY       },     { "bin",      DataType::BINARY       },
+        { "octal",       DataType::OCTAL        },     { "oct",      DataType::OCTAL        },
+        { "hexadecimal", DataType::HEXADECIMAL  },     { "hex",      DataType::HEXADECIMAL  },
+        { "object",      DataType::JUSTC_OBJECT },     { "obj",      DataType::JUSTC_OBJECT },
         { "json",        DataType::JSON_OBJECT  },
         { "array",       DataType::JSON_ARRAY   },
         { "nan",         DataType::NOT_A_NUMBER },
-        { "infinity",    DataType::INFINITE     },     { "inf",  DataType::INFINITE     },
+        { "infinity",    DataType::INFINITE     },     { "inf",      DataType::INFINITE     },
         { "data",        DataType::BINARY_DATA  },
         { "auto",        DataType::UNKNOWN      },
+        { "bignum",      DataType::BIGNUM       },     { "big",      DataType::BIGNUM       },
+        { "largenum",    DataType::LARGENUM     },     { "large",    DataType::LARGENUM     },
+        { "hugenum",     DataType::HUGENUM      },     { "huge",     DataType::HUGENUM      },
+        { "giantnum",    DataType::GIANTNUM     },     { "giant",    DataType::GIANTNUM     },
+        { "colossalnum", DataType::COLOSSALNUM  },     { "colossal", DataType::COLOSSALNUM  },
     };
 
     auto it = typeMap.find(typeDeclaration);
@@ -176,6 +213,11 @@ Value Utility::convert(const Value value, const DataType type) {
     result.type = type;
     switch (type) {
         case DataType::NUMBER:
+        case DataType::BIGNUM:
+        case DataType::LARGENUM:
+        case DataType::HUGENUM:
+        case DataType::GIANTNUM:
+        case DataType::COLOSSALNUM:
             break;
         case DataType::BINARY:
             result.name = double2binString(value.number_value);

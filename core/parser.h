@@ -37,6 +37,7 @@ SOFTWARE.
 #include <variant>
 #include "lexer.h"
 #include "version.h"
+#include "number.hpp"
 
 struct Value;
 class Parser;
@@ -75,7 +76,12 @@ enum class DataType {
     CLASS        = 21,
     SPACE        = 22,
     BINARY_DATA  = 23,
-    UNKNOWN      =-1
+    BIGNUM       = 24,
+    LARGENUM     = 25,
+    HUGENUM      = 26,
+    GIANTNUM     = 27,
+    COLOSSALNUM  = 28,
+    UNKNOWN      = -1
 };
 
 inline std::string dataTypeToString(DataType type) {
@@ -102,6 +108,11 @@ inline std::string dataTypeToString(DataType type) {
         case DataType::CLASS:        return "class";
         case DataType::SPACE:        return "space";
         case DataType::BINARY_DATA:  return "Binary Data";
+        case DataType::BIGNUM:       return "Big Number";
+        case DataType::LARGENUM:     return "Large Number";
+        case DataType::HUGENUM:      return "Huge Number";
+        case DataType::GIANTNUM:     return "Giant Number";
+        case DataType::COLOSSALNUM:  return "Colossal Number";
         default:                     return "invalid";
     }
 };
@@ -110,7 +121,7 @@ struct Value {
     DataType type;
 
     union {
-        double number_value;
+        JUSTCnum number_value;
         bool boolean_value;
     };
     std::string string_value;
@@ -172,6 +183,12 @@ struct Value {
     static Value createJustcObject(const std::shared_ptr<ObjectContext>& context);
     static Value createJsonObject(const std::unordered_map<std::string, Value>& obj);
     static Value createJsonArray(const std::vector<Value>& arr);
+
+    static Value createBigNum(BigNum num);
+    static Value createLargeNum(LargeNum num);
+    static Value createHugeNum(HugeNum num);
+    static Value createGiantNum(GiantNum num);
+    static Value createColossalNum(ColossalNum num);
 
     static Value createString(const std::wstring& wstr) {
         Value result;
@@ -356,7 +373,7 @@ private:
     Value evaluateASTNode(const ASTNode& node);
     void extractReferences(const Value& value, std::vector<std::string>& references);
 
-    Value numberToValue(double num);
+    Value numberToValue(JUSTCnum num, DataType type = DataType::NUMBER);
     Value booleanToValue(bool b);
     Value linkToValue(const std::string& link);
     Value pathToValue(const std::string& path);
@@ -419,12 +436,22 @@ private:
         for (size_t i = 0; i < values.size(); ++i) {
             const auto& value = values[i];
             switch (value.type) {
+
                 case DataType::NUMBER:
                 case DataType::HEXADECIMAL:
                 case DataType::BINARY:
                 case DataType::OCTAL:
                     result.push_back(value.number_value);
                     break;
+
+                case DataType::BIGNUM:
+                case DataType::LARGENUM:
+                case DataType::HUGENUM:
+                case DataType::GIANTNUM:
+                case DataType::COLOSSALNUM:
+                    result.push_back(value.number_value.convert_to<double>());
+                    break;
+
                 default:
                     throw std::runtime_error(
                         "Expected number at argument " + std::to_string(i) +

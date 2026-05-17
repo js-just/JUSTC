@@ -41,6 +41,7 @@ SOFTWARE.
 
 struct Value;
 class Parser;
+class Utility;
 
 struct ObjectContext {
     std::shared_ptr<Parser> parser;

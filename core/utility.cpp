@@ -513,9 +513,29 @@ JUSTCnum Utility::mod(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Data
         using T = std::decay_t<decltype(x)>;
 
         if constexpr (std::is_same_v<T, double>) {
-            return promoteToType(std::fmod(x, y), resultType);
-        } else {
-            return promoteToType(boost::multiprecision::fmod(x, y), resultType);
+            double result = std::fmod(x, y);
+            switch (resultType) {
+                case DataType::NUMBER: return result;
+                case DataType::BIGNUM: return BigNum(result);
+                case DataType::LARGENUM: return LargeNum(result);
+                case DataType::HUGENUM: return HugeNum(result);
+                case DataType::GIANTNUM: return GiantNum(result);
+                case DataType::COLOSSALNUM: return ColossalNum(result);
+                default: return result;
+            }
+        }
+        else {
+            auto expr_result = boost::multiprecision::fmod(x, y);
+            T evaluated_result = expr_result;
+            switch (resultType) {
+                case DataType::NUMBER: return static_cast<double>(evaluated_result);
+                case DataType::BIGNUM: return BigNum(evaluated_result);
+                case DataType::LARGENUM: return LargeNum(evaluated_result);
+                case DataType::HUGENUM: return HugeNum(evaluated_result);
+                case DataType::GIANTNUM: return GiantNum(evaluated_result);
+                case DataType::COLOSSALNUM: return ColossalNum(evaluated_result);
+                default: return static_cast<double>(evaluated_result);
+            }
         }
     }, aPromoted, bPromoted);
 }

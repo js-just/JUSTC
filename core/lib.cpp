@@ -41,7 +41,7 @@ Value API::convertFromCore(const ::Value& v) {
         case DataType::BINARY:
         case DataType::OCTAL:
             return std::visit([](auto&& num) -> Value {
-                return Value(static_cast<double>(num));
+                return Value(num);
             }, v.number_value);
 
         case DataType::BIGNUM:

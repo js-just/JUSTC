@@ -79,6 +79,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s ASYNCIFY=1 \
 -s FETCH=1 \
 -O0 \
+-gsource-map \
 -s ASSERTIONS=2 \
 -s SAFE_HEAP=1 \
 -s STACK_OVERFLOW_CHECK=2 \
@@ -203,7 +204,7 @@ for file in justc justc.node; do
         tail -n +2 "$JSOUT_DIR/$file.wat"
     } > $JSOUT_DIR/$file.tmp
     wat2wasm $JSOUT_DIR/$file.tmp --enable-annotations -o $JSOUT_DIR/$file.wasm
-    rm -f $JSOUT_DIR/$file.tmp $JSOUT_DIR/$file.wat
+    rm $JSOUT_DIR/$file.tmp
 done
 
 npm i strc

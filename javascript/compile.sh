@@ -28,8 +28,10 @@ OUTPUT_DIR="${1:-development}"
 SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
 mkdir -p "javascript/$SAFE_DIR"
 
-sudo apt-get update
-sudo apt-get install -y libboost-all-dev
+curl -L -o boost.tar.gz https://archives.boost.io/release/1.84.0/source/boost_1_84_0.tar.gz
+tar -xzf boost.tar.gz
+mv boost_1_84_0/boost ./
+rm -rf boost_1_84_0 boost.tar.gz
 
 emcc --version
 EMCCVERSION=$(emcc --version)
@@ -66,7 +68,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MAXIMUM_MEMORY=512MB \
 --bind \
 -I./third-party \
--I/usr/include \
+-I./boost \
 $LUAU_INCLUDE"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker \

@@ -272,6 +272,7 @@ private:
     std::unordered_map<std::string, std::vector<std::string>> dependencies;
     std::vector<std::string> outputVariables;
     std::vector<std::string> outputNames;
+    Value returnValue;
     std::string outputMode;
     bool allowJavaScript;
     bool globalScope;
@@ -431,7 +432,6 @@ private:
 
     Value onHTTPDisabled(size_t startPos, std::string args0string_value);
     void parseOutputCommandError(const std::string mode);
-    void parseReturnCommandError(const bool a, const bool b = false);
     void parseScopeCommandError(const std::string scope);
     void parseAllowCommandError();
 
@@ -464,7 +464,11 @@ private:
 public:
     static std::string getCurrentTimestamp();
     static Value stringToValue(const std::string& str);
-    Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);
+    Parser(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau)
+    : tokens(tokens), input(input), position(0), outputMode("everything"), allowJavaScript(allowJavaScript),
+      globalScope(false), strictMode(false), hasLogFile(false), allowLuau(allowLuau), canAllowLuau(canAllowLuau),
+      doExecute(doExecute), runAsync(runAsync), canAllowJS(allowJavaScript ? true : canAllowJS), scriptName(scriptName), scriptType(scriptType),
+      asJSON(false), isJSONArray(false), endOfScript("."), returnValue(DataType::UNKNOWN) {}
     ParseResult parse(bool doExecute = true);
     static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);
 };

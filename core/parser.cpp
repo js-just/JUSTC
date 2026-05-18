@@ -600,30 +600,48 @@ ParseResult Parser::parse(bool doExecute) {
             }
         } else {
             if (outputMode == "specified") {
-                if (outputVariables.empty()) {
-                    throw std::runtime_error("Output mode \"specified\" requires \"return\" command with variables.");
-                }
-                for (const auto& varName : outputVariables) {
-                    auto it = variables.find(varName);
-                    if (it != variables.end()) {
-                        size_t index = &varName - &outputVariables[0];
-                        std::string outputName = (index < outputNames.size()) ? outputNames[index] : varName;
-                        if (outputName != "_") {
-                            result.returnValues[outputName] = convertToDecimal(it->second);
-                        } else {
-                            result.returnValues[varName] = convertToDecimal(it->second);
+                if (returnValue.type == DataType::UNKNOWN && !outputVariables.empty()) {
+                    for (const auto& varName : outputVariables) {
+                        auto it = variables.find(varName);
+                        if (it != variables.end()) {
+                            size_t index = &varName - &outputVariables[0];
+                            std::string outputName = (index < outputNames.size()) ? outputNames[index] : varName;
+                            if (outputName != "_") {
+                                result.returnValues[outputName] = convertToDecimal(it->second);
+                            } else {
+                                result.returnValues[varName] = convertToDecimal(it->second);
+                            }
                         }
+                    }
+                } else if (returnValue.type != DataType::UNKNOWN) {
+                    Value finalValue = returnValue;
+
+                    if (finalValue.type == DataType::VARIABLE) {
+                        finalValue = resolveVariableValue(finalValue.string_value, true);
+                    }
+
+                    if (finalValue.type == DataType::JUSTC_OBJECT ||
+                        finalValue.type == DataType::JSON_OBJECT) {
+                        for (const auto& [key, val] : finalValue.properties) {
+                            result.returnValues[key] = convertToDecimal(val);
+                        }
+                    } else if (finalValue.type == DataType::JSON_ARRAY) {
+                        for (size_t i = 0; i < finalValue.array_elements.size(); i++) {
+                            result.returnValues[std::to_string(i)] = convertToDecimal(finalValue.array_elements[i]);
+                        }
+                    } else {
+                        result.returnValues["return"] = convertToDecimal(finalValue);
                     }
                 }
             } else if (outputMode == "everything") {
-                if (!outputVariables.empty()) {
+                if (returnValue.type != DataType::UNKNOWN || !outputVariables.empty()) {
                     throw std::runtime_error("Got \"return\" command with output mode \"everything\". Output mode \"everything\" returns every variable without \"return\" command.");
                 }
                 for (const auto& pair : variables) {
                     result.returnValues[pair.first] = convertToDecimal(pair.second);
                 }
             } else if (outputMode == "disabled") {
-                if (!outputVariables.empty()) {
+                if (returnValue.type != DataType::UNKNOWN || !outputVariables.empty()) {
                     throw std::runtime_error("Cannot return anything with output mode \"disabled\".");
                 }
             }
@@ -705,12 +723,6 @@ ASTNode Parser::parseOutputCommand() {
     return node;
 }
 
-void Parser::parseReturnCommandError(const bool a, const bool b) {
-    if (a && b) throw std::runtime_error("Expected identifier, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
-    else if (b) throw std::runtime_error("Expected variable name, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
-    else if (a) throw std::runtime_error("Expected \"[\", got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
-    else throw std::runtime_error("Expected \"]\" (to close \"[\"), got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
-}
 ASTNode Parser::parseReturnCommand() {
     if (asJSON) {
         throw std::runtime_error("Running as JSON - Cannot parse return command at " + Utility::position(currentToken().start, input) + ".");
@@ -719,33 +731,15 @@ ASTNode Parser::parseReturnCommand() {
     ASTNode node("RETURN_COMMAND", "", currentToken().start);
     advance();
 
-    if (match("[")) {
-        advance();
-        while (!match("]") && !isEnd()) {
-            if (match("identifier")) {
-                outputVariables.push_back(currentToken().value);
-                advance();
-            } else parseReturnCommandError(true, true);
-            if (match(",") || match(";")) advance();
-        }
-        if (match("]")) advance();
-        else parseReturnCommandError(false);
-    } else parseReturnCommandError(true);
+    size_t exprStartPos = position;
 
-    if (match("keyword", "as")) {
-        advance();
-        if (match("[")) {
-            advance();
-            while (!match("]") && !isEnd()) {
-                if (match("identifier") || match("string") || match("number")) {
-                    outputNames.push_back(currentToken().value);
-                    advance();
-                } else parseReturnCommandError(false, true);
-                if (match(",") || match(";")) advance();
-            }
-            if (match("]")) advance();
-            else parseReturnCommandError(false);
-        } else parseReturnCommandError(true);
+    Value exprValue = parseExpression(doExecute);
+
+    returnValue = exprValue;
+    node.value = exprValue;
+
+    if (outputMode == "everything") {
+        outputMode = "specified";
     }
 
     return node;

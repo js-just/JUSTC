@@ -28,10 +28,10 @@ OUTPUT_DIR="${1:-development}"
 SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
 mkdir -p "javascript/$SAFE_DIR"
 
-wget -q https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.tar.gz
-tar -xzf boost-1.84.0.tar.gz
-mv boost-1.84.0/boost ./
-rm -rf boost-1.84.0 boost-1.84.0.tar.gz
+wget -q https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_1_84_0.tar.bz2
+tar -xjf boost_1_84_0.tar.bz2
+mv boost_1_84_0/boost ./
+rm -rf boost_1_84_0 boost_1_84_0.tar.bz2
 
 emcc --version
 EMCCVERSION=$(emcc --version)
@@ -68,7 +68,6 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MAXIMUM_MEMORY=512MB \
 --bind \
 -I./third-party \
--I./boost \
 $LUAU_INCLUDE"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker \

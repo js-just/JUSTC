@@ -647,12 +647,14 @@ ParseResult Parser::parse(bool doExecute) {
                     throw std::runtime_error("Cannot return anything with output mode \"disabled\".");
                 }
                 if (isFunction) {
-                    result.returnValue["return"] = convertToDecimal(createNull());
+                    result.returnValues["return"] = convertToDecimal(createNull());
                     done = true;
                 }
             }
             if (isFunction && !done) {
-                result.returnValues["return"] = result.returnValues;
+                Value returnObject = Value::createJsonObject(result.returnValues);
+                result.returnValues.clear();
+                result.returnValues["return"] = returnObject;
             }
         }
 

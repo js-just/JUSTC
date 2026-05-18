@@ -27,7 +27,16 @@ SOFTWARE.
 #ifndef NUMBER_HPP
 #define NUMBER_HPP
 
+#ifndef __EMSCRIPTEN__
+
 #include <boost/multiprecision/cpp_dec_float.hpp>
+
+#else
+
+#include "../boost/multiprecision/cpp_dec_float.hpp"
+
+#endif
+
 #include <variant>
 
 using BigNum =

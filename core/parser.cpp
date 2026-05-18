@@ -2576,6 +2576,7 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos)
     );
 
     ParseResult result;
+    Value justcObject;
 
     try {
         result = isolatedParser.parse(doExecute);
@@ -2588,7 +2589,7 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos)
         objectContext->allowJavaScript = isolatedParser.allowJavaScript;
         objectContext->allowLuau = isolatedParser.allowLuau;
 
-        Value justcObject = Value::createJustcObject(objectContext);
+        justcObject = Value::createJustcObject(objectContext);
         justcObject.name = "[JUSTC Object]";
 
         if (isolatedParser.outputMode == "everything") {

@@ -89,7 +89,7 @@ std::string Utility::value2string(const Value& value) {
         case DataType::HUGENUM:
         case DataType::GIANTNUM:
         case DataType::COLOSSALNUM:
-            return numToString(value.number_value);
+            return numToString(value);
         case DataType::JUSTC_OBJECT:
             if (value.name == "HTTP.Responce") {
                 auto text = value.object_value.find("text");

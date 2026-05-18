@@ -394,14 +394,6 @@ bool isOctalDigit(char c) {
     return c >= '0' && c <= '7';
 }
 
-double parseDouble(const std::string& str) {
-    try {
-        return std::stod(str);
-    } catch (...) {
-        return 0.0;
-    }
-}
-
 template<typename T>
 T parseNumber(const std::string& str) {
     try {
@@ -1426,7 +1418,7 @@ Value Parser::astNodeToValue(const ASTNode& node) {
 Value Parser::parsePrimary(bool doExecute) {
     if (match("number")) {
         std::string numStr = currentToken().value;
-        double num = parseDouble(numStr);
+        double num = parseNumber<double>(numStr);
         advance();
         return numberToValue(num);
     }
@@ -1566,7 +1558,7 @@ Value Parser::parsePrimary(bool doExecute) {
     }
     else if ((match(".") || match(",")) && position + 1 < tokens.size() && tokens[position + 1].type == "number") {
         advance();
-        double num = parseDouble("0." + currentToken().value);
+        double num = parseNumber<double>("0." + currentToken().value);
         advance();
         return numberToValue(num);
     }

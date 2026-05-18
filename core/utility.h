@@ -96,11 +96,6 @@ std::string Utility::numberToString(const T& num) {
     return s;
 }
 
-template<>
-inline std::string Utility::numberToString<JUSTCnum>(const JUSTCnum& num) {
-    return numToString(num);
-}
-
 class UnicodeUtility {
 public:
     static bool isValidUTF8(const std::string& str) {

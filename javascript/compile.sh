@@ -81,7 +81,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s EXPORT_NAME='__justc__' \
 -s ASYNCIFY=1 \
 -s FETCH=1 \
--O1 \
+-O0 \
 -s ASSERTIONS=2 \
 -s SAFE_HEAP=1 \
 -s STACK_OVERFLOW_CHECK=2 \

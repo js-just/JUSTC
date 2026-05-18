@@ -28,8 +28,26 @@ OUTPUT_DIR="${1:-development}"
 SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
 mkdir -p "javascript/$SAFE_DIR"
 
-sudo apt-get update
-sudo apt-get install -y libboost-all-dev
+BOOST_VERSION="1.84.0"
+if curl -L -o boost.tar.gz "https://archives.boost.io/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION//./_}.tar.gz"; then
+    tar -xzf boost.tar.gz
+    if [ -d "boost_${BOOST_VERSION//./_}/boost" ]; then
+        rm -rf boost
+        mv boost_${BOOST_VERSION//./_}/boost ./
+    else
+        mkdir -p boost
+        cp -r boost_${BOOST_VERSION//./_}/* boost/
+    fi
+    rm -rf boost_${BOOST_VERSION//./_} boost.tar.gz
+else
+    echo "::error::Failed to download Boost headers"
+    exit 1
+fi
+if [ ! -f "boost/multiprecision/cpp_dec_float.hpp" ]; then
+    echo "::error::Boost headers not found after download"
+    ls -la boost/
+    exit 1
+fi
 
 emcc --version
 EMCCVERSION=$(emcc --version)
@@ -66,7 +84,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MAXIMUM_MEMORY=512MB \
 --bind \
 -I./third-party \
--I/usr/include \
+-I./boost \
 $LUAU_INCLUDE"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker \

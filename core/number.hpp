@@ -28,7 +28,6 @@ SOFTWARE.
 #define NUMBER_HPP
 
 #include <boost/multiprecision/cpp_dec_float.hpp>
-#include <variant>
 
 using BigNum =
     boost::multiprecision::number<

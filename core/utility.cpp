@@ -319,19 +319,7 @@ JUSTCnum Utility::doubleToJUSTCnum(double num, DataType type) {
 
 std::string Utility::numToString(const JUSTCnum& num) {
     return std::visit([](auto&& arg) -> std::string {
-        using T = std::decay_t<decltype(arg)>;
-        if constexpr (std::is_same_v<T, double>) {
-            std::ostringstream out;
-            out << std::setprecision(std::numeric_limits<double>::max_digits10) << arg;
-            std::string s = out.str();
-            if (s.find('.') != std::string::npos) {
-                s.erase(s.find_last_not_of('0') + 1);
-                if (s.back() == '.') s.pop_back();
-            }
-            return s;
-        } else {
-            return arg.str();
-        }
+        return numberToString(arg);
     }, num);
 }
 

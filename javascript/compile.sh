@@ -178,7 +178,7 @@ for file in justc justc.node; do
         tail -n +2 "$JSOUT_DIR/$file.wat"
     } > $JSOUT_DIR/$file.tmp
     wat2wasm $JSOUT_DIR/$file.tmp --enable-annotations -o $JSOUT_DIR/$file.wasm
-    rm $JSOUT_DIR/$file.tmp
+    rm -f $JSOUT_DIR/$file.tmp $JSOUT_DIR/$file.wat
 done
 
 npm i strc

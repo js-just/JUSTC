@@ -65,16 +65,14 @@ namespace multiprecision {
 }
 }
 
-/*
 template<>
 std::string Utility::numberToString<JUSTCnum>(const JUSTCnum& num) {
     return numToString(num);
 }
-*/
 
 std::string Utility::numberValue2string(const Value& value) {
     return std::visit([](auto&& num) {
-        return numToString(num);
+        return numberToString(num);
     }, value.number_value);
 }
 
@@ -89,7 +87,7 @@ std::string Utility::value2string(const Value& value) {
         case DataType::HUGENUM:
         case DataType::GIANTNUM:
         case DataType::COLOSSALNUM:
-            return numToString(value);
+            return numberValue2string(value);
         case DataType::JUSTC_OBJECT:
             if (value.name == "HTTP.Responce") {
                 auto text = value.object_value.find("text");

@@ -45,10 +45,9 @@ else
 fi
 if [ ! -f "boost/multiprecision/cpp_dec_float.hpp" ]; then
     echo "::error::Boost headers not found after download"
+    ls -la boost/
     exit 1
 fi
-
-ls -la boost/
 
 emcc --version
 EMCCVERSION=$(emcc --version)

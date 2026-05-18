@@ -87,7 +87,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MAXIMUM_MEMORY=512MB \
 --bind \
 -I./third-party \
--isystem . \
+-isystem ./boost \
 $LUAU_INCLUDE"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker \

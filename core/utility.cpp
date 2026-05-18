@@ -340,10 +340,7 @@ std::string Utility::numToString(const JUSTCnum& num) {
             }
             return s;
         } else {
-            return arg.str(
-                0,
-                std::ios::fixed
-            );
+            return arg.str();
         }
     }, num);
 }

@@ -405,9 +405,7 @@ double parseDouble(const std::string& str) {
 template<typename T>
 T parseNumber(const std::string& str) {
     try {
-        T result;
-        result = str;
-        return result;
+        return T(str);
     } catch (...) {
         return T(0.0);
     }

@@ -647,7 +647,7 @@ ParseResult Parser::parse(bool doExecute) {
                     throw std::runtime_error("Cannot return anything with output mode \"disabled\".");
                 }
                 if (isFunction) {
-                    result.returnValues["return"] = convertToDecimal(createNull());
+                    result.returnValues["return"] = Value::createNull();
                     done = true;
                 }
             }
@@ -863,7 +863,7 @@ ASTNode Parser::parseStatement(bool doExecute) {
         return node;
 
     } else if (keyword == "echo" || keyword == "log" || keyword == "logfile") {
-        ast.push_back(parseCommand(doExecute));
+        return parseCommand(doExecute);
     } else if ((match("identifier") || match("string")) && !isJSONArray) {
         return parseVariableDeclaration(doExecute);
     } else if (match("keyword", "const") && !isJSONArray) {

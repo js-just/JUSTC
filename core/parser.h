@@ -435,16 +435,24 @@ private:
         for (size_t i = 0; i < values.size(); ++i) {
             const auto& value = values[i];
             switch (value.type) {
+
                 case DataType::NUMBER:
                 case DataType::HEXADECIMAL:
                 case DataType::BINARY:
                 case DataType::OCTAL:
+                    result.push_back(value.number_value);
+                    break;
+
                 case DataType::BIGNUM:
                 case DataType::LARGENUM:
                 case DataType::HUGENUM:
                 case DataType::GIANTNUM:
                 case DataType::COLOSSALNUM:
-                    result.push_back(Utility::numToDouble(value.number_value));
+                    result.push_back(
+                        std::visit([](auto&& n){
+                            return static_cast<double>(n);
+                        }, value.number_value)
+                    );
                     break;
 
                 default:

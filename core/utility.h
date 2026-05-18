@@ -52,28 +52,6 @@ public:
     static std::unordered_map<std::string, std::string> ParseHeaders(const std::string& headers);
     static std::string defaultHTTPAccept;
     static void Warn(const std::string& warning);
-
-    static double numToDouble(const JUSTCnum& num);
-    static bool numIsZero(const JUSTCnum& num);
-    static int numToInt(const JUSTCnum& num);
-    static JUSTCnum doubleToJUSTCnum(double num, DataType type = DataType::NUMBER);
-    static std::string numToString(const JUSTCnum& num);
-    static JUSTCnum longToJUSTCnum(long value, DataType type = DataType::NUMBER);
-
-    static DataType getLargestType(DataType a, DataType b);
-    static JUSTCnum promoteToType(const JUSTCnum& num, DataType targetType);
-    static JUSTCnum add(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-    static JUSTCnum subtract(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-    static JUSTCnum multiply(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-    static JUSTCnum divide(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-    static JUSTCnum mod(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-    static JUSTCnum power(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-
-    static bool equals(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-    static bool lessThan(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-    static bool greaterThan(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-    static bool lessOrEqual(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
-    static bool greaterOrEqual(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType);
 };
 
 template<typename T>

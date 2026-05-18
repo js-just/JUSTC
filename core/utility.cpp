@@ -471,11 +471,9 @@ JUSTCnum Utility::mod(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Data
         using T = std::decay_t<decltype(x)>;
 
         if constexpr (std::is_same_v<T, double>) {
-            auto result = std::fmod(x, y);
-            return promoteToType(result, resultType);
+            return evaluateToType(std::fmod(x, y), resultType);
         } else {
-            auto result = boost::multiprecision::fmod(x, y);
-            return promoteToType(result, resultType);
+            return evaluateToType(boost::multiprecision::fmod(x, y), resultType);
         }
     }, aPromoted, bPromoted);
 }

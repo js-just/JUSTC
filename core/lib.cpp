@@ -40,18 +40,15 @@ Value API::convertFromCore(const ::Value& v) {
         case DataType::HEXADECIMAL:
         case DataType::BINARY:
         case DataType::OCTAL:
-            return std::visit([](auto&& num) -> Value {
-                return Value(num);
-            }, v.number_value);
+            return Value(v.number_value);
+
 
         case DataType::BIGNUM:
         case DataType::LARGENUM:
         case DataType::HUGENUM:
         case DataType::GIANTNUM:
         case DataType::COLOSSALNUM:
-            return std::visit([](auto&& num) -> Value {
-                return Value(static_cast<double>(num));
-            }, v.number_value);
+            return Value(v.number_value.convert_to<double>());
 
         case DataType::STRING:
         case DataType::LINK:

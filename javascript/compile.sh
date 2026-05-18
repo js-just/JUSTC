@@ -76,16 +76,14 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -std=c++17 \
 -s DISABLE_EXCEPTION_CATCHING=0 \
 -s EXPORT_NAME='__justc__' \
+-s ASSERTIONS=0 \
 -s ASYNCIFY=1 \
 -s FETCH=1 \
--O0 \
--gsource-map \
--s ASSERTIONS=2 \
--s SAFE_HEAP=1 \
--s STACK_OVERFLOW_CHECK=2 \
--s DEMANGLE_SUPPORT=1 \
+-O3 \
+-flto \
 -s TOTAL_STACK=8MB \
 -s TOTAL_MEMORY=64MB \
+-s AGGRESSIVE_VARIABLE_ELIMINATION=1 \
 -s MAXIMUM_MEMORY=512MB \
 --bind \
 -I./third-party \

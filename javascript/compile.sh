@@ -72,19 +72,19 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"UTF8ToString\",\"stringToUTF8\"] \
 -s MODULARIZE=1 \
 -s ALLOW_MEMORY_GROWTH=1 \
--s INITIAL_MEMORY=128MB \
--s MAXIMUM_MEMORY=1GB \
--s STACK_SIZE=64MB \
 -s INVOKE_RUN=0 \
 -std=c++17 \
 -s DISABLE_EXCEPTION_CATCHING=0 \
 -s EXPORT_NAME='__justc__' \
 -s ASYNCIFY=1 \
 -s FETCH=1 \
--O1 \
+-O0 \
 -s ASSERTIONS=2 \
 -s SAFE_HEAP=1 \
 -s STACK_OVERFLOW_CHECK=2 \
+-s TOTAL_STACK=8MB \
+-s TOTAL_MEMORY=64MB \
+-s MAXIMUM_MEMORY=512MB \
 --bind \
 -I./third-party \
 -isystem . \

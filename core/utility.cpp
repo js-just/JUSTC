@@ -35,20 +35,12 @@ SOFTWARE.
 #include <cstddef>
 #include <unordered_map>
 #include <iostream>
-
 #ifdef __EMSCRIPTEN__
-
 #include "utility.emscripten.h"
-#include "../boost/multiprecision/cpp_dec_float.hpp"
-#include "../boost/multiprecision/cpp_int.hpp"
-
-#else
+#endif
 
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
-
-#endif
-
 namespace boost {
 namespace multiprecision {
     template<typename Backend, expression_template_option ET>

@@ -114,6 +114,17 @@ inline std::string dataTypeToString(DataType type) {
     }
 };
 
+struct FunctionInfo {
+    std::string code;
+    std::vector<std::string> paramNames;
+    std::vector<DataType> paramTypes;
+    std::vector<struct Value> defaultValues;
+    bool hasVarArgs;
+    bool isIsolated;
+
+    FunctionInfo() : hasVarArgs(false), isIsolated(false) {}
+};
+
 struct Value {
     DataType type;
 
@@ -196,16 +207,6 @@ struct Value {
         }
         return result;
     }
-};
-
-struct FunctionInfo {
-    std::string code;
-    std::vector<std::string> paramNames;
-    std::vector<DataType> paramTypes;
-    std::vector<Value> defaultValues;
-    bool hasVarArgs;
-    bool isIsolated;
-    FunctionInfo() : hasVarArgs(false), isIsolated(false) {}
 };
 
 struct LogEntry {

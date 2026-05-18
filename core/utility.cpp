@@ -224,13 +224,13 @@ Value Utility::convert(const Value value, const DataType type) {
         case DataType::COLOSSALNUM:
             break;
         case DataType::BINARY:
-            result.name = double2binString(numToDouble(value.number_value));
+            result.name = double2binString(value.number_value);
             break;
         case DataType::HEXADECIMAL:
-            result.name = double2hexString(numToDouble(value.number_value));
+            result.name = double2hexString(value.number_value);
             break;
         case DataType::OCTAL:
-            result.name = double2octString(numToDouble(value.number_value));
+            result.name = double2octString(value.number_value);
             break;
         default: // warning: 15 enumeration values not handled in switch: 'UNKNOWN', 'JUSTC_OBJECT', 'STRING'... [-Wswitch]
             throw std::runtime_error("JUSTC/core/utility.cpp error: Incorrect usage.");
@@ -388,41 +388,34 @@ JUSTCnum Utility::add(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Data
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
-        auto result = x + y;
-        return promoteToType(JUSTCnum{result}, resultType);
+        return promoteToType(x + y, resultType);
     }, aPromoted, bPromoted);
 }
-
 JUSTCnum Utility::subtract(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
     DataType resultType = getLargestType(aType, bType);
     JUSTCnum aPromoted = promoteToType(a, resultType);
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
-        auto result = x - y;
-        return promoteToType(JUSTCnum{result}, resultType);
+        return promoteToType(x - y, resultType);
     }, aPromoted, bPromoted);
 }
-
 JUSTCnum Utility::multiply(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
     DataType resultType = getLargestType(aType, bType);
     JUSTCnum aPromoted = promoteToType(a, resultType);
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
-        auto result = x * y;
-        return promoteToType(JUSTCnum{result}, resultType);
+        return promoteToType(x * y, resultType);
     }, aPromoted, bPromoted);
 }
-
 JUSTCnum Utility::divide(const JUSTCnum& a, const JUSTCnum& b, DataType aType, DataType bType) {
     DataType resultType = getLargestType(aType, bType);
     JUSTCnum aPromoted = promoteToType(a, resultType);
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
     return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
-        auto result = x / y;
-        return promoteToType(JUSTCnum{result}, resultType);
+        return promoteToType(x / y, resultType);
     }, aPromoted, bPromoted);
 }
 
@@ -431,15 +424,22 @@ JUSTCnum Utility::mod(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Data
     JUSTCnum aPromoted = promoteToType(a, resultType);
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
-    return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+    return std::visit([](auto&& x, auto&& y) -> JUSTCnum {
         using T = std::decay_t<decltype(x)>;
 
-        if constexpr (std::is_arithmetic_v<T>) {
-            auto result = std::fmod(x, y);
-            return promoteToType(JUSTCnum{result}, resultType);
-        } else {
-            auto result = fmod(x, y);
-            return promoteToType(JUSTCnum{result}, resultType);
+        if constexpr (std::is_same_v<T, double>) {
+            return std::fmod(x, y);
+        }
+        else {
+            if constexpr (std::is_same_v<T, BigNum> ||
+                          std::is_same_v<T, LargeNum> ||
+                          std::is_same_v<T, HugeNum> ||
+                          std::is_same_v<T, GiantNum> ||
+                          std::is_same_v<T, ColossalNum>) {
+                return fmod(x, y);
+            } else {
+                return x % y;
+            }
         }
     }, aPromoted, bPromoted);
 }
@@ -449,15 +449,14 @@ JUSTCnum Utility::power(const JUSTCnum& a, const JUSTCnum& b, DataType aType, Da
     JUSTCnum aPromoted = promoteToType(a, resultType);
     JUSTCnum bPromoted = promoteToType(b, resultType);
 
-    return std::visit([resultType](auto&& x, auto&& y) -> JUSTCnum {
+    return std::visit([](auto&& x, auto&& y) -> JUSTCnum {
         using T = std::decay_t<decltype(x)>;
 
         if constexpr (std::is_same_v<T, double>) {
-            auto result = std::pow(x, static_cast<double>(y));
-            return promoteToType(JUSTCnum{result}, resultType);
-        } else {
-            auto result = boost::multiprecision::pow(x, y);
-            return promoteToType(JUSTCnum{result}, resultType);
+            return std::pow(x, y);
+        }
+        else {
+            return boost::multiprecision::pow(x, y);
         }
     }, aPromoted, bPromoted);
 }

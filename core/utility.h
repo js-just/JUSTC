@@ -27,15 +27,10 @@ SOFTWARE.
 #ifndef UTILITY_H
 #define UTILITY_H
 
-#include "number.hpp"
+#include "parser.h"
 #include <string>
-#include <unordered_map>
 #include <codecvt>
 #include <locale>
-
-enum class DataType;
-struct Value;
-struct ParseResult;
 
 class Utility {
 public:
@@ -102,7 +97,9 @@ std::string Utility::numberToString(const T& num) {
 }
 
 template<>
-std::string Utility::numberToString<JUSTCnum>(const JUSTCnum& num);
+inline std::string Utility::numberToString<JUSTCnum>(const JUSTCnum& num) {
+    return numToString(num);
+}
 
 class UnicodeUtility {
 public:

@@ -39,6 +39,25 @@ SOFTWARE.
 #include "utility.emscripten.h"
 #endif
 
+std::string Utility::numberToString(const T& num) {
+    std::ostringstream out;
+
+    out << std::setprecision(std::numeric_limits<T>::digits10)
+        << num;
+
+    std::string s = out.str();
+
+    if (s.find('.') != std::string::npos)
+    {
+        s.erase(s.find_last_not_of('0') + 1);
+
+        if (s.back()=='.')
+            s.pop_back();
+    }
+
+    return s;
+}
+
 std::string Utility::numberValue2string(const Value& value) {
     return std::visit([](auto&& num) {
         return numberToString(num);

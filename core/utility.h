@@ -32,11 +32,11 @@ SOFTWARE.
 #include <codecvt>
 #include <locale>
 
+template<typename T>
+
 class Utility {
 public:
-    template<typename T>
     static std::string numberToString(const T& num);
-
     static std::string numberValue2string(const Value& value);
     static std::string value2string(const Value& value);
     static std::string double2hexString(const double d);
@@ -53,27 +53,6 @@ public:
     static std::string defaultHTTPAccept;
     static void Warn(const std::string& warning);
 };
-
-template<typename T>
-std::string Utility::numberToString(const T& num) {
-    std::ostringstream out;
-
-    out << std::setprecision(std::numeric_limits<T>::digits10)
-        << num;
-
-    std::string s = out.str();
-
-    if (s.find('.') != std::string::npos)
-    {
-        s.erase(s.find_last_not_of('0') + 1);
-
-        if (s.back()=='.')
-            s.pop_back();
-    }
-
-    return s;
-}
-
 class UnicodeUtility {
 public:
     static bool isValidUTF8(const std::string& str) {

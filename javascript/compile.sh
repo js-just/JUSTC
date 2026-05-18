@@ -43,14 +43,12 @@ else
     echo "::error::Failed to download Boost headers"
     exit 1
 fi
-
-ls -la boost/ 2>/dev/null || echo "::error::Missing boost dir"
-ls -la boost/multiprecision/ 2>/dev/null || echo "::error::Missing boost/multiprecision dir"
-
 if [ ! -f "boost/multiprecision/cpp_dec_float.hpp" ]; then
     echo "::error::Boost headers not found after download"
     exit 1
 fi
+
+ls -la boost/
 
 emcc --version
 EMCCVERSION=$(emcc --version)

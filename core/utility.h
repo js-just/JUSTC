@@ -32,11 +32,8 @@ SOFTWARE.
 #include <codecvt>
 #include <locale>
 
-template<typename T>
-
 class Utility {
 public:
-    static std::string numberToString(const T& num);
     static std::string numberValue2string(const Value& value);
     static std::string value2string(const Value& value);
     static std::string double2hexString(const double d);

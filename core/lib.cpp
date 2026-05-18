@@ -42,14 +42,6 @@ Value API::convertFromCore(const ::Value& v) {
         case DataType::OCTAL:
             return Value(v.number_value);
 
-
-        case DataType::BIGNUM:
-        case DataType::LARGENUM:
-        case DataType::HUGENUM:
-        case DataType::GIANTNUM:
-        case DataType::COLOSSALNUM:
-            return Value(v.number_value.convert_to<double>());
-
         case DataType::STRING:
         case DataType::LINK:
         case DataType::PATH:

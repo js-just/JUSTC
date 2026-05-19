@@ -368,11 +368,23 @@ long getCurrentTime() {
 
 }
 
-Parser::Parser(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau, const bool isFunction)
-    : tokens(tokens), input(input), position(0), outputMode("everything"), allowJavaScript(allowJavaScript),
-      globalScope(false), strictMode(false), hasLogFile(false), allowLuau(allowLuau), canAllowLuau(canAllowLuau),
-      doExecute(doExecute), runAsync(runAsync), canAllowJS(allowJavaScript ? true : canAllowJS), scriptName(scriptName), scriptType(scriptType),
-      asJSON(false), isJSONArray(false), endOfScript("."), returnValue(DataType::UNKNOWN), isFunction(isFunction) {}
+Parser::Parser(
+    const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript,
+    const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau,
+    const bool isFunction, const std::unordered_map<std::string, Value>* initialContext
+) :
+    tokens(tokens), input(input), position(0), outputMode("everything"), allowJavaScript(allowJavaScript), globalScope(false),
+    strictMode(false), hasLogFile(false), allowLuau(allowLuau), canAllowLuau(canAllowLuau), doExecute(doExecute), runAsync(runAsync),
+    canAllowJS(allowJavaScript ? true : canAllowJS), scriptName(scriptName), scriptType(scriptType), asJSON(false), isJSONArray(false),
+    endOfScript("."), returnValue(DataType::UNKNOWN), isFunction(isFunction)
+{
+    if (initialContext) {
+        for (const auto& [key, value] : *initialContext) {
+            variables[key] = value;
+            constVars[key] = false;
+        }
+    }
+}
 
 std::string Parser::getCurrentTimestamp() {
     auto now = std::chrono::system_clock::now();
@@ -2603,41 +2615,33 @@ Value Parser::functionHTTP(size_t startPos, const std::string& method, const std
 }
 
 Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context) {
-    auto lexerResult = Lexer::parse(code);
-
-    std::string currName = "function";
-    bool isFunction = true;
-    if (context == nullptr) {
-        currName = "justc";
-        isFunction = false;
-    }
-
-    Parser isolatedParser(
-        lexerResult.second,
-        doExecute && this->doExecute,
-        this->runAsync,
-        code,
-        this->allowJavaScript,
-        this->canAllowJS,
-        this->scriptName + "::" + currName,
-        currName,
-        this->allowLuau,
-        this->canAllowLuau,
-        isFunction
-    );
-
-    if (context) {
-        for (const auto& [key, value] : *context) {
-            isolatedParser.variables[key] = value;
-            if (isolatedParser.constVars.find(key) == isolatedParser.constVars.end()) {
-                isolatedParser.constVars[key] = false;
-            }
-        }
-    }
-
-    ParseResult result;
-
     try {
+        auto lexerResult = Lexer::parse(code);
+
+        std::string currName = "function";
+        bool isFunction = true;
+        if (context == nullptr) {
+            currName = "justc";
+            isFunction = false;
+        }
+
+        Parser isolatedParser(
+            lexerResult.second,
+            doExecute && this->doExecute,
+            this->runAsync,
+            code,
+            this->allowJavaScript,
+            this->canAllowJS,
+            this->scriptName + "::" + currName,
+            currName,
+            this->allowLuau,
+            this->canAllowLuau,
+            isFunction,
+            context
+        );
+
+        ParseResult result;
+
         result = isolatedParser.parse(doExecute);
 
         Value isolatedObject;
@@ -2676,13 +2680,6 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
         objectContext->allowJavaScript = isolatedParser.allowJavaScript;
         objectContext->allowLuau = isolatedParser.allowLuau;
         isolatedObject.object_context = objectContext;
-
-        std::cout << "Isolated parser outputMode: " << isolatedParser.outputMode << std::endl;
-        std::cout << "Return values count: " << result.returnValues.size() << std::endl;
-        std::cout << "Properties count after copy: " << isolatedObject.properties.size() << std::endl;
-        for (const auto& [key, val] : result.returnValues) {
-            std::cout << "  Return value: " << key << " = " << val.toString() << std::endl;
-        }
 
         for (const auto& log : result.logs) {
             this->addLog(log.type, log.message, log.position);
@@ -2868,6 +2865,12 @@ Value Parser::callFunction(const Value& function, const std::vector<Value>& args
         }
     }
 
+    for (const auto& [key, value] : this->variables) {
+        if (functionContext.find(key) == functionContext.end()) {
+            functionContext[key] = value;
+        }
+    }
+
     for (size_t i = 0; i < funcInfo.paramNames.size(); i++) {
         Value paramValue;
 
@@ -2890,30 +2893,19 @@ Value Parser::callFunction(const Value& function, const std::vector<Value>& args
 
     Value result = isolated(function.string_value, true, startPos, &functionContext);
 
-    std::cout << "Function result type: " << static_cast<int>(result.type) << std::endl;
-    std::cout << "Function result properties size: " << result.properties.size() << std::endl;
-    for (const auto& [key, val] : result.properties) {
-        std::cout << "  Property: " << key << " = " << val.toString() << std::endl;
-    }
-
     if (!result.properties.empty()) {
         auto it = result.properties.find("return");
         if (it != result.properties.end()) {
-            std::cout << "Found 'return' property with value: " << it->second.toString() << std::endl;
             return it->second;
         }
 
         if (result.properties.size() == 1) {
-            auto& singleValue = result.properties.begin()->second;
-            std::cout << "Single property, returning value: " << singleValue.toString() << std::endl;
-            return singleValue;
+            return result.properties.begin()->second;
         }
 
-        std::cout << "Multiple properties, returning object" << std::endl;
         return result;
     }
 
-    std::cout << "Empty object, returning null" << std::endl;
     return Value::createNull();
 }
 
@@ -3507,6 +3499,6 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
 }
 
 ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau) {
-    Parser parser(tokens, doExecute, runAsync, input, allowJavaScript, canAllowJS, scriptName, scriptType, allowLuau, canAllowLuau, false);
+    Parser parser(tokens, doExecute, runAsync, input, allowJavaScript, canAllowJS, scriptName, scriptType, allowLuau, canAllowLuau, false, nullptr);
     return parser.parse(doExecute);
 }

@@ -381,6 +381,7 @@ jobs:
         cp artifacts/**/*.dll release/ || true
         cp artifacts/**/*.so release/ || true
         cp artifacts/**/*.dylib release/ || true
+        cp artifacts/**/*.lib release/ || true
 
         mkdir js
 

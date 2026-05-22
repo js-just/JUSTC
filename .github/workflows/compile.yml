@@ -156,11 +156,13 @@ jobs:
           name: justc-windows-cli
           path: ${{ github.workspace }}/build/Release/justc.exe
           retention-days: 1
-      - name: "Upload .dll"
+      - name: "Upload .dll and .lib"
         uses: actions/upload-artifact@v4
         with:
           name: justc-windows-dll
-          path: ${{ github.workspace }}/build/Release/justc.dll
+          path: |
+            ${{ github.workspace }}/build/Release/justc.dll
+            ${{ github.workspace }}/build/Release/justc.lib
           retention-days: 1
 
   compile-macos:

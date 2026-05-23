@@ -24,82 +24,22 @@ SOFTWARE.
 
 */
 
-#include <cstring>
-#include <cstdlib>
+#ifndef JUSTC_CODEC_H
+#define JUSTC_CODEC_H
 
-#include "capi.hpp"
 #include "lib.hpp"
-#include "codec.hpp"
 
-static char*
-copyString(
-    const std::string& s
-){
-
-    char* out=
-        (char*)std::malloc(
-            s.size()+1
-        );
-
-    memcpy(
-        out,
-        s.c_str(),
-        s.size()+1
-    );
-
-    return out;
-}
-
-extern "C"
+namespace JUSTC::Codec
 {
 
-const char*
-justc_version()
-{
-    return JUSTC_VERSION.c_str();
-}
+std::string encode(
+    const Object&
+);
 
-char* justc_parse(
-    const char* code,
-    bool execute,
-    bool async
-){
-
-    auto obj=
-        JUSTC::API::parse(
-            code,
-            execute,
-            async
-        );
-
-    return copyString(
-        JUSTC::Codec::encode(obj)
-    );
-}
-
-char* justc_stringify(
-    const char* data
-){
-
-    auto obj=
-        JUSTC::Codec::decode(
-            data
-        );
-
-    auto out=
-        JUSTC::API::stringify(
-            obj
-        );
-
-    return copyString(out);
-}
-
-void justc_free(
-    char* ptr
-){
-
-    std::free(ptr);
+Object decode(
+    const std::string&
+);
 
 }
 
-}
+#endif

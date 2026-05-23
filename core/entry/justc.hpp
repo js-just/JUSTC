@@ -42,6 +42,7 @@ SOFTWARE.
 #endif
 
 #include "capi.hpp"
+#include "codec.hpp"
 
 namespace JUSTC {
 
@@ -106,50 +107,43 @@ class JUSTC_API API {
 public:
 
     static Object parse(
-        const std::string& s,
+        const std::string& code,
         bool execute=true,
         bool async=false
     ){
 
-        char* out=
+        char* ptr=
             justc_parse(
-                s.c_str(),
+                code.c_str(),
                 execute,
                 async
             );
 
-        std::string result=
-            out;
+        auto obj=
+            Codec::decode(ptr);
 
-        justc_free(out);
+        justc_free(ptr);
 
-        return parseLocal(
-            result
-        );
+        return obj;
     }
 
     static std::string stringify(
         const Object& obj
     ){
 
-        auto s=
-            stringifyLocal(
-                obj
-            );
+        auto encoded=
+            Codec::encode(obj);
 
-        char* out=
+        char* ptr=
             justc_stringify(
-                s.c_str()
+                encoded.c_str()
             );
 
-        std::string result=
-            out;
+        std::string out(ptr);
 
-        justc_free(
-                out
-        );
+        justc_free(ptr);
 
-        return result;
+        return out;
     }
 
 };

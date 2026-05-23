@@ -41,7 +41,7 @@ SOFTWARE.
     #define JUSTC_API __attribute__((visibility("default")))
 #endif
 
-#include "justc_capi.hpp"
+#include "capi.hpp"
 
 namespace JUSTC {
 

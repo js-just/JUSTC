@@ -55,7 +55,7 @@ extern "C"
 const char*
 justc_version()
 {
-    return JUSTC_VERSION;
+    return JUSTC_VERSION.c_str();
 }
 
 char* justc_parse(

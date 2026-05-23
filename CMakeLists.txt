@@ -264,6 +264,7 @@ target_include_directories(justc_core SYSTEM PRIVATE
 add_library(justc_lib SHARED
     core/entry/lib.cpp
     core/entry/capi.cpp
+    core/entry/codec.cpp
 )
 
 target_compile_definitions(

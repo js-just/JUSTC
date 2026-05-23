@@ -27,7 +27,7 @@ SOFTWARE.
 #ifndef JUSTC_CODEC_H
 #define JUSTC_CODEC_H
 
-#include "lib.hpp"
+#include "types.hpp"
 
 namespace JUSTC::Codec
 {

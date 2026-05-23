@@ -29,6 +29,28 @@ SOFTWARE.
 #include <sstream>
 #include <stdexcept>
 
+namespace
+{
+
+bool startsWith(
+    const std::string& s,
+    const char* prefix
+){
+
+    size_t len=
+        std::strlen(prefix);
+
+    return
+        s.size()>=len &&
+        s.compare(
+            0,
+            len,
+            prefix
+        )==0;
+}
+
+}
+
 namespace JUSTC::Codec
 {
 
@@ -231,14 +253,14 @@ static Value decodeValue(
         return {};
 
     if(
-        s.starts_with("b:")
+        startsWith(s, "b:")
     ){
         return
             s[2]=='1';
     }
 
     if(
-        s.starts_with("n:")
+        startsWith(s, "n:")
     ){
         return
             std::stod(
@@ -247,7 +269,7 @@ static Value decodeValue(
     }
 
     if(
-        s.starts_with("s:")
+        startsWith(s, "s:")
     ){
         return
             unescape(
@@ -256,7 +278,7 @@ static Value decodeValue(
     }
 
     if(
-        s.starts_with("a[")
+        startsWith(s, "a[")
     ){
 
         Array arr;
@@ -312,7 +334,7 @@ static Value decodeValue(
     }
 
     if(
-        s.starts_with("o{")
+        startsWith(s, "o{")
     ){
 
         Object obj;

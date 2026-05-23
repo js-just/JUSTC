@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include <sstream>
 #include <stdexcept>
+#include <cstring>
 
 namespace
 {

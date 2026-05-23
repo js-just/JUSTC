@@ -48,61 +48,6 @@ namespace JUSTC {
 
 extern JUSTC_API const std::string Version;
 
-struct Value;
-
-using Object = std::map<std::string, Value>;
-using Array = std::vector<Value>;
-
-struct Value {
-    std::variant<
-        std::monostate,
-        bool,
-        double,
-        std::string,
-        Array,
-        Object
-    > data;
-
-    Value() = default;
-
-    Value(bool v) : data(v) {}
-    Value(int v) : data((double)v) {}
-    Value(double v) : data(v) {}
-    Value(const char* v) : data(std::string(v)) {}
-    Value(const std::string& v) : data(v) {}
-    Value(const Array& v) : data(v) {}
-    Value(const Object& v) : data(v) {}
-
-    bool isNull() const {
-        return std::holds_alternative<std::monostate>(data);
-    }
-
-    bool isBool() const {
-        return std::holds_alternative<bool>(data);
-    }
-
-    bool isNumber() const {
-        return std::holds_alternative<double>(data);
-    }
-
-    bool isString() const {
-        return std::holds_alternative<std::string>(data);
-    }
-
-    bool isArray() const {
-        return std::holds_alternative<Array>(data);
-    }
-
-    bool isObject() const {
-        return std::holds_alternative<Object>(data);
-    }
-
-    template<class T>
-    const T& get() const {
-        return std::get<T>(data);
-    }
-};
-
 class JUSTC_API API {
 public:
 

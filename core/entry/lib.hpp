@@ -32,9 +32,9 @@ SOFTWARE.
 #include <string>
 #include <map>
 
-#include "lexer.h"
-#include "parser.h"
-#include "version.h"
+#include "../lexer.h"
+#include "../parser.h"
+#include "../version.h"
 
 #ifdef _WIN32
     #ifdef JUSTC_BUILD

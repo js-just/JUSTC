@@ -28,15 +28,15 @@ SOFTWARE.
 #include <fstream>
 #include <string>
 #include <sstream>
-#include "lexer.h"
-#include "parser.h"
-#include "json.hpp"
-#include "version.h"
+#include "../lexer.h"
+#include "../parser.h"
+#include "../json.hpp"
+#include "../version.h"
 #include <cstring>
 #include <cstdlib>
 #include <stdexcept>
 #include <tuple>
-#include "utility.h"
+#include "../utility.h"
 
 void logError(const std::string error) {
     if (Utility::isGitHubActions()) std::cerr << "::error::" + error << std::endl;

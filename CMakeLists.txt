@@ -262,7 +262,7 @@ target_include_directories(justc_core SYSTEM PRIVATE
 )
 
 add_library(justc_lib SHARED
-    core/lib.cpp
+    core/entry/capi.cpp
 )
 
 target_compile_definitions(
@@ -285,7 +285,7 @@ set_target_properties(justc_lib PROPERTIES
 
 add_executable(
     justc_cli
-    core/main.cpp
+    core/entry/cli.cpp
 )
 
 set_property(TARGET justc_core PROPERTY
@@ -324,6 +324,6 @@ install(
 
 install(
     FILES
-    core/lib.hpp
+    core/entry/capi.hpp
     DESTINATION include/justc
 )

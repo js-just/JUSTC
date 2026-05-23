@@ -255,8 +255,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Move just.config.js file to the root directory and copy javascript/core.js to javascript/core.txt and copy javascript/index.d.ts to javascript/index.d.txt
-        run: mv javascript/just.config.js just.config.js && cp javascript/core.js javascript/core.txt && cp javascript/index.d.ts javascript/index.d.txt
+      - name: Move just.config.js file to the root directory and copy javascript/core.js to javascript/core.txt and copy javascript/index.d.ts to javascript/index.d.txt and rename javascript/cli.js to javascript/cli.js.txt
+        run: mv javascript/just.config.js just.config.js && cp javascript/core.js javascript/core.txt && cp javascript/index.d.ts javascript/index.d.txt && mv javascript/cli.js javascript/cli.js.txt
       - name: Compress core.js with Just an Ultimate Site Tool
         uses: js-just/_just@main
         with:

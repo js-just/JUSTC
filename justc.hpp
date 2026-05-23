@@ -24,13 +24,12 @@ SOFTWARE.
 
 */
 
-#ifndef JUSTC_LIB_H
-#define JUSTC_LIB_H
+#pragma once
 
-#include <variant>
-#include <vector>
 #include <string>
 #include <map>
+#include <vector>
+#include <variant>
 
 #ifdef _WIN32
     #ifdef JUSTC_BUILD
@@ -41,6 +40,8 @@ SOFTWARE.
 #else
     #define JUSTC_API __attribute__((visibility("default")))
 #endif
+
+#include "justc_capi.hpp"
 
 namespace JUSTC {
 
@@ -105,16 +106,52 @@ class JUSTC_API API {
 public:
 
     static Object parse(
-        const std::string& code,
+        const std::string& s,
         bool execute=true,
         bool async=false
-    );
+    ){
+
+        char* out=
+            justc_parse(
+                s.c_str(),
+                execute,
+                async
+            );
+
+        std::string result=
+            out;
+
+        justc_free(out);
+
+        return parseLocal(
+            result
+        );
+    }
 
     static std::string stringify(
-        const Object&
-    );
+        const Object& obj
+    ){
+
+        auto s=
+            stringifyLocal(
+                obj
+            );
+
+        char* out=
+            justc_stringify(
+                s.c_str()
+            );
+
+        std::string result=
+            out;
+
+        justc_free(
+                out
+        );
+
+        return result;
+    }
+
 };
 
 }
-
-#endif

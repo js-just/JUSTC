@@ -42,8 +42,7 @@ const char* justc_parse(
     bool execute,
     bool async
 ){
-
-    static std::string result;
+    thread_local std::string result;
 
     result=
         JUSTC::Codec::encode(
@@ -60,8 +59,7 @@ const char* justc_parse(
 const char* justc_stringify(
     const char* code
 ){
-
-    static std::string result;
+    thread_local std::string result;
 
     result=
         JUSTC::API::stringify(

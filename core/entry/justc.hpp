@@ -46,9 +46,12 @@ SOFTWARE.
 
 namespace JUSTC {
 
-extern JUSTC_API const std::string Version;
+inline const char* Version()
+{
+    return justc_version();
+}
 
-class JUSTC_API API {
+class API {
 public:
 
     static Object parse(

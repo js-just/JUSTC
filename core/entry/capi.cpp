@@ -24,31 +24,11 @@ SOFTWARE.
 
 */
 
-#include <cstring>
-#include <cstdlib>
-
 #include "capi.hpp"
 #include "lib.hpp"
 #include "codec.hpp"
 
-static char*
-copyString(
-    const std::string& s
-){
-
-    char* out=
-        (char*)std::malloc(
-            s.size()+1
-        );
-
-    memcpy(
-        out,
-        s.c_str(),
-        s.size()+1
-    );
-
-    return out;
-}
+static thread_local std::string result;
 
 extern "C"
 {
@@ -59,7 +39,7 @@ justc_version()
     return JUSTC_VERSION.c_str();
 }
 
-char* justc_parse(
+const char* justc_parse(
     const char* code,
     bool execute,
     bool async
@@ -72,34 +52,29 @@ char* justc_parse(
             async
         );
 
-    return copyString(
-        JUSTC::Codec::encode(obj)
-    );
+    result=
+        JUSTC::Codec::encode(
+            obj
+        );
+
+    return result.c_str();
 }
 
-char* justc_stringify(
-    const char* data
+const char* justc_stringify(
+    const char* code
 ){
 
     auto obj=
         JUSTC::Codec::decode(
-            data
+            code
         );
 
-    auto out=
+    result=
         JUSTC::API::stringify(
             obj
         );
 
-    return copyString(out);
-}
-
-void justc_free(
-    char* ptr
-){
-
-    std::free(ptr);
-
+    return result.c_str();
 }
 
 }

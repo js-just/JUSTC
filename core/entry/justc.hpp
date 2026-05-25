@@ -57,17 +57,16 @@ public:
         bool async=false
     ){
 
-        char* ptr=
+        const char* ptr=
             justc_parse(
                 code.c_str(),
                 execute,
                 async
             );
 
-        auto obj=
-            Codec::decode(ptr);
+        std::string str = ptr;
 
-        justc_free(ptr);
+        auto obj = Codec::decode(str);
 
         return obj;
     }
@@ -76,17 +75,14 @@ public:
         const Object& obj
     ){
 
-        auto encoded=
-            Codec::encode(obj);
+        auto encoded = Codec::encode(obj);
 
         char* ptr=
             justc_stringify(
                 encoded.c_str()
             );
 
-        std::string out(ptr);
-
-        justc_free(ptr);
+        std::string out = ptr;
 
         return out;
     }

@@ -28,8 +28,6 @@ SOFTWARE.
 #include "lib.hpp"
 #include "codec.hpp"
 
-static thread_local std::string result;
-
 extern "C"
 {
 
@@ -45,16 +43,15 @@ const char* justc_parse(
     bool async
 ){
 
-    auto obj=
-        JUSTC::API::parse(
-            code,
-            execute,
-            async
-        );
+    static std::string result;
 
     result=
         JUSTC::Codec::encode(
-            obj
+            JUSTC::API::parse(
+                code,
+                execute,
+                async
+            )
         );
 
     return result.c_str();
@@ -64,14 +61,13 @@ const char* justc_stringify(
     const char* code
 ){
 
-    auto obj=
-        JUSTC::Codec::decode(
-            code
-        );
+    static std::string result;
 
     result=
         JUSTC::API::stringify(
-            obj
+            JUSTC::Codec::decode(
+                code
+            )
         );
 
     return result.c_str();

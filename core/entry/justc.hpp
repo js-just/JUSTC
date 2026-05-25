@@ -77,7 +77,7 @@ public:
 
         auto encoded = Codec::encode(obj);
 
-        char* ptr=
+        const char* ptr=
             justc_stringify(
                 encoded.c_str()
             );

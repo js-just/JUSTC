@@ -43,20 +43,15 @@ JUSTC_API
 const char* justc_version();
 
 JUSTC_API
-char* justc_parse(
+const char* justc_parse(
     const char* code,
     bool execute,
     bool async
 );
 
 JUSTC_API
-char* justc_stringify(
+const char* justc_stringify(
     const char* code
-);
-
-JUSTC_API
-void justc_free(
-    char*
 );
 
 }

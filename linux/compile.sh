@@ -38,7 +38,8 @@ make -j$(nproc)
 sudo make install
 
 pip install --user quom
-cmake --build build --target bundle
+mkdir -p bundle
+cmake --build bundle --target bundle
 
 hash -r
 if [[ "$OPTIONS" == "" ]] && ! command -v justc &> /dev/null; then

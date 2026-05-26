@@ -326,6 +326,14 @@ add_custom_target(
         ${CMAKE_SOURCE_DIR}/core/entry/lib.hpp
         ${CMAKE_SOURCE_DIR}/justc.hpp
 
+        -I ${CMAKE_SOURCE_DIR}/core
+        -I ${CMAKE_SOURCE_DIR}/third-party
+
+        -I ${luau_SOURCE_DIR}/VM/include
+        -I ${luau_SOURCE_DIR}/Compiler/include
+        -I ${luau_SOURCE_DIR}/Ast/include
+        -I ${luau_SOURCE_DIR}/Common/include
+
     WORKING_DIRECTORY
         ${CMAKE_SOURCE_DIR}
 )

@@ -323,8 +323,8 @@ add_custom_target(
     bundle
     COMMAND
         ${QUOM_EXECUTABLE}
-        -o ${CMAKE_SOURCE_DIR}/justc.hpp
         ${CMAKE_SOURCE_DIR}/core/entry/lib.hpp
+        ${CMAKE_SOURCE_DIR}/justc.hpp
 
     WORKING_DIRECTORY
         ${CMAKE_SOURCE_DIR}

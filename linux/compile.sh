@@ -37,6 +37,7 @@ cmake .. $OPTIONS
 make -j$(nproc)
 
 pip install --user quom
+export PATH="$HOME/.local/bin:$PATH"
 cmake --build . --target bundle
 
 sudo make install

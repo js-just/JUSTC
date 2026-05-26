@@ -35,11 +35,11 @@ mkdir -p build
 cd build
 cmake .. $OPTIONS
 make -j$(nproc)
-sudo make install
 
 pip install --user quom
-mkdir -p bundle
-cmake --build bundle --target bundle
+cmake --build . --target bundle
+
+sudo make install
 
 hash -r
 if [[ "$OPTIONS" == "" ]] && ! command -v justc &> /dev/null; then
@@ -59,4 +59,4 @@ find . -name "*.so"
 find . -name "justc"
 
 echo "justc.hpp:"
-echo $(cat justc.hpp)
+ls -lh justc.hpp

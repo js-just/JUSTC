@@ -39,7 +39,11 @@ cd build
 cmake .. $OPTIONS
 make -j$(nproc)
 
-cmake --build . --target bundle
+quom \
+    core/entry/lib.hpp \
+    justc.hpp \
+    -I core \
+    -I third-party
 
 sudo make install
 

@@ -33,12 +33,13 @@ sudo apt-get install -y libluau-dev libluau0 || echo "Luau not available in pack
 
 pip install --user quom
 export PATH="$HOME/.local/bin:$PATH"
-cmake --build . --target bundle
 
 mkdir -p build
 cd build
 cmake .. $OPTIONS
 make -j$(nproc)
+
+cmake --build . --target bundle
 
 sudo make install
 

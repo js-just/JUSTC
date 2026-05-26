@@ -91,11 +91,11 @@ jobs:
           name: justc-linux-cli
           path: ${{ github.workspace }}/install_root/bin/justc
           retention-days: 1
-      - name: "Upload .so"
+      - name: "Upload justc.hpp"
         uses: actions/upload-artifact@v4
         with:
-          name: justc-linux-so
-          path: ${{ github.workspace }}/install_root/lib/libjustc.so
+          name: justc-hpp
+          path: justc.hpp
           retention-days: 1
 
   compile-windows:
@@ -156,14 +156,6 @@ jobs:
           name: justc-windows-cli
           path: ${{ github.workspace }}/build/Release/justc.exe
           retention-days: 1
-      - name: "Upload .dll and .lib"
-        uses: actions/upload-artifact@v4
-        with:
-          name: justc-windows-dll
-          path: |
-            ${{ github.workspace }}/build/Release/justc.dll
-            ${{ github.workspace }}/build/Release/justc.lib
-          retention-days: 1
 
   compile-macos:
     runs-on: macos-latest
@@ -192,12 +184,6 @@ jobs:
         with:
           name: justc-macos-cli
           path: build/justc
-          retention-days: 1
-      - name: "Upload .dylib"
-        uses: actions/upload-artifact@v4
-        with:
-          name: justc-macos-dylib
-          path: build/libjustc.dylib
           retention-days: 1
 
   test-linux:

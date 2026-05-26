@@ -263,7 +263,6 @@ target_include_directories(justc_core SYSTEM PRIVATE
 
 add_library(justc_lib SHARED
     core/entry/lib.cpp
-    core/entry/capi.cpp
 )
 
 target_compile_definitions(
@@ -315,16 +314,18 @@ install(
     RUNTIME DESTINATION bin
 )
 
-install(
-    TARGETS
-    justc_lib
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+find_program(
+    QUOM_EXECUTABLE
+    quom
 )
 
-install(
-    FILES
-    core/entry/capi.hpp
-    DESTINATION include/justc
+add_custom_target(
+    bundle
+    COMMAND
+        ${QUOM_EXECUTABLE}
+        ${CMAKE_SOURCE_DIR}/core/entry/lib.hpp
+        ${CMAKE_SOURCE_DIR}/justc.hpp
+
+    WORKING_DIRECTORY
+        ${CMAKE_SOURCE_DIR}
 )

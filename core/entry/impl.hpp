@@ -25,7 +25,6 @@ SOFTWARE.
 */
 
 #include <sstream>
-#include "lib.hpp"
 
 namespace JUSTC {
 

@@ -37,6 +37,9 @@ cmake .. $OPTIONS
 make -j$(nproc)
 sudo make install
 
+pip install --user quom
+cmake --build build --target bundle
+
 hash -r
 if [[ "$OPTIONS" == "" ]] && ! command -v justc &> /dev/null; then
     sudo ln -sf /usr/local/bin/justc /usr/bin/justc
@@ -53,3 +56,6 @@ echo "Built files:"
 
 find . -name "*.so"
 find . -name "justc"
+
+echo "justc.hpp:"
+echo $(cat justc.hpp)

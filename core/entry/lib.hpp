@@ -87,3 +87,7 @@ public:
 }
 
 #endif
+
+#ifdef JUSTC_IMPLEMENTATION
+#include "impl.hpp"
+#endif

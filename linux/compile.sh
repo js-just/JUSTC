@@ -54,6 +54,3 @@ echo "Built files:"
 
 find . -name "*.so"
 find . -name "justc"
-
-echo "justc.hpp:"
-ls -lh justc.hpp

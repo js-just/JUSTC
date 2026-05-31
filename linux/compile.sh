@@ -31,19 +31,10 @@ sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config zi
 
 sudo apt-get install -y libluau-dev libluau0 || echo "Luau not available in packages, will build from source"
 
-pip install --user quom
-export PATH="$HOME/.local/bin:$PATH"
-
 mkdir -p build
 cd build
 cmake .. $OPTIONS
 make -j$(nproc)
-
-quom \
-    core/entry/lib.hpp \
-    justc.hpp \
-    -I core \
-    -I third-party
 
 sudo make install
 

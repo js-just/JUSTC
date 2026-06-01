@@ -5,7 +5,7 @@ const JUSTCWASM = require('./justc.node.js');
     JUSTC.initialize().then(()=>{
         JUSTC.execute(`
             a is 123,
-            b is value(a) + 123,
+            b is Value(a) + 123,
             c : string = <example>,
             d = Math::Random().
         `).then((result)=>{

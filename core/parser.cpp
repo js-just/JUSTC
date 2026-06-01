@@ -1788,16 +1788,16 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     }
 
     // built-in
-    if (funcName == "value") return functionVALUE(args);
-    if (funcName == "string") return functionSTRING(args);
-    if (funcName == "link") return functionLINK(args);
-    if (funcName == "binary") return functionBINARY(args);
-    if (funcName == "octal") return functionOCTAL(args);
-    if (funcName == "hexadecimal") return functionHEXADECIMAL(args);
+    if (funcName == "valueof") return functionVALUE(args);
+    if (funcName == "String") return functionSTRING(args);
+    if (funcName == "Link") return functionLINK(args);
+    if (funcName == "Binary") return functionBINARY(args);
+    if (funcName == "Octal") return functionOCTAL(args);
+    if (funcName == "Hexadecimal") return functionHEXADECIMAL(args);
     if (funcName == "typeid") return functionTYPEID(args);
     if (funcName == "typeof") return functionTYPEOF(args);
     if (funcName == "echo") return functionECHO(args);
-    if (funcName == "number") {
+    if (funcName == "Number") {
         if (args.empty()) return numberToValue(0.0);
         return numberToValue(args[0].toNumber());
     }

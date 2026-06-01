@@ -2069,7 +2069,15 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             (left.type == DataType::UNKNOWN && right.type == DataType::STRING ) ||
             (left.type == DataType::STRING  && right.type == DataType::UNKNOWN)
         ) {
-            throw std::runtime_error("Unexpected operator \"+\" at " + Utility::position(position, input) + ". Did you mean '" + left.name + " .. " + right.name + "'?");
+            if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
+                result = stringToValue(Utility::stringAdd(left.name, right.name));
+            } else if (left.type == DataType::UNKNOWN) {
+                result = stringToValue(Utility::stringAdd(left.name, right.toString()));
+            } else if (right.type == DataType::UNKNOWN) {
+                result = stringToValue(Utility::stringAdd(left.toString(), right.name));
+            } else {
+                result = stringToValue(Utility::stringAdd(left.toString(), right.toString()));
+            }
         } else if (left.type == DataType::STRING) {
             throw std::runtime_error("Cannot add string to " + Utility::value2string(right) + " at " + Utility::position(position, input) + ".");
         } else if (right.type == DataType::STRING) {
@@ -2077,18 +2085,26 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
             result = numberToValue(left.toNumber() + right.toNumber());
         } else if (left.type == DataType::UNKNOWN) {
-            result = stringToValue(left.name + Utility::value2string(right));
+            result = stringToValue(Utility::stringAdd(left.name, Utility::value2string(right)));
         } else if (right.type == DataType::UNKNOWN) {
-            result = stringToValue(Utility::value2string(left) + right.name);
+            result = stringToValue(Utility::stringAdd(Utility::value2string(left), right.name));
         } else {
-            result = stringToValue(left.toString() + right.toString());
+            result = stringToValue(Utility::stringAdd(left.toString(), right.toString()));
         }
     }
     else if (op == "minus" || op == "-") {
-        if (left.type == DataType::UNKNOWN) {
+        if (left.type == DataType::UNKNOWN && Utility::checkNumbers(right, Value::createNumber(0.0))) {
             result = numberToValue(-right.toNumber());
         } else if (Utility::checkNumbers(left, right)) {
             result = numberToValue(left.toNumber() - right.toNumber());
+        } else if (left.type == DataType::STRING && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringSub(left.toString(), right.toString()));
+        } else if (left.type == DataType::STRING && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringSub(left.toString(), right.name));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringSub(left.name, right.toString()));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringSub(left.name, right.name));
         } else {
             throw std::runtime_error("Unexpected operator \"-\" at " + Utility::position(position, input) + ".");
         }

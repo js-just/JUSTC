@@ -2145,11 +2145,35 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             throw std::runtime_error("Unexpected operator \"" + op + "\" at " + Utility::position(position, input) + ".");
         }
     }
-    else if (op == "**" && Utility::checkNumbers(left, right)) {
-        result = numberToValue(std::pow(left.toNumber(), right.toNumber()));
+    else if (op == "**") {
+        if (Utility::checkNumbers(left, right)) {
+            result = numberToValue(std::pow(left.toNumber(), right.toNumber()));
+        } else if (left.type == DataType::STRING && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringPow(left.toString(), right.toString()));
+        } else if (left.type == DataType::STRING && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringPow(left.toString(), right.name));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringPow(left.name, right.toString()));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringPow(left.name, right.name));
+        } else {
+            throw std::runtime_error("Unexpected operator \"**\" at " + Utility::position(position, input) + ".");
+        }
     }
-    else if (op == "%" && Utility::checkNumbers(left, right)) {
-        result = numberToValue(std::fmod(left.toNumber(), right.toNumber()));
+    else if (op == "%") {
+        if (Utility::checkNumbers(left, right)) {
+            result = numberToValue(std::fmod(left.toNumber(), right.toNumber()));
+        } else if (left.type == DataType::STRING && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringFMod(left.toString(), right.toString()));
+        } else if (left.type == DataType::STRING && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringFMod(left.toString(), right.name));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringFMod(left.name, right.toString()));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringFMod(left.name, right.name));
+        } else {
+            throw std::runtime_error("Unexpected operator \"%\" at " + Utility::position(position, input) + ".");
+        }
     }
     else if (op == "..") {
         result = concatenateStrings(left, right);
@@ -2238,8 +2262,12 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             right.type == DataType::BINARY || right.type == DataType::OCTAL) {
             int num = static_cast<int>(right.toNumber());
             result = numberToValue(~num);
+        } else if (right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringNot(right.toString()));
+        } else if (right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringNot(right.name));
         } else {
-            throw std::runtime_error("Expected number for bitwise NOT operation at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected number or string for bitwise NOT operation at " + Utility::position(position, input) + ".");
         }
     }
     else if (op == "<<") {
@@ -2247,8 +2275,16 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             int leftInt = static_cast<int>(left.toNumber());
             int rightInt = static_cast<int>(right.toNumber());
             result = numberToValue(leftInt << rightInt);
+        } else if (left.type == DataType::STRING && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringLShift(left.toString(), right.toString()));
+        } else if (left.type == DataType::STRING && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringLShift(left.toString(), right.name));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringLShift(left.name, right.toString()));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringLShift(left.name, right.name));
         } else {
-            throw std::runtime_error("Expected numbers at left shift at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected numbers or strings for bitwise left shift operation at " + Utility::position(position, input) + ".");
         }
     }
     else if (op == ">>") {
@@ -2256,8 +2292,16 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
             int leftInt = static_cast<int>(left.toNumber());
             int rightInt = static_cast<int>(right.toNumber());
             result = numberToValue(leftInt >> rightInt);
+        } else if (left.type == DataType::STRING && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringRShift(left.toString(), right.toString()));
+        } else if (left.type == DataType::STRING && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringRShift(left.toString(), right.name));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::STRING) {
+            result = stringToValue(Utility::stringRShift(left.name, right.toString()));
+        } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
+            result = stringToValue(Utility::stringRShift(left.name, right.name));
         } else {
-            throw std::runtime_error("Expected numbers at right shift  at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected numbers or strings for bitwise right shift operation at " + Utility::position(position, input) + ".");
         }
     }
 

@@ -1787,7 +1787,7 @@ Value Parser::onExecDisabled(size_t startPos, std::string name) {
 
 Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos) {
     if (!doExecute) {
-        return onExecDisabled(startPosm, funcName);
+        return onExecDisabled(startPos, funcName);
     }
 
     if (funcName == "TIME") {

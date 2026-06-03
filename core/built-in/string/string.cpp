@@ -27,8 +27,10 @@ SOFTWARE.
 #include "string.hpp"
 #include <algorithm>
 
-std::string String::Reverse(std::string str) {
-    return std::reverse(str.begin(), str.end());
+std::string String::Reverse(const std::string& str) {
+    std::string res = str;
+    std::reverse(res.begin(), res.end());
+    return res;
 }
 
 std::string String::Trim(const std::string& str) {

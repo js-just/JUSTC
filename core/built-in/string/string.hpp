@@ -33,7 +33,7 @@ SOFTWARE.
 
 class String {
     public:
-        static std::string Reverse(std::string str);
+        static std::string Reverse(const std::string& str);
         static std::string Trim(const std::string& str);
         static std::string Repeat(const std::string& str, size_t times);
         static std::vector<std::string_view> Split(std::string_view str, std::string_view delim);

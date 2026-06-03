@@ -1063,7 +1063,7 @@ Value Parser::parseConditional(bool doExecute, bool identifierMode) {
             }
         }
 
-        if (match("keyword", "elseif") || match("??")) {
+        if (match("keyword", "elseif")) {
             std::string elseifOp = currentToken().value;
             advance();
 
@@ -1135,13 +1135,13 @@ Value Parser::parseBitwiseAND(bool doExecute, bool identifierMode) {
     return left;
 }
 Value Parser::parseBitwiseSHIFT(bool doExecute, bool identifierMode) {
-    Value left = parseLogicalOR(doExecute, identifierMode);
+    Value left = parseElvisOrNullCoalescing(doExecute, identifierMode);
 
     while (match("<<") || match(">>")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseLogicalOR(doExecute, identifierMode);
+        Value right = parseElvisOrNullCoalescing(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
@@ -1163,6 +1163,20 @@ Value Parser::parseBitwiseNOT(bool doExecute, bool identifierMode) {
         return left;
     }
     else return parseBitwiseSHIFT(doExecute, identifierMode);
+}
+
+Value Parser::parseElvisOrNullCoalescing(bool doExecute, bool identifierMode) {
+    Value left = parseLogicalOR(doExecute, identifierMode);
+
+    while (match("?:") || match("??")) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseLogicalOR(doExecute, identifierMode);
+        left = evaluateExpression(left, op, right);
+    }
+
+    return left;
 }
 
 Value Parser::parseLogicalOR(bool doExecute, bool identifierMode) {
@@ -2338,6 +2352,25 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     }
     else if (op == "nimply") {
         result = booleanToValue(leftBool && !rightBool);
+    }
+
+    else if (op == "??") {
+        switch (left.type) {
+            case DataType::UNKNOWN:
+            case DataType::NULL_TYPE:
+                result = right;
+                break;
+            default:
+                result = left;
+                break;
+        }
+    }
+    else if (op == "?:") {
+        if (left.toBoolean()) {
+            result = left;
+        } else {
+            result = right;
+        }
     }
 
     else {

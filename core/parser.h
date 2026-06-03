@@ -329,6 +329,7 @@ private:
     Value parseBitwiseAND(bool doExecute, bool identifierMode);
     Value parseBitwiseSHIFT(bool doExecute, bool identifierMode);
     Value parseBitwiseNOT(bool doExecute, bool identifierMode);
+    Value parseElvisOrNullCoalescing(bool doExecute, bool identifierMode);
     Value parseLogicalOR(bool doExecute, bool identifierMode);
     Value parseLogicalXOR(bool doExecute, bool identifierMode);
     Value parseLogicalAND(bool doExecute, bool identifierMode);

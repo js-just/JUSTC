@@ -1135,13 +1135,13 @@ Value Parser::parseBitwiseAND(bool doExecute, bool identifierMode) {
     return left;
 }
 Value Parser::parseBitwiseSHIFT(bool doExecute, bool identifierMode) {
-    Value left = parseElvisOrNullCoalescing(doExecute, identifierMode);
+    Value left = parsePipeline(doExecute, identifierMode);
 
     while (match("<<") || match(">>")) {
         std::string op = currentToken().value;
         advance();
 
-        Value right = parseElvisOrNullCoalescing(doExecute, identifierMode);
+        Value right = parsePipeline(doExecute, identifierMode);
         left = evaluateExpression(left, op, right);
     }
 
@@ -1163,6 +1163,20 @@ Value Parser::parseBitwiseNOT(bool doExecute, bool identifierMode) {
         return left;
     }
     else return parseBitwiseSHIFT(doExecute, identifierMode);
+}
+
+Value Parser::parsePipeline(bool doExecute, bool identifierMode) {
+    Value left = parseElvisOrNullCoalescing(doExecute, identifierMode);
+
+    while (match("|>")) {
+        std::string op = currentToken().value;
+        advance();
+
+        Value right = parseElvisOrNullCoalescing(doExecute, identifierMode);
+        left = evaluateExpression(left, op, right);
+    }
+
+    return left;
 }
 
 Value Parser::parseElvisOrNullCoalescing(bool doExecute, bool identifierMode) {
@@ -2371,6 +2385,16 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else {
             result = right;
         }
+    }
+
+    else if (op == "|>") {
+        std::string funcName = right.name;
+        if (right.type == DataType::STRING) {
+            funcName = right.toString();
+        }
+        std::vector<Value> args;
+        args.push_back(left);
+        result = executeFunction(funcName, args, position);
     }
 
     else {

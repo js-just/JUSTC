@@ -1773,19 +1773,23 @@ ASTNode Parser::parseCommand(bool doExecute) {
     return node;
 }
 
-Value Parser::onHTTPDisabled(size_t startPos, std::string args0string_value) {
+Value Parser::onExecDisabled(size_t startPos, std::string name) {
     #ifdef __EMSCRIPTEN__
-    warn_http_disabled(Utility::position(startPos, input).c_str(), args0string_value.c_str(), getCurrentTimestamp().c_str());
+    warn_exec_disabled(Utility::position(startPos, input).c_str(), name.c_str(), getCurrentTimestamp().c_str());
     #endif
 
     Value result;
     result.type = DataType::ERROR;
     result.string_value = "HTTP requests are disabled";
-    result.name = "<" + args0string_value + ">";
+    result.name = "<" + name + ">";
     return result;
 }
 
 Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos) {
+    if (!doExecute) {
+        return onExecDisabled(startPosm, funcName);
+    }
+
     if (funcName == "TIME") {
         long timestamp = getCurrentTime();
         return numberToValue(timestamp);
@@ -1831,9 +1835,6 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
     }
     if (funcName == "JSON") return functionJSON(args);
     if (funcName == "HTTP::GET") {
-        if (!doExecute) {
-            return onHTTPDisabled(startPos, args[0].string_value);
-        }
         if (runAsync) {
             auto future = functionHTTPAsync(startPos, "GET", args);
             return future.get();
@@ -1841,9 +1842,6 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         return functionHTTP(startPos, "GET", args);
     }
     if (funcName == "HTTP::POST") {
-        if (!doExecute) {
-            return onHTTPDisabled(startPos, args[0].string_value);
-        }
         if (runAsync) {
             auto future = functionHTTPAsync(startPos, "POST", args);
             return future.get();
@@ -1851,9 +1849,6 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         return functionHTTP(startPos, "POST", args);
     }
     if (funcName == "HTTP::PUT") {
-        if (!doExecute) {
-            return onHTTPDisabled(startPos, args[0].string_value);
-        }
         if (runAsync) {
             auto future = functionHTTPAsync(startPos, "PUT", args);
             return future.get();
@@ -1861,9 +1856,6 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         return functionHTTP(startPos, "PUT", args);
     }
     if (funcName == "HTTP::PATCH") {
-        if (!doExecute) {
-            return onHTTPDisabled(startPos, args[0].string_value);
-        }
         if (runAsync) {
             auto future = functionHTTPAsync(startPos, "PATCH", args);
             return future.get();
@@ -1871,9 +1863,6 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         return functionHTTP(startPos, "PATCH", args);
     }
     if (funcName == "HTTP::DELETE") {
-        if (!doExecute) {
-            return onHTTPDisabled(startPos, args[0].string_value);
-        }
         if (runAsync) {
             auto future = functionHTTPAsync(startPos, "DELETE", args);
             return future.get();
@@ -1881,9 +1870,6 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         return functionHTTP(startPos, "DELETE", args);
     }
     if (funcName == "HTTP::HEAD") {
-        if (!doExecute) {
-            return onHTTPDisabled(startPos, args[0].string_value);
-        }
         if (runAsync) {
             auto future = functionHTTPAsync(startPos, "HEAD", args);
             return future.get();
@@ -1891,9 +1877,6 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         return functionHTTP(startPos, "HEAD", args);
     }
     if (funcName == "HTTP::OPTIONS") {
-        if (!doExecute) {
-            return onHTTPDisabled(startPos, args[0].string_value);
-        }
         if (runAsync) {
             auto future = functionHTTPAsync(startPos, "OPTIONS", args);
             return future.get();

@@ -208,7 +208,7 @@ EM_JS(int, unicode_is_whitespace_js, (const char* input), {
     for (const ch of s) {
         const cp = ch.codePointAt(0);
 
-        if (!/\p{White_Space}/u.test(ch)) {
+        if (!/\\p{White_Space}/u.test(ch)) {
             return 0;
         }
     }

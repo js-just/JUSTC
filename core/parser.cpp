@@ -1110,7 +1110,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     }
 
     if (doExecute && isBuiltinVariable(identifier)) {
-        handleBuiltinVariableAssignment(identifier, exprValue, startPos);
+        handleBuiltinVariableAssignment(identifier, node.value, startPos);
     }
 
     return node;

@@ -3641,7 +3641,7 @@ Value Parser::parseJustcObject(bool doExecute) {
         objectContext->allowLuau,
         canAllowLuau,
         false,
-        currentContext,
+        &currentContext,
         chartype
     );
 

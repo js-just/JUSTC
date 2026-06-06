@@ -41,7 +41,7 @@ const monacoJUSTClang = {
 
         escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
-        builtinFunctions: /\b(echo|log|logfile|valueof|String(::((Grapheme|CodePoint|Byte|)(Reverse|Slice|Length)|Trim|Repeat|(Start|End)sWith|Size|Lower|Upper|NormalizeNF(K|)(C|D)|EqualsIgnoreCase|IsWhitespace)|)|Number|Link|Binary(::((To|From)(Text|DataURL))|)|Octal|Hexadecimal|typeid|typeof|JSON(\.(Parse|Stringify)|)|file|size|env|config|parseInt|JUSTC(\.(Parse(r|)|Execute|Stringify|Version|Lexer)|)|TIME|PI|BACKSLASH|VERSION|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(Abs|A(cos|sin|tan(2|))|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|To(Degrees|Radians)|ParseNum)|Data|JavaScript(\.(Execute|About)|)|Luau(\.(Execute|Version)|))\b/i,
+        builtinFunctions: /\b(echo|log|logfile|valueof|String(::((Grapheme|CodePoint|Byte|)(Reverse|Slice|Length)|Trim|Repeat|(Start|End)sWith|Size|Lower|Upper|NormalizeNF(K|)(C|D)|EqualsIgnoreCase|IsWhitespace)|)|Number|Link|Binary(::((To|From)(Text|DataURL))|)|Octal|Hexadecimal|typeid|typeof|JSON(\.(Parse|Stringify)|)|file|size|env|config|parseInt|JUSTC(\.(Parse(r|)|Execute|Stringify|Version|Lexer)|)|TIME|PI|Backslash|Version|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(A(bs|cos|sin|tan(2|))|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|To(Degrees|Radians)|ParseNum)|Data|JavaScript(\.(Execute|About)|)|Luau(\.(Execute|Version)|))\b/i,
 
         constants: /\b(True|TRUE|False|FALSE|Yes|YES|No|NO|Y|N|Null|NULL|Nil|NIL|Infinity|NaN|undefined)\b/,
 
@@ -197,6 +197,166 @@ monacoScript.onload = function() {
             comments: {
                 lineComment: '--',
                 blockComment: ['-{', '}-']
+            }
+        });
+
+        const JUSTC_BUILTINS = {
+            "echo": {
+                text: "echo ${1:str}"
+            },
+            "log": {
+                text: "log ${1:str}"
+            },
+            "logfile": {
+                text: "logfile ${1:path}"
+            },
+            "valueof": {
+                text: "valueof(${1:varname})"
+            },
+            "String": {
+                text: "String(${1:any})"
+            },
+            "String::Length": {
+                text: "String::Length(${1:str})"
+            },
+            "String::GraphemeLength": {
+                text: "String::GraphemeLength(${1:str})"
+            },
+            "String::CodePointLength": {
+                text: "String::CodePointLength(${1:str})"
+            },
+            "String::ByteLength": {
+                text: "String::ByteLength(${1:str})"
+            },
+            "String::Slice": {
+                text: "String::Slice(${1:str}, ${2:start}, ${3:end})"
+            },
+            "String::GraphemeSlice": {
+                text: "String::GraphemeSlice(${1:str}, ${2:start}, ${3:end})"
+            },
+            "String::CodePointSlice": {
+                text: "String::CodePointSlice(${1:str}, ${2:start}, ${3:end})"
+            },
+            "String::ByteSlice": {
+                text: "String::ByteSlice(${1:str}, ${2:start}, ${3:end})"
+            },
+            "String::Reverse": {
+                text: "String::Reverse(${1:str})"
+            },
+            "String::GraphemeReverse": {
+                text: "String::GraphemeReverse(${1:str})"
+            },
+            "String::CodePointReverse": {
+                text: "String::CodePointReverse(${1:str})"
+            },
+            "String::ByteReverse": {
+                text: "String::ByteReverse(${1:str})"
+            },
+            "String::Size": {
+                text: "String::Size(${1:str})"
+            },
+            "String::Trim": {
+                text: "String::Trim(${1:str})"
+            },
+            "String::Repeat": {
+                text: "String::Repeat(${1:str})"
+            },
+            "String::StartsWith": {
+                text: "String::StartsWith(${1:str}, ${2:prefix})"
+            },
+            "String::EndsWith": {
+                text: "String::StartsWith(${1:str}, ${2:postfix})"
+            },
+            "String::Lower": {
+                text: "String::Lower(${1:str})"
+            },
+            "String::Upper": {
+                text: "String::Upper(${1:str})"
+            },
+            "String::NormalizeNFC": {
+                text: "String::NormalizeNFC(${1:str})"
+            },
+            "String::NormalizeNFD": {
+                text: "String::NormalizeNFD(${1:str})"
+            },
+            "String::NormalizeNFKC": {
+                text: "String::NormalizeNFKC(${1:str})"
+            },
+            "String::NormalizeNFKD": {
+                text: "String::NormalizeNFKD(${1:str})"
+            },
+            "String::EqualsIgnoreCase": {
+                text: "String::EqualsIgnoreCase(${1:a}, ${2:b})"
+            },
+            "String::IsWhitespace": {
+                text: "String::IsWhitespace(${1:str})"
+            },
+            "Number": {
+                text: "Number(${1:any})"
+            },
+            "Link": {
+                text: "Link(${1:str})"
+            },
+            "Binary": {
+                text: "Binary(${1:any})"
+            },
+            "Binary::ToText": {
+                text: "Binary::ToText(${1:bin})"
+            },
+            "Binary::FromText": {
+                text: "Binary::FromText(${1:str})"
+            },
+            "Binary::ToDataURL": {
+                text: "Binary::ToText(${1:bin})"
+            },
+            "Binary::FromDataURL": {
+                text: "Binary::ToText(${1:str})"
+            },
+            "Octal": {
+                text: "Octal(${1:num})"
+            },
+            "Hexadecimal": {
+                text: "Hexadecimal(${1:num})"
+            },
+            "typeid": {
+                text: "typeid ${1:any}"
+            },
+            "typeof": {
+                text: "typeof ${1:any}"
+            },
+            "JSON.Parse": {
+                text: "JSON.Parse(${1:str})"
+            },
+            "JSON.Stringify": {
+                text: "JSON.Stringify(${1:obj})"
+            },
+            "file": {},
+            "size": {},
+            "env": {},
+            "config": {},
+            "parseInt": {},
+        };
+        monaco.languages.registerCompletionItemProvider('justc', {
+            provideCompletionItems(model, position) {
+                const suggestions = [];
+
+                for (const keyword of monacoJUSTClang.keywords.filter(k => k.length > 1)) {
+                    suggestions.push({
+                        label: keyword,
+                        kind: monaco.languages.CompletionItemKind.Keyword,
+                        insertText: keyword
+                    });
+                }
+
+                for (const [fn, data] of Object.entries(JUSTC_BUILTINS)) {
+                    suggestions.push({
+                        label: fn,
+                        kind: monaco.languages.CompletionItemKind.Function,
+                        insertText: data.text || fn
+                    });
+                }
+
+                return { suggestions };
             }
         });
 

@@ -213,11 +213,6 @@ endif()
 
 find_package(ICU REQUIRED COMPONENTS uc i18n)
 
-target_link_libraries(justc_core PRIVATE
-    ICU::uc
-    ICU::i18n
-)
-
 include_directories(third-party)
 
 set(CORE_SOURCES
@@ -268,6 +263,11 @@ endif()
 
 target_include_directories(justc_core SYSTEM PRIVATE
     ${Boost_INCLUDE_DIRS}
+)
+
+target_link_libraries(justc_core PRIVATE
+    ICU::uc
+    ICU::i18n
 )
 
 add_library(justc_lib SHARED

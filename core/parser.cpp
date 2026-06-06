@@ -44,6 +44,7 @@ SOFTWARE.
 #include <unordered_map>
 #include "built-in/s.hpp"
 #include <variant>
+#include "unicode.hpp"
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"

@@ -3124,7 +3124,7 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
     }
 }
 
-Value emptyJUSTC() {
+Value Parser::emptyJUSTC() {
     auto emptyContext = std::make_shared<ObjectContext>();
     emptyContext->allowJavaScript = this->allowJavaScript;
     emptyContext->allowLuau = this->allowLuau;
@@ -3161,7 +3161,7 @@ Value Parser::functionJUSTC(const std::vector<Value>& args, size_t startPos) {
 
     return isolated(code, execute, startPos);
 }
-Value functionJUSTC2(const std::string& code, bool doExecute, size_t startPos) {
+Value Parser::functionJUSTC2(const std::string& code, bool doExecute, size_t startPos) {
     bool execute = doExecute;
     if (!this->doExecute) {
         execute = false;

@@ -211,6 +211,13 @@ else()
     message(WARNING "Please use CMake 3.14+")
 endif()
 
+find_package(ICU REQUIRED COMPONENTS uc i18n)
+
+target_link_libraries(justc_core PRIVATE
+    ICU::uc
+    ICU::i18n
+)
+
 include_directories(third-party)
 
 set(CORE_SOURCES
@@ -226,6 +233,7 @@ set(CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/run.js.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/import.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/run.luau.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/unicode.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/http/http.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/math/math.cpp

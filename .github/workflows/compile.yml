@@ -140,6 +140,7 @@ jobs:
         run: |
           ./vcpkg/vcpkg install cpr:x64-windows-static
           ./vcpkg/vcpkg install libidn2:x64-windows-static
+          ./vcpkg/vcpkg install icu:x64-windows-static
       - name: Configure CMake
         run: cmake -B build -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DBoost_USE_STATIC_LIBS=ON
       - name: Build
@@ -157,7 +158,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          brew install libidn2 pkg-config boost
+          brew install libidn2 pkg-config boost icu4c
           if [ ! -f /opt/homebrew/lib/libidn2.dylib ] && [ -f /opt/homebrew/lib/libidn2.0.dylib ]; then
             ln -sf /opt/homebrew/lib/libidn2.0.dylib /opt/homebrew/lib/libidn2.dylib
           fi
@@ -165,10 +166,11 @@ jobs:
         run: |
           export LDFLAGS="-L/opt/homebrew/lib"
           export CPPFLAGS="-I/opt/homebrew/include"
-          export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
+          export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
           cmake -B build -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_EXE_LINKER_FLAGS="-L/opt/homebrew/lib" \
-            -DCMAKE_SHARED_LINKER_FLAGS="-L/opt/homebrew/lib"
+            -DCMAKE_SHARED_LINKER_FLAGS="-L/opt/homebrew/lib" \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix icu4c)"
       - name: Fix QuickJS version conflict
         run: rm -f build/_deps/quickjs-src/version
       - name: Build

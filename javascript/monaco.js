@@ -352,7 +352,8 @@ monacoScript.onload = function() {
                     suggestions.push({
                         label: fn,
                         kind: monaco.languages.CompletionItemKind.Function,
-                        insertText: data.text || fn
+                        insertText: data.text || fn,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
                     });
                 }
 

@@ -288,9 +288,17 @@ target_link_libraries(justc_lib PUBLIC
     justc_core
 )
 
-set_target_properties(justc_lib PROPERTIES
-    OUTPUT_NAME "justc"
-)
+if (NOT MSVC)
+    set_target_properties(
+        justc_lib
+        PROPERTIES OUTPUT_NAME "justc"
+    )
+else()
+    set_target_properties(
+        justc_lib
+        PROPERTIES OUTPUT_NAME "libjustc"
+    )
+endif()
 
 add_executable(
     justc_cli

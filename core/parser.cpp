@@ -393,12 +393,12 @@ long getCurrentTime() {
 Parser::Parser(
     const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript,
     const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau,
-    const bool isFunction, const std::unordered_map<std::string, Value>* initialContext
+    const bool isFunction, const std::unordered_map<std::string, Value>* initialContext, const CharType chartype
 ) :
     tokens(tokens), input(input), position(0), outputMode("everything"), allowJavaScript(allowJavaScript), globalScope(false),
     strictMode(false), hasLogFile(false), allowLuau(allowLuau), canAllowLuau(canAllowLuau), doExecute(doExecute), runAsync(runAsync),
     canAllowJS(allowJavaScript ? true : canAllowJS), scriptName(scriptName), scriptType(scriptType), asJSON(false), isJSONArray(false),
-    endOfScript("."), returnValue(DataType::UNKNOWN), isFunction(isFunction)
+    endOfScript("."), returnValue(DataType::UNKNOWN), isFunction(isFunction), chartype(chartype)
 {
     if (initialContext) {
         for (const auto& [key, value] : *initialContext) {

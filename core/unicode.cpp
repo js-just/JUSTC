@@ -24,6 +24,10 @@ SOFTWARE.
 
 */
 
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <string_view>
 #include "unicode.hpp"
 
 #ifdef __EMSCRIPTEN__
@@ -37,9 +41,8 @@ SOFTWARE.
     #include <unicode/normalizer2.h>
     #include <unicode/uchar.h>
     #include <unicode/brkiter.h>
-    #include <unicode/unorm2.h>
+    #include <unicode/utf8.h>
     #include <memory>
-    #include <vector>
 
 #endif
 
@@ -176,29 +179,25 @@ std::string NormalizeNFKC(std::string_view str) {
 
         UErrorCode status = U_ZERO_ERROR;
 
-        const UNormalizer2* normalizer = unorm2_getNFKCInstance(&status);
+        const auto* normalizer = icu::Normalizer2::getNFKCInstance(status);
 
-        if (U_FAILURE(status)) return {};
-
-        icu::UnicodeString input = icu::UnicodeString::fromUTF8(icu::StringPiece(
+        icu::UnicodeString source = icu::UnicodeString::fromUTF8(icu::StringPiece(
             str.data(),
             static_cast<int32_t>(str.size())
         ));
 
-        icu::UnicodeString output;
+        icu::UnicodeString result;
 
         normalizer->normalize(
-            input,
-            output,
+            source,
+            result,
             status
         );
 
-        if (U_FAILURE(status)) return {};
+        std::string output;
+        result.toUTF8String(output);
 
-        std::string result;
-        output.toUTF8String(result);
-
-        return result;
+        return output;
 
     #endif
 }
@@ -212,29 +211,25 @@ std::string NormalizeNFKD(std::string_view str) {
 
         UErrorCode status = U_ZERO_ERROR;
 
-        const UNormalizer2* normalizer = unorm2_getNFKDInstance(&status);
+        const auto* normalizer = icu::Normalizer2::getNFKDInstance(status);
 
-        if (U_FAILURE(status)) return {};
-
-        icu::UnicodeString input = icu::UnicodeString::fromUTF8(icu::StringPiece(
+        icu::UnicodeString source = icu::UnicodeString::fromUTF8(icu::StringPiece(
             str.data(),
             static_cast<int32_t>(str.size())
         ));
 
-        icu::UnicodeString output;
+        icu::UnicodeString result;
 
         normalizer->normalize(
-            input,
-            output,
+            source,
+            result,
             status
         );
 
-        if (U_FAILURE(status)) return {};
+        std::string output;
+        result.toUTF8String(output);
 
-        std::string result;
-        output.toUTF8String(result);
-
-        return result;
+        return output;
 
     #endif
 }
@@ -255,7 +250,7 @@ bool EqualsIgnoreCase(std::string_view left, std::string_view right){
 }
 
 std::string ByteReverse(std::string_view str) {
-    std::string res = str;
+    std::string res(str);
     std::reverse(res.begin(), res.end());
     return res;
 }
@@ -382,7 +377,7 @@ std::string CodePointSlice(std::string_view str, int64_t start, int64_t end) {
     #endif
 }
 
-size_t Unicode::GraphemeLength(std::string_view str) {
+size_t GraphemeLength(std::string_view str) {
     #ifdef __EMSCRIPTEN__
 
         return static_cast<size_t>(unicode_grapheme_length_js(std::string(str).c_str()));
@@ -413,7 +408,7 @@ size_t Unicode::GraphemeLength(std::string_view str) {
 
     #endif
 }
-std::string Unicode::GraphemeReverse(std::string_view str) {
+std::string GraphemeReverse(std::string_view str) {
     #ifdef __EMSCRIPTEN__
 
         return fromJS(unicode_grapheme_reverse_js(std::string(str).c_str()));
@@ -460,7 +455,7 @@ std::string Unicode::GraphemeReverse(std::string_view str) {
 
     #endif
 }
-std::string Unicode::GraphemeSlice(std::string_view str, int64_t start, int64_t end) {
+std::string GraphemeSlice(std::string_view str, int64_t start, int64_t end) {
     #if __EMSCRIPTEN__
 
         return fromJS(unicode_grapheme_slice_js(
@@ -555,8 +550,16 @@ bool IsWhitespace(std::string_view str) {
 
         if (str.empty()) return true;
 
-        for (auto cp : CodePoints(str)) {
-            if (!u_isUWhiteSpace(cp)) {
+        const char* data = str.data();
+        int32_t length = static_cast<int32_t>(str.size());
+
+        int32_t i = 0;
+
+        while (i < length) {
+            UChar32 cp;
+            U8_NEXT(data, i, length, cp);
+
+            if (cp < 0 || !u_hasBinaryProperty(cp, UCHAR_WHITE_SPACE)) {
                 return false;
             }
         }

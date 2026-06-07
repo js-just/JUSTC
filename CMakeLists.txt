@@ -224,7 +224,7 @@ if(EXISTS ${LUA_DIR}/include/lua.h)
     add_library(lua_wrapper STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/core/luawrapper.c
     )
-    target_include_directories(lua_wrapper PRIVATE ${LUA_INCLUDE_DIR})
+    target_include_directories(lua_wrapper PRIVATE ${LUA_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/core)
     target_compile_definitions(lua_wrapper PRIVATE LUA_USE_POSIX)
 
     if(MSVC)

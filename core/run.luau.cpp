@@ -31,7 +31,7 @@ SOFTWARE.
 #include <string>
 #include <cstring>
 #include <utility>
-#include <iostream>
+#include <sstream>
 
 #include "lua.h"
 #include "lualib.h"
@@ -311,12 +311,7 @@ std::pair<std::string, int> RunLuau::runScriptWithResult(const std::string& code
             if (lua_iscfunction(L, -1)) {
                 output = "[Luau C Function]";
             } else {
-                lua_Debug ar;
-                if (lua_getinfo(L, ">S", &ar)) {
-                    output = "[Luau Function: " + std::string(ar.name ? ar.name : "anonymous") + "]";
-                } else {
-                    output = "[Luau Function]";
-                }
+                output = "[Luau Function]";
             }
             outputtype = 0;
             break;

@@ -61,6 +61,8 @@ fi
 mkdir -p build
 cd build
 
+rm -f _deps/quickjs-src/version 2>/dev/null || true
+
 export LDFLAGS="-L/opt/homebrew/lib"
 export CPPFLAGS="-I/opt/homebrew/include"
 export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
@@ -69,7 +71,5 @@ cmake .. -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_EXE_LINKER_FLAGS="-L/opt/homebrew/lib" \
     -DCMAKE_SHARED_LINKER_FLAGS="-L/opt/homebrew/lib" \
     -DCMAKE_PREFIX_PATH="$(brew --prefix icu4c)"
-
-rm -f build/_deps/quickjs-src/version 2>/dev/null || true
 
 make -j$(sysctl -n hw.ncpu)

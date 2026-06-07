@@ -224,6 +224,7 @@ if(EXISTS ${LUA_DIR}/include/lua.h)
     add_library(lua_wrapper STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/core/luawrapper.c
     )
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/core/luawrapper.c PROPERTIES LANGUAGE C)
     target_include_directories(lua_wrapper PRIVATE ${LUA_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/core)
 
     if(APPLE)
@@ -279,7 +280,7 @@ target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
-target_link_libraries(justc_core PRIVATE
+target_link_libraries(justc_core PUBLIC
     luau_lib
     lua_wrapper
 )
@@ -319,8 +320,8 @@ target_include_directories(justc_lib PUBLIC
 )
 
 target_link_libraries(justc_lib PUBLIC
-    justc_core
     lua_wrapper
+    justc_core
 )
 
 if (NOT MSVC)
@@ -352,8 +353,8 @@ set_property(TARGET justc_cli PROPERTY
 target_link_libraries(
     justc_cli
     PRIVATE
-    justc_core
     lua_wrapper
+    justc_core
 )
 
 set_target_properties(

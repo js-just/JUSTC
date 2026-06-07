@@ -27,6 +27,8 @@ SOFTWARE.
 #ifndef LUA_WRAPPER_H
 #define LUA_WRAPPER_H
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -46,8 +46,10 @@ struct ObjectContext {
     std::string outputMode;
     std::vector<std::string> outputVariables;
     std::unordered_map<std::string, Value> variables;
+
     bool allowJavaScript;
     bool allowLuau;
+    bool allowLua;
 
     std::shared_ptr<ObjectContext> parent;
     std::unordered_map<std::string, std::shared_ptr<ObjectContext>> childObjects;
@@ -280,12 +282,16 @@ private:
     std::vector<std::string> outputNames;
     Value returnValue;
     std::string outputMode;
-    bool allowJavaScript;
     bool globalScope;
     bool strictMode;
-    bool canAllowJS;
+
+    bool allowJavaScript;
     bool allowLuau;
+    bool allowLua;
+
+    bool canAllowJS;
     bool canAllowLuau;
+    bool canAllowLua;
 
     std::vector<LogEntry> logs;
     std::string logFilePath;
@@ -490,9 +496,9 @@ private:
 public:
     static std::string getCurrentTimestamp();
     static Value stringToValue(const std::string& str);
-    Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true, const bool isFunction = false, const std::unordered_map<std::string, Value>* initialContext = nullptr, const CharType chartype = CharType::GRAPHEME);
+    Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true, const bool isFunction = false, const std::unordered_map<std::string, Value>* initialContext = nullptr, const CharType chartype = CharType::GRAPHEME, const bool allowLua = true, const bool canAllowLua = true);
     ParseResult parse(bool doExecute = true);
-    static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);
+    static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true, const bool allowLua = true, const bool canAllowLua = true);
 };
 
 #endif

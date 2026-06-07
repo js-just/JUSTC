@@ -23,16 +23,17 @@ set -e
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-OPTIONS="${1:-""}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-g++ --version
+cd "$PROJECT_ROOT"
 
-sudo apt-get update
-sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config zip libboost-all-dev libicu-dev libidn2-dev
+echo "Installing system dependencies..."
+brew install libidn2 pkg-config boost icu4c
 
-sudo apt-get install -y libluau-dev libluau0 || echo "Luau not available in packages, will build from source"
-
-cd "$(dirname "$0")/.."
+if [ ! -f /opt/homebrew/lib/libidn2.dylib ] && [ -f /opt/homebrew/lib/libidn2.0.dylib ]; then
+    ln -sf /opt/homebrew/lib/libidn2.0.dylib /opt/homebrew/lib/libidn2.dylib
+fi
 
 LUA_VERSION="5.4.7"
 LUA_URL="https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz"
@@ -43,14 +44,12 @@ mkdir -p ${LUA_DIR}/source
 
 if [ ! -f "${LUA_DIR}/include/lua.h" ]; then
     echo "Downloading Lua ${LUA_VERSION}..."
-    wget -q ${LUA_URL} -O /tmp/lua.tar.gz
+    curl -L ${LUA_URL} -o /tmp/lua.tar.gz
     tar -xzf /tmp/lua.tar.gz -C /tmp/
 
     echo "Installing Lua ${LUA_VERSION}..."
-
     cp /tmp/lua-${LUA_VERSION}/src/*.h ${LUA_DIR}/include/
     cp /tmp/lua-${LUA_VERSION}/src/*.c ${LUA_DIR}/source/
-
     rm -f ${LUA_DIR}/source/lua.c ${LUA_DIR}/source/luac.c
 
     rm -f /tmp/lua.tar.gz
@@ -61,24 +60,16 @@ fi
 
 mkdir -p build
 cd build
-cmake .. $OPTIONS
-make -j$(nproc)
 
-sudo make install
+export LDFLAGS="-L/opt/homebrew/lib"
+export CPPFLAGS="-I/opt/homebrew/include"
+export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-hash -r
-if [[ "$OPTIONS" == "" ]] && ! command -v justc &> /dev/null; then
-    sudo ln -sf /usr/local/bin/justc /usr/bin/justc
-    hash -r
-fi
+cmake .. -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_EXE_LINKER_FLAGS="-L/opt/homebrew/lib" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-L/opt/homebrew/lib" \
+    -DCMAKE_PREFIX_PATH="$(brew --prefix icu4c)"
 
-if [[ "$OPTIONS" == "" ]] && ! command -v justc &> /dev/null; then
-    echo -e "::error::CMake error." && exit 1
-fi
+rm -f build/_deps/quickjs-src/version 2>/dev/null || true
 
-sudo ldconfig
-
-echo "Built files:"
-
-find . -name "*.so"
-find . -name "justc"
+make -j$(sysctl -n hw.ncpu)

@@ -213,6 +213,29 @@ endif()
 
 find_package(ICU REQUIRED COMPONENTS uc i18n)
 
+message(STATUS "Setting up Lua...")
+set(LUA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party/lua)
+
+if(EXISTS ${LUA_DIR}/include/lua.h)
+    message(STATUS "Lua found in third-party/lua")
+    set(LUA_FOUND TRUE)
+    set(LUA_INCLUDE_DIR ${LUA_DIR}/include)
+
+    file(GLOB LUA_SOURCES ${LUA_DIR}/source/*.c)
+    add_library(lua_lib STATIC ${LUA_SOURCES})
+    target_include_directories(lua_lib PUBLIC ${LUA_INCLUDE_DIR})
+    target_compile_definitions(lua_lib PRIVATE LUA_USE_POSIX)
+
+    if(MSVC)
+        target_compile_definitions(lua_lib PRIVATE LUA_BUILD_AS_DLL _CRT_SECURE_NO_WARNINGS)
+        target_compile_options(lua_lib PRIVATE /W0)
+    else()
+        target_compile_options(lua_lib PRIVATE -w -fPIC)
+    endif()
+else()
+    message(WARNING "Lua not found in third-party/lua.")
+endif()
+
 include_directories(third-party)
 
 set(CORE_SOURCES
@@ -230,6 +253,7 @@ set(CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/run.luau.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/unicode.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/builtins.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/run.lua.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/http/http.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/math/math.cpp
@@ -249,6 +273,7 @@ target_include_directories(justc_core PUBLIC
 
 target_link_libraries(justc_core PRIVATE
     luau_lib
+    lua_lib
 )
 
 if(NOT MSVC)

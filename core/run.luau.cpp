@@ -45,7 +45,7 @@ public:
     LuaStateManager() {
         L = luaL_newstate();
         if (!L) {
-            throw std::runtime_error("Failed to create Lua state");
+            throw std::runtime_error("Failed to create Lua state (Luau).");
         }
 
         luaL_openlibs(L);

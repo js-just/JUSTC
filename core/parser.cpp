@@ -46,6 +46,7 @@ SOFTWARE.
 #include <variant>
 #include "unicode.hpp"
 #include "builtins.h"
+#include "run.lua.hpp"
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"
@@ -395,12 +396,14 @@ long getCurrentTime() {
 Parser::Parser(
     const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript,
     const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau,
-    const bool isFunction, const std::unordered_map<std::string, Value>* initialContext, const CharType chartype
+    const bool isFunction, const std::unordered_map<std::string, Value>* initialContext, const CharType chartype,
+    const bool allowLua, const bool canAllowLua
 ) :
     tokens(tokens), input(input), position(0), outputMode("everything"), allowJavaScript(allowJavaScript), globalScope(false),
     strictMode(false), hasLogFile(false), allowLuau(allowLuau), canAllowLuau(canAllowLuau), doExecute(doExecute), runAsync(runAsync),
     canAllowJS(allowJavaScript ? true : canAllowJS), scriptName(scriptName), scriptType(scriptType), asJSON(false), isJSONArray(false),
-    endOfScript("."), returnValue(DataType::UNKNOWN), isFunction(isFunction), chartype(chartype)
+    endOfScript("."), returnValue(DataType::UNKNOWN), isFunction(isFunction), chartype(chartype), allowLua(allowLua),
+    canAllowLua(canAllowLua)
 {
     initializeBuiltIns();
     if (initialContext) {
@@ -849,6 +852,14 @@ ASTNode Parser::parseAllowCommand() {
             addLog("WARN", "Attempt to allow Luau at <import " + scriptType + " \"" + scriptName + "\"> at " + Utility::position(currentToken().start, input) + ".", currentToken().start);
         } else allowLuau = (command == "allow");
         node.value = booleanToValue(allowLuau);
+    } else if (match("keyword", "Lua")) {
+        if (!canAllowLua && command == "allow") {
+            #ifdef __EMSCRIPTEN__
+            warn_cant_enable_lua(Utility::position(currentToken().start, input).c_str(), getCurrentTimestamp().c_str(), scriptName.c_str(), scriptType.c_str());
+            #endif
+            addLog("WARN", "Attempt to allow Lua at <import " + scriptType + " \"" + scriptName + "\"> at " + Utility::position(currentToken().start, input) + ".", currentToken().start);
+        } else allowLua = (command == "allow");
+        node.value = booleanToValue(allowLua);
     } else parseAllowCommandError();
     advance();
 
@@ -2368,6 +2379,41 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
                 throw std::runtime_error("Luau disallowed - Cannot run Luau \"" + args[0].toString() + "\" at " + Utility::position(startPos, input) + ".");
             }
         }
+        if (funcName == "Lua" || funcName == "Lua.Execute") {
+            if (allowLua) {
+                std::pair<std::string, int> luaResult = RunLua::runScriptWithResult(args[0].toString());
+                Value result;
+
+                switch (luaResult.second) {
+                    case 1: // number
+                        result = Value::createNumber(parseNumber(luaResult.first));
+                        result.type = DataType::NUMBER;
+                        break;
+                    case 2: // boolean
+                        result = Value::createBoolean(luaResult.first == "true");
+                        result.type = DataType::BOOLEAN;
+                        break;
+                    case 3: // null
+                        result = Value::createNull();
+                        result.type = DataType::NULL_TYPE;
+                        break;
+                    case 4: case 5: // object/array
+                        result = isolated(luaResult.first, false, startPos, nullptr, "Lua Table output to JUSTC converter");
+                        result.type = luaResult.second == 4 ? DataType::JSON_OBJECT : DataType::JSON_ARRAY;
+                        break;
+                    default: // string/function/thread/userdata
+                        result = stringToValue(luaResult.first);
+                        result.type = DataType::STRING;
+                        break;
+                }
+
+                addLog("LUA", Utility::value2string(result), startPos);
+                result.name = funcName + "(...)";
+                return result;
+            } else {
+                throw std::runtime_error("Lua disallowed - Cannot run Lua \"" + args[0].toString() + "\" at " + Utility::position(startPos, input) + ".");
+            }
+        }
     } catch (const std::exception& e) {
         throw std::runtime_error(std::string(e.what()) + " at " + Utility::position(startPos, input) + ".");
     }
@@ -3154,7 +3200,9 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
             this->canAllowLuau,
             isFunction,
             context,
-            chartype
+            chartype,
+            this->allowLua,
+            this->canAllowLua
         );
 
         ParseResult result;
@@ -3196,6 +3244,7 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
         objectContext->outputVariables = isolatedParser.outputVariables;
         objectContext->allowJavaScript = isolatedParser.allowJavaScript;
         objectContext->allowLuau = isolatedParser.allowLuau;
+        objectContext->allowLua = isolatedParser.allowLua;
         isolatedObject.object_context = objectContext;
 
         for (const auto& log : result.logs) {
@@ -3216,6 +3265,7 @@ Value Parser::emptyJUSTC() {
     auto emptyContext = std::make_shared<ObjectContext>();
     emptyContext->allowJavaScript = this->allowJavaScript;
     emptyContext->allowLuau = this->allowLuau;
+    emptyContext->allowLua = this->allowLua;
     emptyContext->outputMode = "everything";
 
     Value emptyObject = Value::createJustcObject(emptyContext);
@@ -3373,6 +3423,7 @@ Value Parser::parseFunctionDeclaration(bool doExecute) {
     }
     closureContext->allowJavaScript = this->allowJavaScript;
     closureContext->allowLuau = this->allowLuau;
+    closureContext->allowLua = this->allowLua;
     result.closure_context = closureContext;
 
     return result;
@@ -3717,9 +3768,11 @@ std::shared_ptr<ObjectContext> Parser::createObjectContext(bool inheritFromParen
     if (inheritFromParent) {
         context->allowJavaScript = allowJavaScript;
         context->allowLuau = allowLuau;
+        context->allowLua = allowLua;
     } else {
         context->allowJavaScript = true;
         context->allowLuau = true;
+        context->allowLua = true;
     }
 
     context->outputMode = "everything";
@@ -3823,7 +3876,9 @@ Value Parser::parseJustcObject(bool doExecute) {
         canAllowLuau,
         false,
         &currentContext,
-        chartype
+        chartype,
+        objectContext->allowLua,
+        canAllowLua
     );
 
     objectContext->parser = objectParser;
@@ -4116,7 +4171,7 @@ void Parser::updateCharType(const std::string& newType, size_t startPos) {
     }
 }
 
-ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau) {
-    Parser parser(tokens, doExecute, runAsync, input, allowJavaScript, canAllowJS, scriptName, scriptType, allowLuau, canAllowLuau, false, nullptr, CharType::GRAPHEME);
+ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau, const bool allowLua, const bool canAllowLua) {
+    Parser parser(tokens, doExecute, runAsync, input, allowJavaScript, canAllowJS, scriptName, scriptType, allowLuau, canAllowLuau, false, nullptr, CharType::GRAPHEME, allowLua, canAllowLua);
     return parser.parse(doExecute);
 }

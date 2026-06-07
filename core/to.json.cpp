@@ -189,7 +189,7 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
                 for (size_t i = 0; i < indices.size(); i++) {
                     if (i > 0) json << ",";
                     std::string key = std::to_string(indices[i]);
-                    json << valueToJson(result.returnValues[key]);
+                    json << valueToJson(result.returnValues.at(key));
                 }
                 json << "],";
             } else {
@@ -251,7 +251,7 @@ std::string JsonSerializer::serialize(const ParseResult& result) {
             for (size_t i = 0; i < indices.size(); i++) {
                 if (i > 0) json << ",";
                 std::string key = std::to_string(indices[i]);
-                json << valueToJson(result.returnValues[key]);
+                json << valueToJson(result.returnValues.at(key));
             }
             json << "]";
         } else {

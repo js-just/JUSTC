@@ -270,7 +270,7 @@ std::pair<std::string, int> RunLuau::runScriptWithResult(const std::string& code
     }
 
     std::string output;
-    int outputtype = 0; // 0 = string; 1 = number; 2 = boolean; 3 = nil; 4 = object; 5 = array; 6 = function; 7 = thread; 8 = userdata
+    int outputtype = 0; // 0 = string; 1 = number; 2 = boolean; 3 = nil; 4 = object; 5 = array
 
     int type = lua_type(L, -1);
 
@@ -308,23 +308,81 @@ std::pair<std::string, int> RunLuau::runScriptWithResult(const std::string& code
         }
 
         case LUA_TFUNCTION:
-            output = "[Luau Function]";
-            outputtype = 6;
+            if (lua_iscfunction(L, -1)) {
+                output = "[Luau C Function]";
+            } else {
+                lua_Debug ar;
+                if (lua_getinfo(L, ">S", &ar)) {
+                    output = "[Luau Function: " + std::string(ar.name ? ar.name : "anonymous") + "]";
+                } else {
+                    output = "[Luau Function]";
+                }
+            }
+            outputtype = 0;
             break;
 
-        case LUA_TTHREAD:
-            output = "[Luau Thread]";
-            outputtype = 7;
-            break;
+        case LUA_TTHREAD: {
+            lua_State* thread = lua_tothread(L, -1);
+            std::stringstream ss;
 
-        case LUA_TLIGHTUSERDATA:
-        case LUA_TUSERDATA:
-            output = "[Luau UserData]";
-            outputtype = 8;
+            int status = lua_status(thread);
+            if (status == LUA_OK) {
+                ss << "[Luau Thread: normal";
+            } else if (status == LUA_YIELD) {
+                ss << "[Luau Thread: suspended";
+            } else if (status == LUA_ERRRUN) {
+                ss << "[Luau Thread: runtime error";
+            } else if (status == LUA_ERRMEM) {
+                ss << "[Luau Thread: memory error";
+            } else {
+                ss << "[Luau Thread: unknown";
+            }
+
+            int top = lua_gettop(thread);
+            ss << " (stack: " << top << " values)]";
+
+            output = ss.str();
+            outputtype = 0;
             break;
+        }
+
+        case LUA_TLIGHTUSERDATA: {
+            void* ptr = lua_touserdata(L, -1);
+            std::stringstream ss;
+            ss << "[Luau LightUserData: 0x" << std::hex << reinterpret_cast<uintptr_t>(ptr) << "]";
+            output = ss.str();
+            outputtype = 0;
+            break;
+        }
+
+        case LUA_TUSERDATA: {
+            std::stringstream ss;
+            ss << "[Luau UserData: ";
+
+            if (lua_getmetatable(L, -1)) {
+                lua_getfield(L, -1, "__name");
+                if (lua_isstring(L, -1)) {
+                    ss << lua_tostring(L, -1);
+                    lua_pop(L, 1);
+                } else {
+                    ss << "anonymous";
+                    lua_pop(L, 1);
+                }
+                lua_pop(L, 1);
+            } else {
+                ss << "anonymous";
+            }
+
+            void* ptr = lua_touserdata(L, -1);
+            ss << " 0x" << std::hex << reinterpret_cast<uintptr_t>(ptr) << "]";
+
+            output = ss.str();
+            outputtype = 0;
+            break;
+        }
 
         default:
-            output = "[Luau " + lua_typename(L, type) + "]";
+            output = "[Luau " + std::string(lua_typename(L, type)) + "]";
             outputtype = 0;
             break;
     }

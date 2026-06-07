@@ -320,8 +320,9 @@ target_include_directories(justc_lib PUBLIC
 )
 
 target_link_libraries(justc_lib PUBLIC
-    lua_wrapper
     justc_core
+    lua_wrapper
+    -Wl,--no-as-needed
 )
 
 if (NOT MSVC)
@@ -353,8 +354,9 @@ set_property(TARGET justc_cli PROPERTY
 target_link_libraries(
     justc_cli
     PRIVATE
-    lua_wrapper
     justc_core
+    lua_wrapper
+    -Wl,--no-as-needed
 )
 
 set_target_properties(

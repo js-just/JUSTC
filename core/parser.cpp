@@ -2852,6 +2852,15 @@ Value Parser::resolveVariableValue(const std::string& varName, const bool unknow
 
     for (const auto& node : ast) {
         if (node.type == "VARIABLE_DECLARATION" && node.identifier == varName) {
+            auto mutatedIt = mutated.find(varName);
+            if (mutatedIt != mutated.end()) {
+                Mutated newVal = mutatedIt->second;
+                if (newVal.value && newVal.startPos && newVal.startPos > node.startPos && (
+                    newVal.value.type != DataType::UNKNOWN || unknownIsString
+                )) {
+                    return newVal.value;
+                }
+            }
             return evaluateASTNode(node);
         }
     }
@@ -3231,6 +3240,7 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
                     std::cout << key << std::endl;
 
                     variables[key] = value;
+                    mutated[key] = Mutated(value, startPos);
                     if (result.constants) {
                         auto childConstIt = result.constants->find(key);
                         if (childConstIt != result.constants->end()) {
@@ -3934,6 +3944,20 @@ void Parser::evaluateAllVariablesSync() {
                         constVars[varName] = true;
                     }
                     changed = true;
+                }
+
+                auto mutatedIt = mutated.find(varName);
+                auto isConstIt = constVars.find(varName);
+                bool isConst2 = isConst;
+                if (isConstIt != constVars.end()) {
+                    isConst2 = isConstIt->second;
+                }
+                if (mutatedIt != mutated.end()) {
+                    Mutated newVal = mutatedIt->second;
+                    if (newVal.value && newVal.value.type != DataType::UNKNOWN && newVal.startPos && newVal.startPos > node.startPos && !isConst && !isConst2) {
+                        variables[varName] = newVal.value;
+                        changed = true;
+                    }
                 }
             }
         }

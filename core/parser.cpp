@@ -3155,7 +3155,7 @@ Value Parser::functionHTTP(size_t startPos, const std::string& method, const std
     } else return result;
 }
 
-Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context, const std::string name, bool merge) {
+Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context, const std::string name, bool merge, bool silent) {
     std::cout << name << " : " << code << std::endl;
     try {
         auto lexerResult = Lexer::parse(code);
@@ -3227,8 +3227,10 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
         objectContext->allowLuau = isolatedParser.allowLuau;
         isolatedObject.object_context = objectContext;
 
-        for (const auto& log : result.logs) {
-            addLog(log.type, log.message, log.position);
+        if (!silent) {
+            for (const auto& log : result.logs) {
+                addLog(log.type, log.message, log.position);
+            }
         }
         for (const auto& importLog : result.importLogs) {
             addImportLog(importLog[0], importLog[1], importLog[2]);
@@ -3285,7 +3287,7 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
         throw std::runtime_error(std::string(e.what()) + " (at \"" + this->scriptName + "\" " + Utility::position(startPos, input) + ")");
     }
 }
-Value Parser::shared(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context, const std::string name, bool merge) {
+Value Parser::shared(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context, const std::string name, bool merge, bool silent) {
     std::unordered_map<std::string, Value> ctx;
     if (context) {
         ctx = *context;

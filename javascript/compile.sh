@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # MIT License
 #
@@ -23,6 +22,8 @@ set -e
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+set -e
+
 OUTPUT_DIR="${1:-development}"
 SAFE_DIR=$(echo "$OUTPUT_DIR" | sed 's|/|_|g') || "${{ env.DEFAULT_DIR }}"
 mkdir -p "javascript/$SAFE_DIR"
@@ -39,34 +40,9 @@ tar -xzf wabt-1.0.34-ubuntu.tar.gz
 sudo cp wabt-1.0.34/bin/* /usr/local/bin/
 rm -rf wabt-1.0.34 wabt-1.0.34-ubuntu.tar.gz
 
-LUA_VERSION="5.4.7"
-LUA_URL="https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz"
-LUA_DIR="third-party/lua"
-
-mkdir -p ${LUA_DIR}/include
-mkdir -p ${LUA_DIR}/source
-
-if [ ! -f "${LUA_DIR}/include/lua.h" ]; then
-    echo "Downloading Lua ${LUA_VERSION}..."
-    wget -q ${LUA_URL} -O /tmp/lua.tar.gz
-    tar -xzf /tmp/lua.tar.gz -C /tmp/
-
-    echo "Installing Lua ${LUA_VERSION}..."
-    cp /tmp/lua-${LUA_VERSION}/src/*.h ${LUA_DIR}/include/
-    cp /tmp/lua-${LUA_VERSION}/src/*.c ${LUA_DIR}/source/
-    rm -f ${LUA_DIR}/source/lua.c ${LUA_DIR}/source/luac.c
-
-    rm -f /tmp/lua.tar.gz
-    rm -rf /tmp/lua-${LUA_VERSION}
-
-    echo "Installed Lua ${LUA_VERSION}."
-fi
-
 SOURCE_FILES="core/entry/jsapi.cpp core/lexer.cpp core/parser.cpp core/from.json.cpp core/to.json.cpp core/keywords.cpp core/fetch.cpp core/to.xml.cpp core/to.yaml.cpp core/utility.cpp core/import.cpp core/run.luau.cpp core/built-in/http/http.cpp core/built-in/math/math.cpp core/built-in/binary/binary.cpp core/built-in/string/string.cpp core/unicode.cpp core/builtins.cpp"
 LUAU_FILES="luau/Ast/src/Ast.cpp luau/Ast/src/Confusables.cpp luau/Ast/src/Lexer.cpp luau/Ast/src/Location.cpp luau/Ast/src/Parser.cpp luau/Common/src/StringUtils.cpp luau/Ast/src/TimeTrace.cpp luau/Compiler/src/Builtins.cpp luau/Compiler/src/BuiltinFolding.cpp luau/Compiler/src/BytecodeBuilder.cpp luau/Compiler/src/Compiler.cpp luau/Compiler/src/ConstantFolding.cpp luau/Compiler/src/CostModel.cpp luau/Compiler/src/lcode.cpp luau/Compiler/src/TableShape.cpp luau/Compiler/src/ValueTracking.cpp luau/VM/src/lapi.cpp luau/VM/src/laux.cpp luau/VM/src/lbaselib.cpp luau/VM/src/lbitlib.cpp luau/VM/src/lbuiltins.cpp luau/VM/src/lcorolib.cpp luau/VM/src/ldblib.cpp luau/VM/src/ldebug.cpp luau/VM/src/ldo.cpp luau/VM/src/lfunc.cpp luau/VM/src/lgc.cpp luau/VM/src/linit.cpp luau/VM/src/lmathlib.cpp luau/VM/src/lmem.cpp luau/VM/src/lobject.cpp luau/VM/src/loslib.cpp luau/VM/src/lperf.cpp luau/VM/src/lstate.cpp luau/VM/src/lstring.cpp luau/VM/src/lstrlib.cpp luau/VM/src/ltable.cpp luau/VM/src/ltablib.cpp luau/VM/src/ltm.cpp luau/VM/src/ludata.cpp luau/VM/src/lutf8lib.cpp luau/VM/src/lvmexecute.cpp luau/VM/src/lvmload.cpp luau/VM/src/lvmutils.cpp luau/Ast/src/Allocator.cpp luau/Ast/src/Cst.cpp luau/Ast/src/PrettyPrinter.cpp luau/Compiler/src/Types.cpp luau/VM/src/lbuffer.cpp luau/VM/src/lbuflib.cpp luau/VM/src/lgcdebug.cpp luau/VM/src/lnumprint.cpp luau/VM/src/lveclib.cpp"
 LUAU_INCLUDE="-I./luau/Ast/include -I./luau/Common/include -I./luau/Compiler/include -I./luau/VM/include"
-LUA_FILES="third-party/lua/source/*.c"
-LUA_INCLUDE="-I./third-party/lua/include"
 
 COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_string\",\"_malloc\",\"_free\",\"_version\"] \
 -s EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"UTF8ToString\",\"stringToUTF8\"] \
@@ -87,8 +63,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_lexer\",\"_parser\",\"_parse\",\"_free_s
 -s MAXIMUM_MEMORY=512MB \
 --bind \
 -I./third-party \
-$LUAU_INCLUDE \
-$LUA_INCLUDE"
+$LUAU_INCLUDE"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker \
 -s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close','use_luau']"
@@ -102,7 +77,7 @@ JSOUT_DIR="javascript_output/$SAFE_DIR"
 
 web() {
     set +e
-    emcc $SOURCE_FILES $LUAU_FILES $LUA_FILES \
+    emcc $SOURCE_FILES $LUAU_FILES \
         -o $WEB_OUTPUT \
         $COMMON_FLAGS \
         $WEB_FLAGS \
@@ -119,7 +94,7 @@ web() {
 nodejs() {
     mkdir -p $JSOUT_DIR
     set +e
-    emcc $SOURCE_FILES $LUAU_FILES $LUA_FILES \
+    emcc $SOURCE_FILES $LUAU_FILES \
         -o $NODE_OUTPUT \
         $COMMON_FLAGS \
         $NODE_FLAGS

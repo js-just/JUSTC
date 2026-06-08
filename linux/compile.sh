@@ -1,6 +1,3 @@
-#!/bin/bash
-set -e
-
 # MIT License
 #
 # Copyright (c) 2025-2026 JustStudio. <https://juststudio.is-a.dev/>
@@ -23,6 +20,8 @@ set -e
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+#!/bin/bash
+set -e
 OPTIONS="${1:-""}"
 
 g++ --version
@@ -31,33 +30,6 @@ sudo apt-get update
 sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config zip libboost-all-dev libicu-dev libidn2-dev
 
 sudo apt-get install -y libluau-dev libluau0 || echo "Luau not available in packages, will build from source"
-
-cd "$(dirname "$0")/.."
-
-LUA_VERSION="5.4.7"
-LUA_URL="https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz"
-LUA_DIR="third-party/lua"
-
-mkdir -p ${LUA_DIR}/include
-mkdir -p ${LUA_DIR}/source
-
-if [ ! -f "${LUA_DIR}/include/lua.h" ]; then
-    echo "Downloading Lua ${LUA_VERSION}..."
-    wget -q ${LUA_URL} -O /tmp/lua.tar.gz
-    tar -xzf /tmp/lua.tar.gz -C /tmp/
-
-    echo "Installing Lua ${LUA_VERSION}..."
-
-    cp /tmp/lua-${LUA_VERSION}/src/*.h ${LUA_DIR}/include/
-    cp /tmp/lua-${LUA_VERSION}/src/*.c ${LUA_DIR}/source/
-
-    rm -f ${LUA_DIR}/source/lua.c ${LUA_DIR}/source/luac.c
-
-    rm -f /tmp/lua.tar.gz
-    rm -rf /tmp/lua-${LUA_VERSION}
-
-    echo "Installed Lua ${LUA_VERSION}."
-fi
 
 mkdir -p build
 cd build

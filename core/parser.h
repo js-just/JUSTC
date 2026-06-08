@@ -37,6 +37,7 @@ SOFTWARE.
 #include <variant>
 #include "lexer.h"
 #include "version.h"
+#include <functional>
 
 struct Value;
 class Parser;

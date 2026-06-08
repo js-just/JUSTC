@@ -3178,6 +3178,7 @@ Value Parser::merger(const std::vector<Value>& args) {
     Value value = args[1];
     variables[key] = value;
     std::cout << key + " : " + value.toString() << std::endl;
+    return Value::createNull();
 }
 Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context, const std::string name, bool merge, bool silent) {
     try {
@@ -3215,7 +3216,9 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
         isolatedParser.userFunctionsConst = this->userFunctionsConst;
 
         if (merge) {
-            isolatedParser.variableUpdateListener(merger);
+            isolatedParser.variableUpdateListener([this](const std::vector<Value>& args) {
+                return this->merger(args);
+            });
         }
 
         result = isolatedParser.parse(doExecute);
@@ -4491,13 +4494,13 @@ void Parser::variableUpdateListener(Function func) {
     variableUpdateListeners.push_back(func);
 }
 void Parser::triggerVariableUpdate(const std::string& name, const Value& value) {
-    Value key(DataType::STRING, name);
+    Value key = Value::createString(name);
     std::vector<Value> args = {key, value};
     for (Function func : variableUpdateListeners) {
         try {
             func(args);
         } catch (const std::exception& e) {
-            std::cout << std::string(e.what()) + " at " + Utility::position(startPos, input) << std::endl;
+            std::cout << std::string(e.what()) << std::endl;
         }
     }
 }

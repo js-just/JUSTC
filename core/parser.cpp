@@ -1116,6 +1116,15 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
         } else throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got \"" + currentToken().value +"\".");
     }
 
+    if (node.value.type == DataType::FUNCTION) {
+        if (userFunctions.find(identifier) != userFunctions.end() && userFunctionsConst.find(identifier)->second) {
+            throw std::runtime_error("Cannot override const function: " + identifier);
+        }
+        try {
+            userFunctions.erase(identifier);
+        } catch (...) {}
+    }
+
     if (variables.find(identifier) != variables.end()) { // assignment
         variables[identifier] = Value();
     } else { // declaration
@@ -1922,6 +1931,15 @@ Value Parser::onExecDisabled(size_t startPos, std::string name) {
 Value Parser::executeFunction(const std::string& funcName, const std::vector<Value>& args, size_t startPos) {
     if (!doExecute) {
         return onExecDisabled(startPos, funcName);
+    }
+
+    auto customIt = userFunctions.find(funcName);
+    if (customIt != userFunctions.end()) {
+        try {
+            return customIt->second(args);
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::string(e.what()) + " at " + Utility::position(startPos, input));
+        }
     }
 
     if (funcName == "TIME") {
@@ -3188,6 +3206,9 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
 
         ParseResult result;
 
+        isolatedParser.userFunctions = this->userFunctions;
+        isolatedParser.userFunctionsConst = this->userFunctionsConst;
+
         result = isolatedParser.parse(doExecute);
 
         Value isolatedObject;
@@ -4444,6 +4465,24 @@ void Parser::updateCharType(const std::string& newType, size_t startPos) {
     } else {
         throw std::runtime_error("Invalid chartype: " + newType + ". Must be 'grapheme', 'codepoint', or 'byte' at " + Utility::position(startPos, input));
     }
+}
+
+void Parser::registerFunction(const std::string& name, Function func, bool isConst) {
+    userFunctions[name] = func;
+    userFunctionsConst[name] = isConst;
+}
+void Parser::registerFunctions(const std::unordered_map<std::string, Function>& functions, bool isConst) {
+    for (const auto& [name, func] : functions) {
+        userFunctions[name] = func;
+        userFunctionsConst[name] = isConst;
+    }
+}
+void Parser::unregisterFunction(const std::string& name) {
+    userFunctions.erase(name);
+    userFunctionsConst.erase(name);
+}
+bool Parser::hasFunction(const std::string& name) const {
+    return userFunctions.find(name) != userFunctions.end();
 }
 
 ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau) {

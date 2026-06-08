@@ -277,6 +277,8 @@ struct Mutated {
     Mutated(Value v, size_t p) : value(v), startPos(p), applied(false) {}
 };
 
+using Function = std::function<Value(const std::vector<Value>&)>;
+
 class Parser {
 private:
     bool doExecute;
@@ -317,6 +319,9 @@ private:
     bool isFunction;
 
     CharType chartype;
+
+    std::unordered_map<std::string, Function> userFunctions;
+    std::unordered_map<std::string, bool> userFunctionsConst;
 
     ParserToken currentToken() const;
     ParserToken peekToken(size_t offset = 1) const;
@@ -513,6 +518,11 @@ public:
     Parser(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true, const bool isFunction = false, const std::unordered_map<std::string, Value>* initialContext = nullptr, const CharType chartype = CharType::GRAPHEME);
     ParseResult parse(bool doExecute = true);
     static ParseResult parseTokens(const std::vector<ParserToken>& tokens, bool doExecute = true, bool runAsync = false, const std::string& input = "", const bool allowJavaScript = true, const bool canAllowJS = true, const std::string scriptName = "", const std::string scriptType = "script", const bool allowLuau = true, const bool canAllowLuau = true);
+
+    void registerFunction(const std::string& name, Function func, bool isConst = true);
+    void registerFunctions(const std::unordered_map<std::string, Function>& functions, bool isConst = true);
+    void unregisterFunction(const std::string& name);
+    bool hasFunction(const std::string& name) const;
 };
 
 #endif

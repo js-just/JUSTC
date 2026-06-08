@@ -3404,7 +3404,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
             std::string currOp = conditionType == 0 ? "if" : "elseif";
             bool conditionResult = isolated("return " + first.str() + " .", doExecute, startPos, &conditionContext, "'" + currOp + "' condition at " + Utility::position(startPos, input)).toBoolean();
 
-            std::cout << conditionResult ? "true : " : "false : " << conditionBody << std::endl;
+            std::cout << std::string(conditionResult ? "true : " : "false : ") << conditionBody << std::endl;
 
             if (conditionResult) {
                 return isolated(conditionBody, doExecute, startPos, &conditionBodyContext, "'" + currOp + "' body at " + Utility::position(startPos, input));

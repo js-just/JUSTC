@@ -2857,12 +2857,12 @@ Value Parser::resolveVariableValue(const std::string& varName, const bool unknow
                 Mutated newVal = mutatedIt->second;
                 if (newVal.startPos > node.startPos) {
                     if (newVal.value.type != DataType::UNKNOWN) {
-                        return newVal.value
+                        return newVal.value;
                     } else if (unknownIsString) {
                         Value result;
                         result.type = DataType::STRING;
                         result.name = varName;
-                        result.string_value = newVal.name;
+                        result.string_value = newVal.value.name;
                         return result;
                     }
                 }

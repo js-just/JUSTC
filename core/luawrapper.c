@@ -107,11 +107,7 @@ int lua_wrapper_getmetatable(void* L, int idx) {
 }
 
 size_t lua_wrapper_objlen(void* L, int idx) {
-    #if LUA_VERSION_NUM >= 504
-        return lua_rawlen((lua_State*)L, idx);
-    #else
-        return lua_objlen((lua_State*)L, idx);
-    #endif
+    return lua_objlen((lua_State*)L, idx);
 }
 
 int lua_wrapper_gettop(void* L) {

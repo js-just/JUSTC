@@ -225,12 +225,7 @@ if(EXISTS ${LUA_DIR}/include/lua.h)
         ${CMAKE_CURRENT_SOURCE_DIR}/core/luawrapper.c
     )
     target_include_directories(lua_wrapper PRIVATE ${LUA_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/core)
-
-    if(APPLE)
-        target_compile_definitions(lua_wrapper PRIVATE LUA_USE_MACOSX)
-    else()
-        target_compile_definitions(lua_wrapper PRIVATE LUA_USE_POSIX)
-    endif()
+    target_compile_definitions(lua_wrapper PRIVATE LUA_USE_POSIX)
 
     if(MSVC)
         target_compile_definitions(lua_wrapper PRIVATE LUA_BUILD_AS_DLL _CRT_SECURE_NO_WARNINGS)
@@ -320,7 +315,6 @@ target_include_directories(justc_lib PUBLIC
 
 target_link_libraries(justc_lib PUBLIC
     justc_core
-    lua_wrapper
 )
 
 if (NOT MSVC)
@@ -353,7 +347,6 @@ target_link_libraries(
     justc_cli
     PRIVATE
     justc_core
-    lua_wrapper
 )
 
 set_target_properties(

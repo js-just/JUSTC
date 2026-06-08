@@ -37,12 +37,12 @@ SOFTWARE.
 #include "lualib.h"
 #include "luacode.h"
 
-class LuauStateManager {
+class LuaStateManager {
 private:
     lua_State* L;
 
 public:
-    LuauStateManager() {
+    LuaStateManager() {
         L = luaL_newstate();
         if (!L) {
             throw std::runtime_error("Failed to create Lua state (Luau).");
@@ -53,7 +53,7 @@ public:
         restrictEnvironment();
     }
 
-    ~LuauStateManager() {
+    ~LuaStateManager() {
         if (L) {
             lua_close(L);
         }
@@ -90,7 +90,7 @@ private:
 };
 
 void RunLuau::runScript(const std::string& code) {
-    LuauStateManager luaManager;
+    LuaStateManager luaManager;
     lua_State* L = luaManager.getState();
 
     if (code.empty()) {
@@ -246,7 +246,7 @@ static std::string arrayToJSON(lua_State* L, int index) {
 }
 
 std::pair<std::string, int> RunLuau::runScriptWithResult(const std::string& code) {
-    LuauStateManager luaManager;
+    LuaStateManager luaManager;
     lua_State* L = luaManager.getState();
 
     size_t bytecodeSize = 0;
@@ -387,7 +387,7 @@ std::pair<std::string, int> RunLuau::runScriptWithResult(const std::string& code
 }
 
 bool RunLuau::compileScript(const std::string& code, std::string& error) {
-    LuauStateManager luaManager;
+    LuaStateManager luaManager;
     lua_State* L = luaManager.getState();
 
     size_t bytecodeSize = 0;

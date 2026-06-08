@@ -521,6 +521,10 @@ void Parser::skipCommas() {
 ParseResult Parser::parse(bool doExecute) {
     ParseResult result;
 
+    result.variables = std::make_shared<std::unordered_map<std::string, Value>>(variables);
+    result.constants = std::make_shared<std::unordered_map<std::string, bool>>(constVars);
+    result.dependencies = std::make_shared<std::unordered_map<std::string, std::vector<std::string>>>(dependencies);
+
     try {
         while (!isEnd()) {
             skipCommas();
@@ -3136,7 +3140,7 @@ Value Parser::functionHTTP(size_t startPos, const std::string& method, const std
     } else return result;
 }
 
-Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context, const std::string name) {
+Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context, const std::string name, bool merge) {
     std::cout << name << " : " << code << std::endl;
     try {
         auto lexerResult = Lexer::parse(code);
@@ -3213,6 +3217,37 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
         }
         for (const auto& importLog : result.importLogs) {
             addImportLog(importLog[0], importLog[1], importLog[2]);
+        }
+
+        if (merge) {
+            if (result.variables) {
+                for (const auto& [key, value] : *result.variables) {
+                    auto parentConstIt = this->constVars.find(key);
+                    if (parentConstIt != this->constVars.end() && parentConstIt->second) {
+                        continue;
+                    }
+
+                    this->variables[key] = value;
+                    if (result.constants) {
+                        auto childConstIt = result.constants->find(key);
+                        if (childConstIt != result.constants->end()) {
+                            this->constVars[key] = childConstIt->second;
+                        }
+                    }
+                }
+            }
+            if (result.constants) {
+                for (const auto& [key, isConst] : *result.constants) {
+                    auto parentVarIt = this->variables.find(key);
+                    if (parentVarIt != this->variables.end()) {
+                        auto parentConstIt = this->constVars.find(key);
+                        if (parentConstIt != this->constVars.end() && parentConstIt->second) {
+                            continue;
+                        }
+                    }
+                    this->constVars[key] = isConst;
+                }
+            }
         }
 
         std::cout << "isolatedObject " << isolatedObject.toString() << std::endl;
@@ -3418,12 +3453,12 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
     switch (conditionType) {
         case 0: case 3: { // if/elseif
             std::string currOp = conditionType == 0 ? "if" : "elseif";
-            bool conditionResult = i2v(isolated("return " + first.str() + " .", doExecute, startPos, &conditionContext, "'" + currOp + "' condition at " + Utility::position(startPos, input))).toBoolean();
+            bool conditionResult = i2v(isolated("return " + first.str() + " .", doExecute, startPos, &conditionContext, "'" + currOp + "' condition at " + Utility::position(startPos, input), !isIsolated)).toBoolean();
 
             std::cout << std::string(conditionResult ? "true : " : "false : ") << conditionBody << std::endl;
 
             if (conditionResult) {
-                return isolated(conditionBody, doExecute, startPos, &conditionBodyContext, "'" + currOp + "' body at " + Utility::position(startPos, input));
+                return isolated(conditionBody, doExecute, startPos, &conditionBodyContext, "'" + currOp + "' body at " + Utility::position(startPos, input), !isIsolated);
             } else if (match("keyword", "else")) {
                 advance();
                 if (peekToken().type == "keyword" && peekToken().value == "if") {
@@ -3447,15 +3482,15 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
                 }
                 if (braceCount4 != 0) throw std::runtime_error(unclosedBody);
 
-                return isolated(elsebody.str(), doExecute, startPos, &conditionBodyContext, "'else' body at " + Utility::position(startPos, input));
+                return isolated(elsebody.str(), doExecute, startPos, &conditionBodyContext, "'else' body at " + Utility::position(startPos, input), !isIsolated);
             } else if (match("keyword", "elseif")) {
                 return parseCondition(doExecute, isIsolated);
             } else return Value::createNull();
         } case 2: { // while
             std::string conditionStr = "return " + first.str() + " .";
-            bool conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input))).toBoolean();
+            bool conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input), !isIsolated)).toBoolean();
             while (conditionResult) {
-                isolated(conditionBody, doExecute, startPos, &conditionBodyContext, "'while' body at " + Utility::position(startPos, input));
+                isolated(conditionBody, doExecute, startPos, &conditionBodyContext, "'while' body at " + Utility::position(startPos, input), !isIsolated);
                 for (const auto& [key, value] : this->variables) {
                     try {
                         conditionContext[key] = resolveVariableValue(key, false);
@@ -3463,7 +3498,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
                         conditionContext[key] = value;
                     }
                 }
-                conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input))).toBoolean();
+                conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input), !isIsolated)).toBoolean();
             }
             return Value::createNull();
         } default:

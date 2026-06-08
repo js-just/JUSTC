@@ -3398,7 +3398,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
     std::string conditionBody = body.str();
 
     switch (conditionType) {
-        case 0: case 3: // if/elseif
+        case 0: case 3: { // if/elseif
             std::string currOp = conditionType == 0 ? "if" : "elseif";
             bool conditionResult = isolated("return " + first.str() + " .", doExecute, startPos, &conditionContext, "'" + currOp + "' condition at " + Utility::position(startPos, input)).toBoolean();
             if (conditionResult) {
@@ -3414,26 +3414,26 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
 
                 std::stringstream elsebody;
 
-                braceCount = 1;
-                while (!isEnd() && braceCount > 0) {
-                    if (match("{")) braceCount++;
-                    else if (match("}")) braceCount--;
+                int braceCount4 = 1;
+                while (!isEnd() && braceCount4 > 0) {
+                    if (match("{")) braceCount4++;
+                    else if (match("}")) braceCount4--;
 
-                    if (braceCount > 0) {
-                        body << currentToken().value;
+                    if (braceCount4 > 0) {
+                        elsebody << currentToken().value;
                         if (currentToken().type != "{" && currentToken().type != "}") {
-                            body << " ";
+                            elsebody << " ";
                         }
                     }
                     advance();
                 }
-                if (braceCount != 0) throw std::runtime_error(unclosedBody);
+                if (braceCount4 != 0) throw std::runtime_error(unclosedBody);
 
                 return isolated(elsebody.str(), doExecute, startPos, &conditionBodyContext, "'else' body at " + Utility::position(startPos, input));
             } else if (match("keyword", "elseif")) {
                 return parseCondition(doExecute, isIsolated);
             } else return Value::createNull();
-        case 2: // while
+        } case 2: { // while
             std::string conditionStr = "return " + first.str() + " .";
             bool conditionResult = isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input)).toBoolean();
             while (conditionResult) {
@@ -3448,7 +3448,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
                 conditionResult = isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input)).toBoolean();
             }
             return Value::createNull();
-        default:
+        } default:
             throw std::runtime_error(errMsg);
     }
 }
@@ -3590,7 +3590,7 @@ Value Parser::callFunction(const Value& function, const std::vector<Value>& args
         }
     }
 
-    if (!function.isIsolated) {
+    if (!function.function_info.isIsolated) {
         for (const auto& [key, value] : this->variables) {
             try {
                 functionContext[key] = resolveVariableValue(key, false);

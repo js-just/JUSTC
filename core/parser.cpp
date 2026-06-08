@@ -3274,6 +3274,21 @@ Value Parser::functionJUSTC2(const std::string& code, bool doExecute, size_t sta
 Value Parser::i2v(Value fromIsolated) { // isolatedToValue
     return fromIsolated.properties["return"];
 }
+std::string Parser::t2i(ParserToken toIsolated) { // tokenToIsolated
+    std::string out;
+    if (toIsolated.type == "string") {
+        out = "\"" + toIsolated.value + "\"";
+    } else if (toIsolated.type == "link") {
+        out = "<" + toIsolated.value + ">";
+    } else if (toIsolated.type == "Luau") {
+        out = "<<" + toIsolated.value + ">>";
+    } else if (toIsolated.type == "JavaScript") {
+        out = "{{" + toIsolated.value + "}}";
+    } else {
+        out = toIsolated.value;
+    }
+    return out + " ";
+}
 
 Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
     size_t startPos = currentToken().start;
@@ -3353,7 +3368,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
                 else if (match("[")) braceCount3++;
                 else if (match("]")) braceCount3--;
 
-                std::string out = currentToken().value + " ";
+                std::string out = t2i(currentToken());
                 switch (ssnum) {
                     case 1:
                         first << out;
@@ -3388,10 +3403,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
         else if (match("}")) braceCount--;
 
         if (braceCount > 0) {
-            body << currentToken().value;
-            if (currentToken().type != "{" && currentToken().type != "}") {
-                body << " ";
-            }
+            body << t2i(currentToken());
         }
         advance();
     }
@@ -3429,10 +3441,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
                     else if (match("}")) braceCount4--;
 
                     if (braceCount4 > 0) {
-                        elsebody << currentToken().value;
-                        if (currentToken().type != "{" && currentToken().type != "}") {
-                            elsebody << " ";
-                        }
+                        elsebody << t2i(currentToken());
                     }
                     advance();
                 }
@@ -3549,10 +3558,7 @@ Value Parser::parseFunctionDeclaration(bool doExecute) {
         else if (match("}")) braceCount--;
 
         if (braceCount > 0) {
-            body << currentToken().value;
-            if (currentToken().type != "{" && currentToken().type != "}") {
-                body << " ";
-            }
+            body << t2i(currentToken());
         }
         advance();
     }

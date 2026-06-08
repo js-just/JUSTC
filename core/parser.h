@@ -427,6 +427,7 @@ private:
 
     Value parseCondition(bool doExecute, bool wasIsolated = false);
     Value i2v(Value fromIsolated);
+    std::string t2i(ParserToken toIsolated);
 
     // built-in
     std::future<Value> functionHTTPAsync(size_t startPos, const std::string& method, const std::vector<Value>& args);

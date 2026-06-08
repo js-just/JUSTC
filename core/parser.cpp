@@ -3177,7 +3177,6 @@ Value Parser::merger(const std::vector<Value>& args) {
     std::string key = args[0].toString();
     Value value = args[1];
     variables[key] = value;
-    std::cout << key + " : " + value.toString() << std::endl;
     return Value::createNull();
 }
 Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context, const std::string name, bool merge, bool silent) {

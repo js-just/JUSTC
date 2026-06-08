@@ -213,7 +213,7 @@ endif()
 
 find_package(ICU REQUIRED COMPONENTS uc i18n)
 
-message(STATUS "Setting up Lua wrapper...")
+message(STATUS "Setting up Lua...")
 set(LUA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party/lua)
 
 if(EXISTS ${LUA_DIR}/include/lua.h)
@@ -221,20 +221,17 @@ if(EXISTS ${LUA_DIR}/include/lua.h)
     set(LUA_FOUND TRUE)
     set(LUA_INCLUDE_DIR ${LUA_DIR}/include)
 
-    add_library(lua_wrapper STATIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/core/luawrapper.c
-    )
-    target_include_directories(lua_wrapper PRIVATE ${LUA_INCLUDE_DIR})
-    target_compile_definitions(lua_wrapper PRIVATE LUA_USE_POSIX)
+    file(GLOB LUA_SOURCES ${LUA_DIR}/source/*.c)
+    add_library(lua_lib STATIC ${LUA_SOURCES})
+    target_include_directories(lua_lib PUBLIC ${LUA_INCLUDE_DIR})
+    target_compile_definitions(lua_lib PRIVATE LUA_USE_POSIX)
 
     if(MSVC)
-        target_compile_definitions(lua_wrapper PRIVATE LUA_BUILD_AS_DLL _CRT_SECURE_NO_WARNINGS)
-        target_compile_options(lua_wrapper PRIVATE /W0)
+        target_compile_definitions(lua_lib PRIVATE LUA_BUILD_AS_DLL _CRT_SECURE_NO_WARNINGS)
+        target_compile_options(lua_lib PRIVATE /W0)
     else()
-        target_compile_options(lua_wrapper PRIVATE -w -fPIC)
+        target_compile_options(lua_lib PRIVATE -w -fPIC)
     endif()
-
-    message(STATUS "Lua wrapper configured successfully")
 else()
     message(WARNING "Lua not found in third-party/lua.")
 endif()
@@ -276,7 +273,7 @@ target_include_directories(justc_core PUBLIC
 
 target_link_libraries(justc_core PRIVATE
     luau_lib
-    lua_wrapper
+    lua_lib
 )
 
 if(NOT MSVC)

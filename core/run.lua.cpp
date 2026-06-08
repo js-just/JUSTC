@@ -40,17 +40,6 @@ extern "C" {
     #include "luawrapper.h"
 }
 
-#define LUA_TNONE (-1)
-#define LUA_TNIL 0
-#define LUA_TBOOLEAN 1
-#define LUA_TLIGHTUSERDATA 2
-#define LUA_TNUMBER 3
-#define LUA_TSTRING 4
-#define LUA_TTABLE 5
-#define LUA_TFUNCTION 6
-#define LUA_TUSERDATA 7
-#define LUA_TTHREAD 8
-
 class LuaStateManager {
 private:
     void* L;
@@ -59,13 +48,13 @@ private:
     std::string valueToString(int index) {
         int type = lua_wrapper_type(L, index);
         switch (type) {
-            case LUA_TSTRING:
+            case 4: // LUA_TSTRING
                 return lua_wrapper_tostring(L, index);
-            case LUA_TNUMBER:
+            case 3: // LUA_TNUMBER
                 return std::to_string(lua_wrapper_tonumber(L, index));
-            case LUA_TBOOLEAN:
+            case 1: // LUA_TBOOLEAN
                 return lua_wrapper_toboolean(L, index) ? "true" : "false";
-            case LUA_TNIL:
+            case 0: // LUA_TNIL
                 return "null";
             default:
                 return lua_wrapper_typename(L, type);
@@ -160,10 +149,10 @@ static std::string luaTableToJSON(void* L, int index) {
         first = false;
 
         int keyType = lua_wrapper_type(L, -2);
-        if (keyType == LUA_TSTRING) {
+        if (keyType == 4) { // LUA_TSTRING
             const char* key = lua_wrapper_tostring(L, -2);
             result += "\"" + std::string(key) + "\":";
-        } else if (keyType == LUA_TNUMBER) {
+        } else if (keyType == 3) { // LUA_TNUMBER
             double keyNum = lua_wrapper_tonumber(L, -2);
             result += std::to_string(keyNum) + ":";
         } else {
@@ -172,7 +161,7 @@ static std::string luaTableToJSON(void* L, int index) {
 
         int valType = lua_wrapper_type(L, -1);
         switch (valType) {
-            case LUA_TSTRING: {
+            case 4: { // LUA_TSTRING
                 const char* val = lua_wrapper_tostring(L, -1);
                 std::string escaped;
                 for (const char* p = val; *p; p++) {
@@ -186,16 +175,16 @@ static std::string luaTableToJSON(void* L, int index) {
                 result += "\"" + escaped + "\"";
                 break;
             }
-            case LUA_TNUMBER:
+            case 3: // LUA_TNUMBER
                 result += std::to_string(lua_wrapper_tonumber(L, -1));
                 break;
-            case LUA_TBOOLEAN:
+            case 1: // LUA_TBOOLEAN
                 result += lua_wrapper_toboolean(L, -1) ? "true" : "false";
                 break;
-            case LUA_TNIL:
+            case 0: // LUA_TNIL
                 result += "null";
                 break;
-            case LUA_TTABLE:
+            case 5: // LUA_TTABLE
                 result += luaTableToJSON(L, lua_wrapper_gettop(L));
                 break;
             default:
@@ -224,7 +213,7 @@ static std::string luaArrayToJSON(void* L, int index) {
 
         int valType = lua_wrapper_type(L, -1);
         switch (valType) {
-            case LUA_TSTRING: {
+            case 4: { // LUA_TSTRING
                 const char* val = lua_wrapper_tostring(L, -1);
                 std::string escaped;
                 for (const char* p = val; *p; p++) {
@@ -238,16 +227,16 @@ static std::string luaArrayToJSON(void* L, int index) {
                 result += "\"" + escaped + "\"";
                 break;
             }
-            case LUA_TNUMBER:
+            case 3: // LUA_TNUMBER
                 result += std::to_string(lua_wrapper_tonumber(L, -1));
                 break;
-            case LUA_TBOOLEAN:
+            case 1: // LUA_TBOOLEAN
                 result += lua_wrapper_toboolean(L, -1) ? "true" : "false";
                 break;
-            case LUA_TNIL:
+            case 0: // LUA_TNIL
                 result += "null";
                 break;
-            case LUA_TTABLE:
+            case 5: // LUA_TTABLE
                 if (lua_wrapper_objlen(L, -1) > 0) {
                     result += luaArrayToJSON(L, lua_wrapper_gettop(L));
                 } else {
@@ -301,23 +290,23 @@ LuaResult RunLua::runScriptWithDetailedResult(const std::string& code) {
     int type = lua_wrapper_type(L, -1);
 
     switch (type) {
-        case LUA_TNUMBER:
+        case 3: // LUA_TNUMBER
             output = std::to_string(lua_wrapper_tonumber(L, -1));
             outputType = 1;
             break;
-        case LUA_TBOOLEAN:
+        case 1: // LUA_TBOOLEAN
             output = lua_wrapper_toboolean(L, -1) ? "true" : "false";
             outputType = 2;
             break;
-        case LUA_TNIL:
+        case 0: // LUA_TNIL
             output = "null";
             outputType = 3;
             break;
-        case LUA_TSTRING:
+        case 4: // LUA_TSTRING
             output = lua_wrapper_tostring(L, -1);
             outputType = 0;
             break;
-        case LUA_TTABLE: {
+        case 5: { // LUA_TTABLE
             int len = lua_wrapper_objlen(L, -1);
             if (len > 0) {
                 output = luaArrayToJSON(L, -1);
@@ -328,16 +317,15 @@ LuaResult RunLua::runScriptWithDetailedResult(const std::string& code) {
             }
             break;
         }
-        case LUA_TFUNCTION:
+        case 6: // LUA_TFUNCTION
             output = "[Lua Function]";
             outputType = 6;
             break;
-        case LUA_TTHREAD:
+        case 7: // LUA_TTHREAD
             output = "[Lua Thread]";
             outputType = 7;
             break;
-        case LUA_TLIGHTUSERDATA:
-        case LUA_TUSERDATA:
+        case 8: case 9: // LUA_TLIGHTUSERDATA, LUA_TUSERDATA
             output = "[Lua UserData]";
             outputType = 8;
             break;
@@ -369,7 +357,7 @@ bool RunLua::compileScript(const std::string& code, std::string& error) {
 
 LuaResult RunLua::runScriptWithGlobals(const std::string& code, const std::unordered_map<std::string, std::string>& globals) {
     LuaStateManager luaManager;
-    void* L = luaManager.getState();
+    lua_State* L = luaManager.getState();
 
     for (const auto& [key, value] : globals) {
         lua_wrapper_pushstring(L, value.c_str());
@@ -377,7 +365,7 @@ LuaResult RunLua::runScriptWithGlobals(const std::string& code, const std::unord
     }
 
     int result = lua_wrapper_loadstring(L, code.c_str());
-    if (result != 0) {
+    if (result != LUA_OK) {
         const char* error = lua_wrapper_tostring(L, -1);
         std::string errMsg = error ? error : "Unknown Lua compilation error";
         lua_wrapper_pop(L, 1);
@@ -385,7 +373,7 @@ LuaResult RunLua::runScriptWithGlobals(const std::string& code, const std::unord
     }
 
     result = lua_wrapper_pcall(L, 0, 1, 0);
-    if (result != 0) {
+    if (result != LUA_OK) {
         const char* error = lua_wrapper_tostring(L, -1);
         std::string errMsg = error ? error : "Unknown Lua runtime error";
         lua_wrapper_pop(L, 1);

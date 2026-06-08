@@ -322,6 +322,7 @@ private:
 
     std::unordered_map<std::string, Function> userFunctions;
     std::unordered_map<std::string, bool> userFunctionsConst;
+    std::vector<Function> variableUpdateListeners;
 
     ParserToken currentToken() const;
     ParserToken peekToken(size_t offset = 1) const;
@@ -512,6 +513,9 @@ private:
 
     void updateCharType(const std::string& newType, size_t startPos);
 
+    void triggerVariableUpdate(const std::string& name, const Value& value);
+    Value merger(const std::vector<Value>& args);
+
 public:
     static std::string getCurrentTimestamp();
     static Value stringToValue(const std::string& str);
@@ -523,6 +527,8 @@ public:
     void registerFunctions(const std::unordered_map<std::string, Function>& functions, bool isConst = true);
     void unregisterFunction(const std::string& name);
     bool hasFunction(const std::string& name) const;
+
+    void variableUpdateListener(Function func);
 };
 
 #endif

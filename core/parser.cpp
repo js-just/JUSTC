@@ -3208,14 +3208,16 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
         isolatedObject.object_context = objectContext;
 
         for (const auto& log : result.logs) {
-            this->addLog(log.type, log.message, log.position);
+            addLog(log.type, log.message, log.position);
         }
         for (const auto& importLog : result.importLogs) {
-            this->addImportLog(importLog[0], importLog[1], importLog[2]);
+            addImportLog(importLog[0], importLog[1], importLog[2]);
         }
 
         return isolatedObject;
 
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error(std::string(e.what()) + " (at \"" + this->scriptName + "\" " + Utility::position(startPos, input) + ")");
     } catch (const std::exception& e) {
         throw std::runtime_error(std::string(e.what()) + " (at \"" + this->scriptName + "\" " + Utility::position(startPos, input) + ")");
     }

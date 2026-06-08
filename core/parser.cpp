@@ -2855,10 +2855,16 @@ Value Parser::resolveVariableValue(const std::string& varName, const bool unknow
             auto mutatedIt = mutated.find(varName);
             if (mutatedIt != mutated.end()) {
                 Mutated newVal = mutatedIt->second;
-                if (newVal.value && newVal.startPos && newVal.startPos > node.startPos && (
-                    newVal.value.type != DataType::UNKNOWN || unknownIsString
-                )) {
-                    return newVal.value;
+                if (newVal.startPos > node.startPos) {
+                    if (newVal.value.type != DataType::UNKNOWN) {
+                        return newVal.value
+                    } else if (unknownIsString) {
+                        Value result;
+                        result.type = DataType::STRING;
+                        result.name = varName;
+                        result.string_value = newVal.name;
+                        return result;
+                    }
                 }
             }
             return evaluateASTNode(node);
@@ -3240,7 +3246,7 @@ Value Parser::isolated(const std::string& code, bool doExecute, size_t startPos,
                     std::cout << key << std::endl;
 
                     variables[key] = value;
-                    mutated[key] = Mutated(value, startPos);
+                    mutated.try_emplace(key, Mutated(value, startPos));
                     if (result.constants) {
                         auto childConstIt = result.constants->find(key);
                         if (childConstIt != result.constants->end()) {
@@ -3954,7 +3960,7 @@ void Parser::evaluateAllVariablesSync() {
                 }
                 if (mutatedIt != mutated.end()) {
                     Mutated newVal = mutatedIt->second;
-                    if (newVal.value && newVal.value.type != DataType::UNKNOWN && newVal.startPos && newVal.startPos > node.startPos && !isConst && !isConst2) {
+                    if (newVal.value.type != DataType::UNKNOWN && newVal.startPos > node.startPos && !isConst && !isConst2) {
                         variables[varName] = newVal.value;
                         changed = true;
                     }

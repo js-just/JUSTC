@@ -272,6 +272,7 @@ struct Mutated {
     Value value;
     size_t startPos;
 
+    Mutated() : value(), startPos(0) {}
     Mutated(Value v, size_t p) : value(v), startPos(p) {}
 };
 

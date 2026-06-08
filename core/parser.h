@@ -122,6 +122,7 @@ struct FunctionInfo {
     std::vector<struct Value> defaultValues;
     bool hasVarArgs;
     bool isIsolated;
+    bool isSilent;
 
     FunctionInfo() : hasVarArgs(false), isIsolated(false) {}
 };

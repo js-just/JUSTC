@@ -221,24 +221,23 @@ if(EXISTS ${LUA_DIR}/include/lua.h)
     set(LUA_FOUND TRUE)
     set(LUA_INCLUDE_DIR ${LUA_DIR}/include)
 
-    add_library(lua_wrapper_obj OBJECT
+    add_library(lua_wrapper STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/core/luawrapper.c
     )
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/core/luawrapper.c PROPERTIES LANGUAGE C)
-
-    target_include_directories(lua_wrapper_obj PRIVATE ${LUA_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/core)
+    target_include_directories(lua_wrapper PRIVATE ${LUA_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/core)
 
     if(APPLE)
-        target_compile_definitions(lua_wrapper_obj PRIVATE LUA_USE_MACOSX)
+        target_compile_definitions(lua_wrapper PRIVATE LUA_USE_MACOSX)
     else()
-        target_compile_definitions(lua_wrapper_obj PRIVATE LUA_USE_POSIX)
+        target_compile_definitions(lua_wrapper PRIVATE LUA_USE_POSIX)
     endif()
 
     if(MSVC)
-        target_compile_definitions(lua_wrapper_obj PRIVATE LUA_BUILD_AS_DLL _CRT_SECURE_NO_WARNINGS)
-        target_compile_options(lua_wrapper_obj PRIVATE /W0)
+        target_compile_definitions(lua_wrapper PRIVATE LUA_BUILD_AS_DLL _CRT_SECURE_NO_WARNINGS)
+        target_compile_options(lua_wrapper PRIVATE /W0)
     else()
-        target_compile_options(lua_wrapper_obj PRIVATE -w -fPIC)
+        target_compile_options(lua_wrapper PRIVATE -w -fPIC)
     endif()
 
     message(STATUS "Lua wrapper configured successfully")
@@ -271,10 +270,6 @@ set(CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/string/string.cpp
 )
 
-if(TARGET lua_wrapper_obj)
-    target_sources(justc_core PRIVATE $<TARGET_OBJECTS:lua_wrapper_obj>)
-endif()
-
 if(MSVC)
     list(REMOVE_ITEM CORE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/core/run.js.cpp)
 endif()
@@ -287,6 +282,7 @@ target_include_directories(justc_core PUBLIC
 
 target_link_libraries(justc_core PUBLIC
     luau_lib
+    lua_wrapper
 )
 
 if(NOT MSVC)
@@ -325,6 +321,8 @@ target_include_directories(justc_lib PUBLIC
 
 target_link_libraries(justc_lib PUBLIC
     justc_core
+    lua_wrapper
+    -Wl,--no-as-needed
 )
 
 if (NOT MSVC)
@@ -357,6 +355,8 @@ target_link_libraries(
     justc_cli
     PRIVATE
     justc_core
+    lua_wrapper
+    -Wl,--no-as-needed
 )
 
 set_target_properties(

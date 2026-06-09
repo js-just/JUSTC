@@ -388,7 +388,8 @@ private:
 
     ASTNode parseStatement(bool doExecute);
     bool CanIgnoreNoAssigmentOperator();
-    ASTNode parseVariableDeclaration(bool doExecute, bool constant = true);
+    ASTNode parseGlobal(bool doExecute, bool constant = false);
+    ASTNode parseVariableDeclaration(bool doExecute, bool constant = false);
     ASTNode parseCommand(bool doExecute);
     ASTNode parseScopeCommand();
     ASTNode parseOutputCommand();
@@ -531,8 +532,15 @@ public:
     void registerFunctions(const std::unordered_map<std::string, Function>& functions, bool isConst = true);
     void unregisterFunction(const std::string& name);
     bool hasFunction(const std::string& name) const;
+    void clearUserFunctions();
 
     void variableUpdateListener(Function func);
+
+    void registerGlobal(const std::string& name, const Value& value, bool isConst = true);
+    Value getGlobal(const std::string& name);
+    bool hasGlobal(const std::string& name);
+    void unregisterGlobal(const std::string& name);
+    void clearGlobals();
 };
 
 #endif

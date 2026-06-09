@@ -46,6 +46,7 @@ SOFTWARE.
 #include <variant>
 #include "unicode.hpp"
 #include "builtins.h"
+#include "global.h"
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"
@@ -950,13 +951,44 @@ ASTNode Parser::parseStatement(bool doExecute) {
         return parseVariableDeclaration(doExecute);
     } else if (match("keyword", "const") && !isJSONArray) {
         advance();
-        return parseVariableDeclaration(doExecute);
+        if (match("keyword", "global")) {
+            advance();
+            return parseGlobal(doExecute, true);
+        }
+        return parseVariableDeclaration(doExecute, true);
     } else if (match("keyword", "var") && !isJSONArray) {
         advance();
-        return parseVariableDeclaration(doExecute, false);
+        if (match("keyword", "global")) {
+            advance();
+            return parseGlobal(doExecute);
+        }
+        return parseVariableDeclaration(doExecute);
+    } else if (match("keyword", "global") && !isJSONArray) {
+        advance();
+        bool isConst = false;
+        if (match("keyword", "var")) advance();
+        else if (match("keyword", "const")) {
+            advance();
+            isConst = true;
+        }
+        return parseGlobal(doExecute, isConst);
     } else {
         return parseCommand(doExecute);
     }
+}
+ASTNode Parser::parseGlobal(bool doExecute, bool constant) {
+    ASTNode global("GLOBAL", currentToken().value, currentToken().start);
+    if (match("keyword", "function") || match("keyword", "isolated")) {
+        Value funcValue = parseFunctionDeclaration(doExecute);
+        global.value = funcValue;
+        global.identifier = funcValue.name;
+        global.constant = constant;
+    } else {
+        global = parseVariableDeclaration(doExecute, constant);
+    }
+    global.type = "GLOBAL";
+    registerGlobal(global.identifier, global.value, constant);
+    return global;
 }
 
 bool Parser::CanIgnoreNoAssigmentOperator() {
@@ -2863,6 +2895,10 @@ bool Parser::dfsCycleDetection(const std::string& node,
 }
 
 Value Parser::resolveVariableValue(const std::string& varName, const bool unknownIsString) {
+    if (hasGlobal(varName)) {
+        return getGlobal(varName);
+    }
+
     auto it = variables.find(varName);
     if (it != variables.end() && it->second.type != DataType::UNKNOWN) {
         return it->second;
@@ -4639,6 +4675,27 @@ std::vector<Value> Parser::parseLambda(bool doExecute, size_t pos) {
     }
 
     return output;
+}
+
+void Parser::clearUserFunctions() {
+    userFunctions.clear();
+    userFunctionsConst.clear();
+}
+
+void Parser::registerGlobal(const std::string& name, const Value& value, bool isConst) {
+    setGlobal(name, value, isConst);
+}
+Value Parser::getGlobal(const std::string& name) {
+    return getGlobal_(name);
+}
+bool Parser::hasGlobal(const std::string& name) {
+    return hasGlobal_(name);
+}
+void Parser::unregisterGlobal(const std::string& name) {
+    removeGlobal(name);
+}
+void Parser::clearGlobals() {
+    clearGlobals_();
 }
 
 ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau) {

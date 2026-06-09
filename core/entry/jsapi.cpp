@@ -104,7 +104,7 @@ std::string argsToJUSTOArray(const std::vector<Value>& args) {
     std::string result = "a[";
     for (size_t i = 0; i < args.size(); i++) {
         if (i > 0) result += ",";
-        result += valueToJUSTO(args[i]);
+        result += JUSTO::valueToJUSTO(args[i]);
     }
     result += "]";
     return result;
@@ -228,7 +228,7 @@ char* getGlobal(const char* name) {
 
     try {
         Value val = globalParser->getGlobal(std::string(name));
-        std::string justo = valueToJUSTO(val);
+        std::string justo = JUSTO::valueToJUSTO(val);
         return strdup(justo.c_str());
     } catch (const std::exception& e) {
         return strdup(";");
@@ -283,7 +283,7 @@ char* getPointer(const char* name) {
 
     auto it = justoPointers.find(std::string(name));
     if (it != justoPointers.end()) {
-        std::string justo = valueToJUSTO(it->second);
+        std::string justo = JUSTO::valueToJUSTO(it->second);
         return strdup(justo.c_str());
     }
     return strdup(";");
@@ -366,7 +366,7 @@ int addVariableUpdateListener(void (*callback)(const char* name, const char* val
     std::lock_guard<std::mutex> lock(varUpdateListenersMutex);
 
     varUpdateListeners.push_back([callback](const std::string& name, const Value& value) {
-        std::string justo = valueToJUSTO(value);
+        std::string justo = JUSTO::valueToJUSTO(value);
         callback(name.c_str(), justo.c_str());
     });
 
@@ -383,7 +383,7 @@ char* justoParse(const char* justoString) {
 
     try {
         Value val = justoToValue(std::string(justoString));
-        std::string justo = valueToJUSTO(val);
+        std::string justo = JUSTO::valueToJUSTO(val);
         return strdup(justo.c_str());
     } catch (const std::exception& e) {
         return strdup(";");

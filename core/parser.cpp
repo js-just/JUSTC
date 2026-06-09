@@ -3486,7 +3486,7 @@ Value Parser::toJUSTO(const std::vector<Value>& args) {
     if (args.empty()) {
         return Value::createString("");
     }
-    return Value::createString(valueToJUSTO(args[0]));
+    return Value::createString(JUSTO::valueToJUSTO(args[0]));
 }
 
 Value Parser::i2v(Value fromIsolated) { // isolatedToValue

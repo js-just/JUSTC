@@ -449,7 +449,7 @@ private:
     Value parseFunctionDeclaration(bool doExecute);
     Value emptyJUSTC();
 
-    Value parseCondition(bool doExecute, bool wasIsolated = false, bool wasSilent = false);
+    Value parseCondition(bool doExecute, bool wasIsolated = false);
     Value i2v(Value fromIsolated);
     std::string t2i(ParserToken toIsolated);
 

@@ -374,6 +374,8 @@ private:
     Value parseSpaceCall(bool doExecute);
     std::vector<Value> parseLambda(bool doExecute, size_t pos);
 
+    ASTNode typeDeclarationNode(std::string typeDecl, size_t pos);
+
     Value parseJustcObject(bool doExecute);
     Value parseJsonObject(bool doExecute);
     Value parseJsonArray(bool doExecute);

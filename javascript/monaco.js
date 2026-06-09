@@ -15,7 +15,7 @@ const monacoJUSTClang = {
             "static", "const", "define", "undefine",
             "echo", "log", "logfile", "space", "var",
             "new", "goto", "embeds", "isolated", "if",
-            "for", "while",
+            "for", "while", "lambda",
 
             "is", "isn't", "isif", "then", "elseif", "else",
             "isifn't", "elseifn't", "then't", "elsen't",

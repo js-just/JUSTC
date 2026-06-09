@@ -4526,6 +4526,11 @@ void Parser::triggerVariableUpdate(const std::string& name, const Value& value) 
     }
 }
 
+ASTNode Parser::typeDeclarationNode(std::string typeDecl, size_t pos) {
+    ASTNode node("TYPE_CHECK", "", pos);
+    node.typeDeclaration = Utility::typeDeclaration2dataType(typeDecl, Utility::position(pos, input));
+    return node;
+}
 std::vector<Value> Parser::parseLambda(bool doExecute, size_t pos) {
     std::vector<std::string> names;
     std::vector<Value> vars;
@@ -4537,6 +4542,12 @@ std::vector<Value> Parser::parseLambda(bool doExecute, size_t pos) {
         while ((match("identifier") || match("string")) && !isEnd()) {
             names.push_back(currentToken().value);
             Value var = parseExpression(doExecute, true);
+            if (match(":") && !(position + 1 >= tokens.size())) {
+                advance();
+                std::string typeDecl = currentToken().value;
+                ASTNode typeNode = typeDeclarationNode(typeDecl, pos);
+                var = applyTypeDeclaration(var, typeNode);
+            }
             vars.push_back(var);
             while ((match(",") || match(";")) && !isEnd()) {
                 advance();
@@ -4549,35 +4560,72 @@ std::vector<Value> Parser::parseLambda(bool doExecute, size_t pos) {
             throw std::runtime_error("Expected ']' to close lambda at " + Utility::position(pos, input) + ".");
         }
         advance();
-        if (match("keyword", "as")) {
+        if (match("keyword", "as") || match(":")) {
             advance();
-            if (!match("[")) {
+            if (isEnd()) {
                 throw std::runtime_error("Expected '[' at " + Utility::position(pos, input) + ".");
-            }
-            advance();
-            while (!match("]") && !isEnd()) {
-                renames.push_back(currentToken().value);
+            } else if (match("[")) {
                 advance();
-                while ((match(",") || match(";")) && !isEnd()) {
+                while (!match("]") && !isEnd()) {
+                    renames.push_back(currentToken().value);
                     advance();
+                    while ((match(",") || match(";")) && !isEnd()) {
+                        advance();
+                    }
+                }
+                if (isEnd()) {
+                    throw std::runtime_error("Unclosed lambda at " + Utility::position(pos, input) + ".");
+                }
+                if (!match("]")) {
+                    throw std::runtime_error("Expected ']' at " + Utility::position(pos, input) + ".");
+                }
+                advance();
+            } else {
+                Value arr = parseExpression(doExecute);
+                if (arr.type != DataType::JSON_ARRAY) {
+                    throw std::runtime_error("Expected array at " + Utility::position(pos, input) + ".");
+                }
+                for (Value arrItem : arr.array_elements) {
+                    renames.push_back(arrItem.toString());
                 }
             }
-            if (isEnd()) {
-                throw std::runtime_error("Unclosed lambda at " + Utility::position(pos, input) + ".");
-            }
-            if (!match("]")) {
-                throw std::runtime_error("Expected ']' at " + Utility::position(pos, input) + ".");
-            }
-            advance();
         }
     } else if (match("identifier") || match("string")) {
         names.push_back(currentToken().value);
         Value var = parseExpression(doExecute, true);
+        if (match(":") && !(position + 1 >= tokens.size())) {
+            advance();
+            std::string typeDecl = currentToken().value;
+            ASTNode typeNode = typeDeclarationNode(typeDecl, pos);
+            var = applyTypeDeclaration(var, typeNode);
+        }
         vars.push_back(var);
-        if (match("keyword", "as") && (peekToken().type == "identifier" || peekToken().type == "string")) {
+        if ((match("keyword", "as") || match(":")) && (peekToken().type == "identifier" || peekToken().type == "string")) {
             advance();
             renames.push_back(currentToken().value);
             advance();
+        }
+    } else if (match("keyword", "lambda")) {
+        advance();
+        Value obj = parseExpression(doExecute);
+        switch (obj.type) {
+            case DataType::JSON_ARRAY: {
+                for (Value arrItem : obj.array_elements) {
+                    names.push_back(arrItem.name);
+                    vars.push_back(arrItem);
+                }
+                break;
+            }
+            case DataType::JSON_OBJECT:
+            case DataType::JUSTC_OBJECT: {
+                for (const auto& [key, value] : obj.properties) {
+                    names.push_back(key);
+                    vars.push_back(value);
+                }
+                break;
+            }
+            default:
+                throw std::runtime_error("Expected array or object for lambda at " + Utility::position(pos, input) + ".");
         }
     }
 

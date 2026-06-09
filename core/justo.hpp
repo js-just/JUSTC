@@ -258,7 +258,7 @@ public:
     }
 };
 
-std::string valueToJUSTO(const Value& value) {
+inline std::string valueToJUSTO(const Value& value) {
     switch (value.type) {
         case DataType::NUMBER:
             return "n" + Utility::numberValue2string(value);

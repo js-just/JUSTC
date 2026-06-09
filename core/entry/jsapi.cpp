@@ -267,7 +267,10 @@ int registerPointer(const char* name, const char* justoValue) {
     std::lock_guard<std::mutex> lock(justoPointersMutex);
 
     try {
-        JUSTO::JUSTOParser parser(justoPointers);
+        JUSTO::JUSTOParser parser;
+        for (const auto& [key, value] : justoPointers) {
+            parser.registerPointer(key, value);
+        }
         Value val = parser.parse(std::string(justoValue));
         justoPointers[std::string(name)] = val;
         return 1;

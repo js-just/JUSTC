@@ -449,7 +449,7 @@ private:
     Value isolated(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context = nullptr, const std::string name = "auto", bool merge = false, bool silent = false);
     Value shared(const std::string& code, bool doExecute, size_t startPos, const std::unordered_map<std::string, Value>* context, const std::string name = "auto", bool merge = true, bool silent = false);
 
-    Value parseFunctionDeclaration(bool doExecute);
+    Value parseFunctionDeclaration(bool doExecute, std::string funcName, bool requireName = true);
     Value emptyJUSTC();
 
     Value parseCondition(bool doExecute, bool wasIsolated = false);

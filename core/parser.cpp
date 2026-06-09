@@ -1172,6 +1172,22 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
 }
 
 Value Parser::parseExpression(bool doExecute, bool identifierMode) {
+    if (match("keyword", "function") || match("keyword", "isolated")) {
+        std::string funcName = std::to_string(position);
+        bool gotName = false;
+        size_t offset = 1;
+        while (!gotName && (
+            position - offset >= 0
+        )) {
+            ParserToken currToken = tokens[position - offset];
+            if (currToken.type == "identifier") {
+                gotName = true;
+                funcName = currToken.value;
+            }
+            ++offset;
+        }
+        return parseFunctionDeclaration(doExecute, funcName, false);
+    }
     return parseConditional(doExecute, identifierMode);
 }
 
@@ -3637,7 +3653,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
     }
 }
 
-Value Parser::parseFunctionDeclaration(bool doExecute) {
+Value Parser::parseFunctionDeclaration(bool doExecute, std::string funcName, bool requireName) {
     size_t startPos = currentToken().start;
     bool isIsolated = false;
 
@@ -3650,11 +3666,18 @@ Value Parser::parseFunctionDeclaration(bool doExecute) {
     }
     advance();
 
-    if (!match("identifier")) {
-        throw std::runtime_error("Expected function name at " + Utility::position(startPos, input));
+    if (requireName) {
+        if (!match("identifier")) {
+            throw std::runtime_error("Expected function name at " + Utility::position(startPos, input));
+        }
+        funcName = currentToken().value;
+        advance();
+    } else {
+        if (match("identifier")) {
+            funcName = currentToken().value;
+            advance();
+        }
     }
-    std::string funcName = currentToken().value;
-    advance();
 
     std::vector<Value> importedContext = parseLambda(doExecute, startPos);
 

@@ -3748,10 +3748,8 @@ Value Parser::callFunction(const Value& function, const std::vector<Value>& args
         }
     }
 
-    if (function.array_elements) {
-        for (Value importedVar : function.array_elements) {
-            functionContext[importedVar.name] = importedVar;
-        }
+    for (Value importedVar : function.array_elements) {
+        functionContext[importedVar.name] = importedVar;
     }
 
     for (size_t i = 0; i < funcInfo.paramNames.size(); i++) {

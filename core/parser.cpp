@@ -3453,6 +3453,12 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
         conditionBodyContext = conditionContext;
     }
 
+    std::vector<Value> importedContext = parseLambda(doExecute, startPos);
+    for (Value importedVar : importedContext) {
+        conditionContext[importedVar.name] = importedVar;
+        conditionBodyContext[importedVar.name] = importedVar;
+    }
+
     if (!match("(")) {
         std::string currKeyword = "if";
         switch (conditionType) {
@@ -3614,6 +3620,8 @@ Value Parser::parseFunctionDeclaration(bool doExecute) {
     std::string funcName = currentToken().value;
     advance();
 
+    std::vector<Value> importedContext = parseLambda(doExecute, startPos);
+
     if (!match("(")) {
         throw std::runtime_error("Expected '(' after function name at " + Utility::position(startPos, input));
     }
@@ -3698,6 +3706,7 @@ Value Parser::parseFunctionDeclaration(bool doExecute) {
     result.string_value = functionBody;
     result.name = funcName;
     result.function_info = funcInfo;
+    result.array_elements = importedContext;
 
     auto closureContext = std::make_shared<ObjectContext>();
     if (!isIsolated) {
@@ -3736,6 +3745,12 @@ Value Parser::callFunction(const Value& function, const std::vector<Value>& args
             } catch (...) {
                 functionContext[key] = value;
             }
+        }
+    }
+
+    if (function.array_elements) {
+        for (Value importedVar : function.array_elements) {
+            functionContext[importedVar.name] = importedVar;
         }
     }
 
@@ -4511,6 +4526,73 @@ void Parser::triggerVariableUpdate(const std::string& name, const Value& value) 
             std::cout << std::string(e.what()) << std::endl;
         }
     }
+}
+
+std::vector<Value> Parser::parseLambda(bool doExecute, size_t pos) {
+    std::vector<std::string> names;
+    std::vector<Value> vars;
+    std::vector<std::string> renames;
+    std::vector<Value> output;
+
+    if (match("[")) {
+        advance();
+        while ((match("identifier") || match("string")) && !isEnd()) {
+            names.push_back(currentToken().value);
+            Value var = parseExpression(doExecute, true);
+            vars.push_back(var);
+            while ((match(",") || match(";")) && !isEnd()) {
+                advance();
+            }
+        }
+        if (isEnd()) {
+            throw std::runtime_error("Unclosed lambda at " + Utility::position(pos, input) + ".");
+        }
+        if (!match("]")) {
+            throw std::runtime_error("Expected ']' to close lambda at " + Utility::position(pos, input) + ".");
+        }
+        advance();
+        if (match("keyword", "as")) {
+            advance();
+            if (!match("[")) {
+                throw std::runtime_error("Expected '[' at " + Utility::position(pos, input) + ".");
+            }
+            advance();
+            while (!match("]") && !isEnd()) {
+                renames.push_back(currentToken().value);
+                advance();
+                while ((match(",") || match(";")) && !isEnd()) {
+                    advance();
+                }
+            }
+            if (isEnd()) {
+                throw std::runtime_error("Unclosed lambda at " + Utility::position(pos, input) + ".");
+            }
+            if (!match("]")) {
+                throw std::runtime_error("Expected ']' at " + Utility::position(pos, input) + ".");
+            }
+            advance();
+        }
+    } else if (match("identifier") || match("string")) {
+        names.push_back(currentToken().value);
+        Value var = parseExpression(doExecute, true);
+        vars.push_back(var);
+        if (match("keyword", "as") && (peekToken().type == "identifier" || peekToken().type == "string")) {
+            advance();
+            renames.push_back(currentToken().value);
+            advance();
+        }
+    }
+
+    output.reserve(vars.size());
+    for (size_t i = 0; i < vars.size(); ++i) {
+        Value var = vars[i];
+        std::string oldName = (i < names.size()) ? names[i] : var.name;
+        std::string newName = (i < renames.size()) ? renames[i] : oldName;
+        var.name = newName;
+        output.push_back(var);
+    }
+
+    return output;
 }
 
 ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau) {

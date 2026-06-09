@@ -372,6 +372,7 @@ private:
     Value parseUnary(bool doExecute, bool identifierMode = false);
     Value parseFunctionCall(bool doExecute);
     Value parseSpaceCall(bool doExecute);
+    std::vector<Value> parseLambda(bool doExecute, size_t pos);
 
     Value parseJustcObject(bool doExecute);
     Value parseJsonObject(bool doExecute);

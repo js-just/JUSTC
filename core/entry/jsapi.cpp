@@ -97,7 +97,7 @@ Value justoToValue(const std::string& justo) {
     for (const auto& [key, value] : justoPointers) {
         parser.registerPointer(key, value);
     }
-    return parser.parse(code);
+    return parser.parse(justo);
 }
 
 std::string argsToJUSTOArray(const std::vector<Value>& args) {
@@ -267,7 +267,7 @@ int registerPointer(const char* name, const char* justoValue) {
     std::lock_guard<std::mutex> lock(justoPointersMutex);
 
     try {
-        JUSTO::JustoParser parser(justoPointers);
+        JUSTO::JUSTOParser parser(justoPointers);
         Value val = parser.parse(std::string(justoValue));
         justoPointers[std::string(name)] = val;
         return 1;
@@ -388,6 +388,8 @@ char* justoParse(const char* justoString) {
     } catch (const std::exception& e) {
         return strdup(";");
     }
+}
+
 }
 
 struct JUSTOInitializer {

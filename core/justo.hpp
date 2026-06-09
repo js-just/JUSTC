@@ -40,6 +40,7 @@ JUSTO - Just an Ultimate Site Tool Object notation language.
 #include <variant>
 #include <cctype>
 #include "parser.h"
+#include "utility.h"
 
 namespace JUSTO {
 

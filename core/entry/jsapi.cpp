@@ -66,6 +66,9 @@ static std::mutex justoPointersMutex;
 static std::vector<std::function<void(const std::string&, const Value&)>> varUpdateListeners;
 static std::mutex varUpdateListenersMutex;
 
+static std::unordered_map<std::string, int> jsFunctions;
+static std::mutex jsFunctionsMutex;
+
 void ensureGlobalParser() {
     if (!globalParser) {
         globalParser = std::make_unique<Parser>(
@@ -97,6 +100,16 @@ Value justoToValue(const std::string& justo) {
     return parser.parse(code);
 }
 
+std::string argsToJUSTOArray(const std::vector<Value>& args) {
+    std::string result = "a[";
+    for (size_t i = 0; i < args.size(); i++) {
+        if (i > 0) result += ",";
+        result += valueToJUSTO(args[i]);
+    }
+    result += "]";
+    return result;
+}
+
 void triggerVariableUpdate(const std::string& name, const Value& value) {
     std::lock_guard<std::mutex> lock(varUpdateListenersMutex);
     for (const auto& listener : varUpdateListeners) {
@@ -108,12 +121,7 @@ void triggerVariableUpdate(const std::string& name, const Value& value) {
 
 #ifdef __EMSCRIPTEN__
 extern "C" {
-    void jsVariableUpdateCallback(const char* name, const char* valueJUSTO) {
-        if (name == nullptr || valueJUSTO == nullptr) return;
-
-        Value val = justoToValue(std::string(valueJUSTO));
-        triggerVariableUpdate(std::string(name), val);
-    }
+    extern void jsCallFunction(const char* name, const char* argsJUSTO, char** resultJUSTO);
 }
 #endif
 
@@ -295,6 +303,63 @@ void clearPointers() {
     initializeJUSTOPointers();
 }
 
+int registerFunction(const char* name, int jsCallbackPtr, int isConst) {
+    if (name == nullptr || jsCallbackPtr == 0) return 0;
+
+    std::lock_guard<std::mutex> lock(globalParserMutex);
+    std::lock_guard<std::mutex> lock2(jsFunctionsMutex);
+    ensureGlobalParser();
+
+    try {
+        jsFunctions[std::string(name)] = jsCallbackPtr;
+
+        globalParser->registerFunction(std::string(name),
+            [name, jsCallbackPtr](const std::vector<Value>& args) -> Value {
+                std::string argsJUSTO = argsToJUSTOArray(args);
+
+                char* resultJUSTO = nullptr;
+
+                #ifdef __EMSCRIPTEN__
+                    using JSFunc = void (*)(const char*, const char*, char**);
+                    JSFunc jsFunc = reinterpret_cast<JSFunc>(jsCallbackPtr);
+                    jsFunc(name, argsJUSTO.c_str(), &resultJUSTO);
+                #else
+                    resultJUSTO = strdup(";");
+                #endif
+
+                Value result = justoToValue(std::string(resultJUSTO));
+                free(resultJUSTO);
+
+                return result;
+            },
+            isConst != 0
+        );
+        return 1;
+    } catch (const std::exception& e) {
+        return 0;
+    }
+}
+
+int unregisterFunction(const char* name) {
+    if (name == nullptr) return 0;
+
+    std::lock_guard<std::mutex> lock(globalParserMutex);
+    std::lock_guard<std::mutex> lock2(jsFunctionsMutex);
+    ensureGlobalParser();
+
+    globalParser->unregisterFunction(std::string(name));
+    jsFunctions.erase(std::string(name));
+    return 1;
+}
+
+void clearUserFunctions() {
+    std::lock_guard<std::mutex> lock(globalParserMutex);
+    std::lock_guard<std::mutex> lock2(jsFunctionsMutex);
+    ensureGlobalParser();
+    globalParser->clearUserFunctions();
+    jsFunctions.clear();
+}
+
 int addVariableUpdateListener(void (*callback)(const char* name, const char* valueJUSTO)) {
     if (callback == nullptr) return 0;
 
@@ -313,6 +378,16 @@ void clearVariableUpdateListeners() {
     varUpdateListeners.clear();
 }
 
+char* justoParse(const char* justoString) {
+    if (justoString == nullptr) return strdup(";");
+
+    try {
+        Value val = justoToValue(std::string(justoString));
+        std::string justo = valueToJUSTO(val);
+        return strdup(justo.c_str());
+    } catch (const std::exception& e) {
+        return strdup(";");
+    }
 }
 
 struct JUSTOInitializer {

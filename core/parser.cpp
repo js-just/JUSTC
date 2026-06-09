@@ -554,7 +554,7 @@ ParseResult Parser::parse(bool doExecute) {
                 } else if (keyword == "import") {
                     ast.push_back(parseImportCommand());
                 } else if (keyword == "if" || keyword == "while" || keyword == "for" || (
-                    (keyword == "isolated" || keyword == "silent") && peekToken().type == "keyword" && (
+                    keyword == "isolated" && peekToken().type == "keyword" && (
                         peekToken().value == "if" || peekToken().value == "while" || peekToken().value == "for"
                     )
                 )) {
@@ -932,7 +932,7 @@ ASTNode Parser::parseImportCommand() {
 ASTNode Parser::parseStatement(bool doExecute) {
     std::string keyword = currentToken().value;
 
-    if (keyword == "function" || keyword == "isolated" || keyword == "silent") {
+    if (keyword == "function" || keyword == "isolated") {
         Value funcValue = parseFunctionDeclaration(doExecute);
 
         ASTNode node("VARIABLE_DECLARATION", funcValue.name, currentToken().start);
@@ -3416,27 +3416,15 @@ std::string Parser::t2i(ParserToken toIsolated) { // tokenToIsolated
     return out + " ";
 }
 
-Value Parser::parseCondition(bool doExecute, bool wasIsolated, bool wasSilent) {
+Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
     size_t startPos = currentToken().start;
     int conditionType = 0; // 0 = if; 1 = for; 2 = while; 3 = elseif
     std::string errMsg = "Expected 'if'/'for'/'while' keyword at " + Utility::position(startPos, input) + ".";
     bool isIsolated = wasIsolated;
-    bool isSilent = wasSilent;
 
     if (match("keyword", "isolated")) {
         isIsolated = true;
         advance();
-        if (match("keyword", "silent")) {
-            isSilent = true;
-            advance();
-        }
-    } else if (match("keyword", "silent")) {
-        isSilent = true;
-        advance();
-        if (match("keyword", "isolated")) {
-            isIsolated = true;
-            advance();
-        }
     }
 
     if (match("keyword", "if")) {
@@ -3556,14 +3544,14 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated, bool wasSilent) {
     switch (conditionType) {
         case 0: case 3: { // if/elseif
             std::string currOp = conditionType == 0 ? "if" : "elseif";
-            bool conditionResult = i2v(isolated("return " + first.str() + " .", doExecute, startPos, &conditionContext, "'" + currOp + "' condition at " + Utility::position(startPos, input), false, isSilent)).toBoolean();
+            bool conditionResult = i2v(isolated("return " + first.str() + " .", doExecute, startPos, &conditionContext, "'" + currOp + "' condition at " + Utility::position(startPos, input))).toBoolean();
 
             if (conditionResult) {
-                return shared(conditionBody, doExecute, startPos, &conditionBodyContext, "'" + currOp + "' body at " + Utility::position(startPos, input), !isIsolated, isSilent);
+                return shared(conditionBody, doExecute, startPos, &conditionBodyContext, "'" + currOp + "' body at " + Utility::position(startPos, input), !isIsolated);
             } else if (match("keyword", "else")) {
                 advance();
                 if (peekToken().type == "keyword" && peekToken().value == "if") {
-                    return parseCondition(doExecute, isIsolated, isSilent);
+                    return parseCondition(doExecute, isIsolated);
                 } else if (!match("{")) {
                     throw std::runtime_error(conditionBodyErr);
                 }
@@ -3583,15 +3571,15 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated, bool wasSilent) {
                 }
                 if (braceCount4 != 0) throw std::runtime_error(unclosedBody);
 
-                return shared(elsebody.str(), doExecute, startPos, &conditionBodyContext, "'else' body at " + Utility::position(startPos, input), !isIsolated, isSilent);
+                return shared(elsebody.str(), doExecute, startPos, &conditionBodyContext, "'else' body at " + Utility::position(startPos, input), !isIsolated);
             } else if (match("keyword", "elseif")) {
-                return parseCondition(doExecute, isIsolated, isSilent);
+                return parseCondition(doExecute, isIsolated);
             } else return Value::createNull();
         } case 2: { // while
             std::string conditionStr = "return " + first.str() + " .";
-            bool conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input), false, isSilent)).toBoolean();
+            bool conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input))).toBoolean();
             while (conditionResult) {
-                shared(conditionBody, doExecute, startPos, &conditionBodyContext, "'while' body at " + Utility::position(startPos, input), !isIsolated, isSilent);
+                shared(conditionBody, doExecute, startPos, &conditionBodyContext, "'while' body at " + Utility::position(startPos, input), !isIsolated);
                 for (const auto& [key, value] : this->variables) {
                     try {
                         conditionContext[key] = resolveVariableValue(key, false);
@@ -3599,7 +3587,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated, bool wasSilent) {
                         conditionContext[key] = value;
                     }
                 }
-                conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input), false, isSilent)).toBoolean();
+                conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input))).toBoolean();
             }
             return Value::createNull();
         } default:
@@ -3610,22 +3598,10 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated, bool wasSilent) {
 Value Parser::parseFunctionDeclaration(bool doExecute) {
     size_t startPos = currentToken().start;
     bool isIsolated = false;
-    bool isSilent = false;
 
     if (match("keyword", "isolated")) {
         isIsolated = true;
         advance();
-        if (match("keyword", "silent")) {
-            isSilent = true;
-            advance();
-        }
-    } else if (match("keyword", "silent")) {
-        isSilent = true;
-        advance();
-        if (match("keyword", "isolated")) {
-            isIsolated = true;
-            advance();
-        }
     }
     if (!match("keyword", "function")) {
         throw std::runtime_error("Expected 'function' keyword at " + Utility::position(startPos, input));
@@ -3645,7 +3621,6 @@ Value Parser::parseFunctionDeclaration(bool doExecute) {
 
     FunctionInfo funcInfo;
     funcInfo.isIsolated = isIsolated;
-    funcInfo.isSilent = isSilent;
     std::vector<std::string> paramNames;
 
     while (!match(")") && !isEnd()) {
@@ -3754,7 +3729,7 @@ Value Parser::callFunction(const Value& function, const std::vector<Value>& args
         }
     }
 
-    if (!funcInfo.isIsolated) {
+    if (!function.function_info.isIsolated) {
         for (const auto& [key, value] : this->variables) {
             try {
                 functionContext[key] = resolveVariableValue(key, false);
@@ -3784,7 +3759,7 @@ Value Parser::callFunction(const Value& function, const std::vector<Value>& args
         functionContext[funcInfo.paramNames[i]] = paramValue;
     }
 
-    Value result = isolated(function.string_value, true, startPos, &functionContext, "auto", false, funcInfo.isSilent);
+    Value result = isolated(function.string_value, true, startPos, &functionContext);
 
     if (!result.properties.empty()) {
         auto it = result.properties.find("return");

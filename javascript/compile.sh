@@ -46,6 +46,7 @@ LUAU_INCLUDE="-I./luau/Ast/include -I./luau/Common/include -I./luau/Compiler/inc
 
 COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_malloc\",\"_free\",\"_addFunction\",\"_removeFunction\",\"_ccall\",\"_registerFunction\",\"_unregisterFunction\",\"_clearUserFunctions\",\"_registerGlobal\",\"_getGlobal\",\"_hasGlobal\",\"_unregisterGlobal\",\"_clearGlobals\",\"_registerPointer\",\"_getPointer\",\"_unregisterPointer\",\"_clearPointers\",\"_addVariableUpdateListener\",\"_clearVariableUpdateListeners\",\"_justoParse\",\"_lexer\",\"_parser\",\"_parse\",\"_free_string\",\"_version\"] \
 -s EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"addFunction\",\"removeFunction\",\"UTF8ToString\",\"stringToUTF8\",\"setValue\",\"getValue\",\"_malloc\",\"_free\"] \
+-s LEGACY_RUNTIME=1 \
 -s MODULARIZE=1 \
 -s ALLOW_MEMORY_GROWTH=1 \
 -s INVOKE_RUN=0 \

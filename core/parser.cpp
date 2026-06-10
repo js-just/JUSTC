@@ -394,7 +394,7 @@ long getCurrentTime() {
 
 }
 
-void Parser::builtinObject(std::string& name, std::unordered_map<std::string, Value> props) {
+void Parser::builtinObject(const std::string& name, std::unordered_map<std::string, Value> props) {
     auto objCtx = std::make_shared<ObjectContext>();
     std::vector<std::string> outputVars;
     for (const auto& [key, value] : props) {

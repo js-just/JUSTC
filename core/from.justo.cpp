@@ -58,7 +58,7 @@ bool parseJUSTOTokens(const char* tokensJUSTO, std::vector<ParserToken>& parserT
             if (typeStart != std::string::npos) {
                 typeStart += 8;
                 size_t typeEnd = tokenStr.find('"', typeStart);
-                while (justoStr[typeEnd - 1] == "\\") {
+                while (justoStr[typeEnd - 1] == '\\') {
                     typeEnd = tokenStr.find('"', typeEnd);
                 }
                 if (typeEnd != std::string::npos) {
@@ -70,7 +70,7 @@ bool parseJUSTOTokens(const char* tokensJUSTO, std::vector<ParserToken>& parserT
             if (valueStart != std::string::npos) {
                 valueStart += 9;
                 size_t valueEnd = tokenStr.find('"', valueStart);
-                while (justoStr[valueEnd - 1] == "\\") {
+                while (justoStr[valueEnd - 1] == '\\') {
                     valueEnd = tokenStr.find('"', valueEnd);
                 }
                 if (valueEnd != std::string::npos) {

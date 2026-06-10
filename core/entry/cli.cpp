@@ -218,6 +218,8 @@ std::string outputString(cmdFlags flags, Args... args) {
         return XmlSerializer::serialize(args...);
     } else if (flags.outputMode == "yaml") {
         return YamlSerializer::serialize(args...);
+    } else if (flags.outputMode == "justo") {
+        return JUSTOSerializer::serialize(args...);
     } else {
         return JsonSerializer::serialize(args...);
     }

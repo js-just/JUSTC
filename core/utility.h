@@ -222,7 +222,7 @@ public:
     static std::unordered_map<std::string, std::string> ParseHeaders(const std::string& headers);
     static std::string defaultHTTPAccept;
     static void Warn(const std::string& warning);
-    static std::string escapeJustcString(const std::string& str);
+    static std::string escapeJUSTCString(const std::string& str);
     static std::string stringifyValue(const Value& value);
 };
 class UnicodeUtility {

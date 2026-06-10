@@ -37,6 +37,7 @@ SOFTWARE.
 #include <stdexcept>
 #include <tuple>
 #include "../utility.h"
+#include "../justo.hpp"
 
 void logError(const std::string error) {
     if (Utility::isGitHubActions()) std::cerr << "::error::" + error << std::endl;

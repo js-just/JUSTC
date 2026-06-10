@@ -129,8 +129,10 @@ void printUsage() {
     std::cout << "  -E, --execute                         - Execute JUSTC from lexer output tokens as JSON" << std::endl;
     std::cout << "  -h, --help                            - Print JUSTC command line options (this list)" << std::endl;
     std::cout << "  -j, --json                            - Output as JSON (default)" << std::endl;
-    std::cout << "  -J, --justc                           - Output as JUSTC, input should be JSON" << std::endl;
+    std::cout << "  -J, --justc                           - Output as JUSTC, input should be JUSTO" << std::endl;
     std::cout << "  -l, --lexer                           - Run lexer only / Tokenize" << std::endl;
+    std::cout << "  -o, --justo                           - Output as JUSTO (Just an Ultimate Site Tool Object notation language)" << std::endl;
+    std::cout << "  -O, --json-justc                      - Output as JUSTC, input should be JSON" << std::endl;
     std::cout << "  -P, --parser                          - Run parser only / Parse JUSTC (not execute) from lexer output tokens as JSON" << std::endl;
     std::cout << "  -p, --parse                           - Parse JUSTC (not execute) / No HTTP requests, some commands will not be executed" << std::endl;
     std::cout << "  -r, --result                          - Print result" << std::endl;
@@ -307,11 +309,18 @@ int main(int argc, char* argv[]) {
                 flags.outputMode = "yaml";
             }
             else if (arg == "--justc" || arg == "-J") {
-                flags.mode = "stringify";
+                flags.mode = "stringifyJUSTO";
                 flags.outputMode = "justc";
             }
             else if (arg == "--silent" || arg == "-S") {
                 flags.silentMode = true;
+            }
+            else if (arg == "--justo" || arg == "-o") {
+                flags.outputMode = "justo";
+            }
+            else if (arg == "--json-justc" || arg == "-O") {
+                flags.mode = "stringify";
+                flags.outputMode = "justc";
             }
 
             // hidden flags. IMPORTANT: DO NOT USE THESE FLAGS! THESE FLAGS ARE ONLY FOR JUST AN ULTIMATE SITE TOOL ENVIRONMENT.
@@ -366,6 +375,15 @@ int main(int argc, char* argv[]) {
                 json = JsonParser::stringify(flags.input);
                 if (flags.outputMode != "justc") {
                     throwError("Cannot output JSON converted to JUSTC as \"" + flags.outputMode + "\".", outputRedirector);
+                }
+            }
+            else if (flags.mode == "stringifyJUSTO") {
+                JUSTO::JUSTOParser parser;
+                Value val = parser.parse(flags.input);
+                json = Utility::stringifyValue(val);
+
+                if (flags.outputMode != "justc") {
+                    throwError("Cannot output JUSTO converted to JUSTC as \"" + flags.outputMode + "\".", outputRedirector);
                 }
             }
             else {

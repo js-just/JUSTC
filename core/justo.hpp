@@ -99,6 +99,7 @@ struct OParser {
     std::string parseIdentifier() {
         skipWhitespace();
         std::string result;
+        if (peek() == '"') return parseString('"');
         while (pos < input.length() && (std::isalnum(static_cast<unsigned char>(peek())) || peek() == '_')) {
             result += peek();
             advance();

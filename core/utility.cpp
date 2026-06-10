@@ -287,7 +287,7 @@ std::string Utility::_stringifyValue(const Value& value, int indentLevel) {
             for (const auto& [key, val] : props) {
                 if (!first) result += "," + nextIndent;
                 first = false;
-                result += "\"" + escapeJUSTCString(key) + "\":" + stringifyValue(val, indentLevel + 1);
+                result += "\"" + escapeJUSTCString(key) + "\":" + _stringifyValue(val, indentLevel + 1);
             }
 
             if (value.object_context && !value.object_context->variables.empty()) {
@@ -296,7 +296,7 @@ std::string Utility::_stringifyValue(const Value& value, int indentLevel) {
 
                     if (!first) result += "," + nextIndent;
                     first = false;
-                    result += "\"" + escapeJUSTCString(key) + "\":" + stringifyValue(val, indentLevel + 1);
+                    result += "\"" + escapeJUSTCString(key) + "\":" + _stringifyValue(val, indentLevel + 1);
                 }
             }
 
@@ -308,7 +308,7 @@ std::string Utility::_stringifyValue(const Value& value, int indentLevel) {
             std::string result = "[" + nextIndent;
             for (size_t i = 0; i < value.array_elements.size(); i++) {
                 if (i > 0) result += "," + nextIndent;
-                result += stringifyValue(value.array_elements[i], indentLevel + 1);
+                result += _stringifyValue(value.array_elements[i], indentLevel + 1);
             }
             result += indent + "]";
             return result;

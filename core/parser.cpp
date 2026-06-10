@@ -2472,7 +2472,7 @@ Value Parser::executeFunction(const std::string& funcName, const std::vector<Val
         throw std::runtime_error(std::string(e.what()) + " at " + Utility::position(startPos, input) + ".");
     }
 
-    throw std::runtime_error("Unknown function: " + funcName);
+    throw std::runtime_error("\"" + funcName + "\" is not a function.");
 }
 
 Value Parser::concatenateStrings(const Value& left, const Value& right) {

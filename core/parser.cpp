@@ -1239,8 +1239,8 @@ ASTNode Parser::parseImportCommand() {
                     continue;
                 }
                 if (!importAll) {
-                    auto importIt = imports.find(key);
-                    if (!(importIt != imports.end() && importIt->second)) {
+                    auto importIt = std::find(imports.begin(), imports.end(), key);
+                    if (importIt == imports.end()) {
                         continue;
                     }
                 }
@@ -1335,8 +1335,8 @@ ASTNode Parser::parseImportCommand() {
                     continue;
                 }
                 if (!importAll) {
-                    auto importIt = imports.find(key);
-                    if (!(importIt != imports.end() && importIt->second)) {
+                    auto importIt = std::find(imports.begin(), imports.end(), key);
+                    if (importIt == imports.end()) {
                         continue;
                     }
                 }

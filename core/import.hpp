@@ -31,6 +31,7 @@ SOFTWARE.
 #include <string>
 #include <cstring>
 #include <utility>
+#include <unordered_map>
 
 class Import {
     public:

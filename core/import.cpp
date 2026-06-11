@@ -37,6 +37,7 @@ SOFTWARE.
 #include "utility.h"
 #include <utility>
 #include "justo.hpp"
+#include <unordered_map>
 
 std::string Import::ReadFile(const std::string path, const std::string position, const bool isLink, const bool isImport) {
     if (isLink) {

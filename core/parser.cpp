@@ -754,14 +754,14 @@ ParseResult Parser::parse(bool doExecute) {
             } else if (match(endOfScript)) {
                 advance();
                 if (!isEnd()) {
-                    throw std::runtime_error("After end of script - Unexpected token \"" + tokens[position + 1].value + "\" at " + Utility::position(position + 1, input) + ".");
+                    throw std::runtime_error("After end of script - Unexpected token \"" + tokens[position + 1].value + "\" at " + Utility::position(tokens[position + 1].start, input) + ".");
                 }
                 break;
             } else if (match("JavaScript")) {
                 if (doExecute && allowJavaScript) {
                     #ifdef __EMSCRIPTEN__
 
-                    Value result = runJavaScript(currentToken().value, Utility::position(position, input), false);
+                    Value result = runJavaScript(currentToken().value, Utility::position(currentToken().start, input), false);
                     addLog("JAVASCRIPT", Utility::value2string(result), position);
                     if (result.type != DataType::NULL_TYPE) {
                         std::cout << Utility::value2string(result) << std::endl;
@@ -771,7 +771,7 @@ ParseResult Parser::parse(bool doExecute) {
 
                     std::pair<std::string, bool> jsresult = JavaScript::Eval(currentToken().value);
                     if (jsresult.second) {
-                        throw std::runtime_error("JavaScript error at " + Utility::position(position, input) + ":\n" + jsresult.first);
+                        throw std::runtime_error("JavaScript error at " + Utility::position(currentToken().start, input) + ":\n" + jsresult.first);
                     } else {
                         addLog("JAVASCRIPT", jsresult.first, position);
                         std::cout << jsresult.first << std::endl;
@@ -1029,7 +1029,7 @@ std::string Parser::readVariableName() {
 void Parser::checkVariableNameAvailable(std::string name) {
     auto constIt = constVars.find(name);
     if (constIt != constVars.end() && constIt->second) {
-        throw new std::runtime_error("Assignment to constant variable \"" + name + "\" at " + Utility::position(position, input) + ".");
+        throw new std::runtime_error("Assignment to constant variable \"" + name + "\" at " + Utility::position(currentToken().start, input) + ".");
     }
 }
 
@@ -1092,7 +1092,7 @@ ASTNode Parser::parseImportCommand() {
             }
         }
     }
-    if (!match("keyword", "from")) throw new std::runtime_error("Expected keyword \"from\" at " + Utility::position(position, input) + ".");
+    if (!match("keyword", "from")) throw new std::runtime_error("Expected keyword \"from\" at " + Utility::position(currentToken().start, input) + ".");
     advance();
 
     std::string importType = parseExpression(doExecute).toString();
@@ -1115,7 +1115,7 @@ ASTNode Parser::parseImportCommand() {
             } else if (typeDeclaration == "strscript") {
                 importStringType = 5;
             } else {
-                throw std::runtime_error("Invalid JUSTC import type \"" + typeDeclaration + "\" at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Invalid JUSTC import type \"" + typeDeclaration + "\" at " + Utility::position(currentToken().start, input) + ".");
             }
         }
 
@@ -1138,7 +1138,7 @@ ASTNode Parser::parseImportCommand() {
             advance();
             Value optionsVal = parseExpression(doExecute);
             if (optionsVal.type != DataType::JSON_OBJECT && optionsVal.type != DataType::JUSTC_OBJECT) {
-                throw std::runtime_error("Expected object for import options at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Expected object for import options at " + Utility::position(currentToken().start, input) + ".");
             }
 
             bool optionsExecute     = optionsVal.getProperty("Execute",     booleanToValue(importExecute)).toBoolean();
@@ -1146,13 +1146,13 @@ ASTNode Parser::parseImportCommand() {
             bool optionsLuau        = optionsVal.getProperty("Luau",        booleanToValue(importLuau)).toBoolean();
 
             if (!importExecute && optionsExecute) {
-                throw std::runtime_error("Attempt to execute JUSTC at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Attempt to execute JUSTC at " + Utility::position(currentToken().start, input) + ".");
             }
             if (!importJavaScript && optionsJavaScript) {
-                throw std::runtime_error("Attempt to allow JavaScript at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Attempt to allow JavaScript at " + Utility::position(currentToken().start, input) + ".");
             }
             if (!importLuau && optionsLuau) {
-                throw std::runtime_error("Attempt to allow Luau at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Attempt to allow Luau at " + Utility::position(currentToken().start, input) + ".");
             }
 
             importExecute = optionsExecute;
@@ -1188,11 +1188,11 @@ ASTNode Parser::parseImportCommand() {
                 throw std::runtime_error("Unknown JUSTC import type.");
         }
         try {
-            imported = Import::JUSTC(location, Utility::position(position, input), importExecute, runAsync, importJavaScript, mode, importLuau, isLink, isString);
+            imported = Import::JUSTC(location, Utility::position(currentToken().start, input), importExecute, runAsync, importJavaScript, mode, importLuau, isLink, isString);
         } catch (const std::exception& e) {
             throw std::runtime_error(std::string(e.what()) + "\n    at <import JUSTC " + importedType + " \"" + location + "\"> at " + Utility::position(currentToken().start, input) + ".");
         } catch (...) {
-            throw std::runtime_error("Invalid import JUSTC \"" + location + "\" at " + Utility::position(position, input));
+            throw std::runtime_error("Invalid import JUSTC \"" + location + "\" at " + Utility::position(currentToken().start, input) + ".");
         }
 
         addImportLog(location, imported.second, "JUSTC " + importedType);
@@ -1270,7 +1270,7 @@ ASTNode Parser::parseImportCommand() {
             } else if (typeDeclaration == "string") {
                 importStringType = 2;
             } else {
-                throw std::runtime_error("Invalid JUSTO import type \"" + typeDeclaration + "\" at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Invalid JUSTO import type \"" + typeDeclaration + "\" at " + Utility::position(currentToken().start, input) + ".");
             }
         }
 
@@ -1291,13 +1291,13 @@ ASTNode Parser::parseImportCommand() {
             advance();
             Value optionsVal = parseExpression(doExecute);
             if (optionsVal.type != DataType::JSON_OBJECT && optionsVal.type != DataType::JUSTC_OBJECT) {
-                throw std::runtime_error("Expected object for import options at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Expected object for import options at " + Utility::position(currentToken().start, input) + ".");
             }
 
             auto nanIt = optionsVal.properties.find("nan");
             auto infIt = optionsVal.properties.find("inf");
             if (nanIt != optionsVal.properties.end() || infIt != optionsVal.properties.end()) {
-                throw std::runtime_error("Attempt to redefine built-in JUSTO pointer at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Attempt to redefine built-in JUSTO pointer at " + Utility::position(currentToken().start, input) + ".");
             }
 
             justoPointers = optionsVal.properties;
@@ -1305,11 +1305,11 @@ ASTNode Parser::parseImportCommand() {
 
         std::pair<Value, std::string> imported;
         try {
-            imported = Import::JUSTO(location, Utility::position(position, input), importStringType == 0, importStringType == 2, justoPointers);
+            imported = Import::JUSTO(location, Utility::position(currentToken().start, input), importStringType == 0, importStringType == 2, justoPointers);
         } catch (const std::exception& e) {
             throw std::runtime_error(std::string(e.what()) + "\n    at <import JUSTO object \"" + location + "\"> at " + Utility::position(currentToken().start, input) + ".");
         } catch (...) {
-            throw std::runtime_error("Invalid import JUSTO \"" + location + "\" at " + Utility::position(position, input));
+            throw std::runtime_error("Invalid import JUSTO \"" + location + "\" at " + Utility::position(currentToken().start, input) + ".");
         }
         addImportLog(location, imported.second, "JUSTO object");
         if (single) {
@@ -1354,7 +1354,7 @@ ASTNode Parser::parseImportCommand() {
             }
         }
     } else {
-        throw std::runtime_error("Cannot import from \"" + importType + "\" at " + Utility::position(position, input));
+        throw std::runtime_error("Cannot import from \"" + importType + "\" at " + Utility::position(currentToken().start, input) + ".");
     }
 
     return node;
@@ -1429,8 +1429,7 @@ bool Parser::CanIgnoreNoAssigmentOperator() {
 }
 ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     std::string identifier = currentToken().value;
-    size_t startPos = currentToken().start;
-    ASTNode node("VARIABLE_DECLARATION", identifier, startPos);
+    ASTNode node("VARIABLE_DECLARATION", identifier, currentToken().start);
     node.constant = constant;
     advance();
 
@@ -1505,13 +1504,13 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
             }
 
             if (doExecute && isBuiltinVariable(identifier)) {
-                handleBuiltinVariableAssignment(identifier, exprValue, startPos);
+                handleBuiltinVariableAssignment(identifier, exprValue, currentToken().start);
             }
 
             return node;
         }
         try {
-            node.typeDeclaration = Utility::typeDeclaration2dataType(typeDecl, Utility::position(position, input));
+            node.typeDeclaration = Utility::typeDeclaration2dataType(typeDecl, Utility::position(currentToken().start, input) + ".");
         } catch (...) {
             // then `:` and `=` are the same
             Value exprValue = parseExpression(doExecute);
@@ -1526,7 +1525,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
             }
 
             if (doExecute && isBuiltinVariable(identifier)) {
-                handleBuiltinVariableAssignment(identifier, exprValue, startPos);
+                handleBuiltinVariableAssignment(identifier, exprValue, currentToken().start);
             }
 
             return node;
@@ -1567,17 +1566,17 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     }
     else {
         if (isEnd()) {
-            throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got EOF.");
+            throw std::runtime_error("Expected assignment operator at " + Utility::position(currentToken().start, input) + ", got EOF.");
         } else if (CanIgnoreNoAssigmentOperator()) {
             Value exprValue = parseExpression(doExecute);
             node.value = exprValue;
             extractReferences(exprValue, node.references);
-        } else throw std::runtime_error("Expected assignment operator at " + Utility::position(position, input) + ", got \"" + currentToken().value +"\".");
+        } else throw std::runtime_error("Expected assignment operator at " + Utility::position(currentToken().start, input) + ", got \"" + currentToken().value +"\".");
     }
 
     if (node.value.type == DataType::FUNCTION) {
         if (userFunctions.find(identifier) != userFunctions.end() && userFunctionsConst.find(identifier)->second) {
-            throw std::runtime_error("Assignment to constant function \"" + identifier + "\" at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Assignment to constant function \"" + identifier + "\" at " + Utility::position(currentToken().start, input) + ".");
         }
         try {
             userFunctions.erase(identifier);
@@ -1592,7 +1591,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
     }
 
     if (doExecute && isBuiltinVariable(identifier)) {
-        handleBuiltinVariableAssignment(identifier, node.value, startPos);
+        handleBuiltinVariableAssignment(identifier, node.value, currentToken().start);
     }
 
     return node;
@@ -1992,7 +1991,7 @@ Value Parser::evaluateLengthOperator(const Value& value) {
         }
 
         default:
-            throw std::runtime_error("Cannot apply length operator to type " + dataTypeToString(value.type) + " at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Cannot apply length operator to type " + dataTypeToString(value.type) + " at " + Utility::position(currentToken().start, input) + ".");
     }
 
     return result;
@@ -2103,7 +2102,7 @@ Value Parser::parsePrimary(bool doExecute) {
         advance();
         Value result = parseExpression(doExecute);
         if (!match(")")) {
-            throw std::runtime_error("Expected \")\" at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected \")\" at " + Utility::position(currentToken().start, input) + ".");
         }
         advance();
         return result;
@@ -2144,7 +2143,7 @@ Value Parser::parsePrimary(bool doExecute) {
             object << currentToken().value;
             advance();
             if (isEnd()) {
-                throw std::runtime_error("Expected \".\" to close object, got EOF at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Expected \".\" to close object, got EOF at " + Utility::position(currentToken().start, input) + ".");
             }
         }
         object << ".";
@@ -2228,7 +2227,7 @@ Value Parser::parsePrimary(bool doExecute) {
         return Value::createNull();
     }
 
-    throw std::runtime_error("Invalid or unexpected token \"" + currentToken().value + "\" at " + Utility::position(position, input) + ".");
+    throw std::runtime_error("Invalid or unexpected token \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
 }
 
 Value Parser::parseFunctionCall(bool doExecute) {
@@ -2241,7 +2240,7 @@ Value Parser::parseFunctionCall(bool doExecute) {
             funcName += "." + currentToken().value;
             advance();
         } else {
-            throw std::runtime_error("Unexpected end of script at " + Utility::position(startPos, input) + ".");
+            throw std::runtime_error("Unexpected end of script at " + Utility::position(currentToken().start, input) + ".");
         }
     }
 
@@ -2251,7 +2250,7 @@ Value Parser::parseFunctionCall(bool doExecute) {
         advance();
 
         if (!match("(")) {
-            throw std::runtime_error("Expected '(' after function name at " + Utility::position(startPos, input) + ".");
+            throw std::runtime_error("Expected '(' after function name at " + Utility::position(currentToken().start, input) + ".");
         }
         advance();
 
@@ -2262,16 +2261,16 @@ Value Parser::parseFunctionCall(bool doExecute) {
         }
 
         if (!match(")")) {
-            throw std::runtime_error("Expected ')' after function arguments at " + Utility::position(startPos, input) + ".");
+            throw std::runtime_error("Expected ')' after function arguments at " + Utility::position(currentToken().start, input) + ".");
         }
         advance();
 
-        return callFunction(funcValue, args, startPos, doExecute);
+        return callFunction(funcValue, args, currentToken().start, doExecute);
     } else {
         advance();
 
         if (!match("(")) {
-            throw std::runtime_error("Expected '(' after function name at " + Utility::position(startPos, input) + ".");
+            throw std::runtime_error("Expected '(' after function name at " + Utility::position(currentToken().start, input) + ".");
         }
         advance();
 
@@ -2282,20 +2281,19 @@ Value Parser::parseFunctionCall(bool doExecute) {
         }
 
         if (!match(")")) {
-            throw std::runtime_error("Expected ')' after function arguments at " + Utility::position(startPos, input) + ".");
+            throw std::runtime_error("Expected ')' after function arguments at " + Utility::position(currentToken().start, input) + ".");
         }
         advance();
 
-        return executeFunction(funcName, args, startPos);
+        return executeFunction(funcName, args, currentToken().start);
     }
 }
 Value Parser::parseSpaceCall(bool doExecute) {
     std::string spaceName = currentToken().value;
-    size_t startPos = currentToken().start;
     advance();
 
     if (!match("::")) {
-        throw std::runtime_error("Expected \"::\" after space name at " + Utility::position(startPos, input) + ".");
+        throw std::runtime_error("Expected \"::\" after space name at " + Utility::position(currentToken().start, input) + ".");
     }
     advance();
 
@@ -2932,11 +2930,11 @@ Value Parser::concatenateStrings(const Value& left, const Value& right) {
     ) {
         std::string error = "Cannot concatenate string with ";
         if (left.type == DataType::STRING || left.type == DataType::UNKNOWN) {
-            throw std::runtime_error(error + dataTypeToString(right.type) + " at " + Utility::position(position, input) + ".");
+            throw std::runtime_error(error + dataTypeToString(right.type) + " at " + Utility::position(currentToken().start, input) + ".");
         } else if (right.type == DataType::STRING || right.type == DataType::UNKNOWN) {
-            throw std::runtime_error(error + dataTypeToString(left.type)  + " at " + Utility::position(position, input) + ".");
+            throw std::runtime_error(error + dataTypeToString(left.type)  + " at " + Utility::position(currentToken().start, input) + ".");
         } else {
-            throw std::runtime_error("Unexpected operator \"..\" at " + Utility::position(position, input) + ". Did you mean " + left.name + " + " + right.name + "?");
+            throw std::runtime_error("Unexpected operator \"..\" at " + Utility::position(currentToken().start, input) + ". Did you mean " + left.name + " + " + right.name + "?");
         }
     } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
         result = stringToValue(left.name + right.name);                                     // "abc .. def" = ""abcdef"", where both "abc" and "def" are not defined.
@@ -2972,9 +2970,9 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
                 result = stringToValue(Utility::stringAdd(left.toString(), right.toString()));
             }
         } else if (left.type == DataType::STRING) {
-            throw std::runtime_error("Cannot add string to " + Utility::value2string(right) + " at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Cannot add string to " + Utility::value2string(right) + " at " + Utility::position(currentToken().start, input) + ".");
         } else if (right.type == DataType::STRING) {
-            throw std::runtime_error("Cannot add " + Utility::value2string(left) + " to string at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Cannot add " + Utility::value2string(left) + " to string at " + Utility::position(currentToken().start, input) + ".");
         } else if (left.type == DataType::NUMBER && right.type == DataType::NUMBER) {
             result = numberToValue(left.toNumber() + right.toNumber());
         } else if (left.type == DataType::UNKNOWN) {
@@ -2999,7 +2997,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
             result = stringToValue(Utility::stringSub(left.name, right.name));
         } else {
-            throw std::runtime_error("Unexpected operator \"-\" at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Unexpected operator \"-\" at " + Utility::position(currentToken().start, input) + ".");
         }
     }
     else if (op == "*") {
@@ -3014,7 +3012,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
             result = stringToValue(Utility::stringMul(left.name, right.name));
         } else {
-            throw std::runtime_error("Unexpected operator \"*\" at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Unexpected operator \"*\" at " + Utility::position(currentToken().start, input) + ".");
         }
     }
     else if (op == "/" || op == ":") {
@@ -3035,7 +3033,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
             result = stringToValue(Utility::stringDiv(left.name, right.name));
         } else {
-            throw std::runtime_error("Unexpected operator \"" + op + "\" at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Unexpected operator \"" + op + "\" at " + Utility::position(currentToken().start, input) + ".");
         }
     }
     else if (op == "**") {
@@ -3050,7 +3048,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
             result = stringToValue(Utility::stringPow(left.name, right.name));
         } else {
-            throw std::runtime_error("Unexpected operator \"**\" at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Unexpected operator \"**\" at " + Utility::position(currentToken().start, input) + ".");
         }
     }
     else if (op == "%") {
@@ -3065,7 +3063,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
             result = stringToValue(Utility::stringFMod(left.name, right.name));
         } else {
-            throw std::runtime_error("Unexpected operator \"%\" at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Unexpected operator \"%\" at " + Utility::position(currentToken().start, input) + ".");
         }
     }
     else if (op == "..") {
@@ -3147,7 +3145,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
             result = stringToValue(Utility::stringXor(left.name, right.name));
         } else {
-            throw std::runtime_error("Expected numbers or strings for bitwise XOR operation at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected numbers or strings for bitwise XOR operation at " + Utility::position(currentToken().start, input) + ".");
         }
     }
     else if (op == "~" || op == "NOT") {
@@ -3160,7 +3158,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (right.type == DataType::UNKNOWN) {
             result = stringToValue(Utility::stringNot(right.name));
         } else {
-            throw std::runtime_error("Expected number or string for bitwise NOT operation at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected number or string for bitwise NOT operation at " + Utility::position(currentToken().start, input) + ".");
         }
     }
     else if (op == "<<") {
@@ -3177,7 +3175,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
             result = stringToValue(Utility::stringLShift(left.name, right.name));
         } else {
-            throw std::runtime_error("Expected numbers or strings for bitwise left shift operation at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected numbers or strings for bitwise left shift operation at " + Utility::position(currentToken().start, input) + ".");
         }
     }
     else if (op == ">>") {
@@ -3194,7 +3192,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         } else if (left.type == DataType::UNKNOWN && right.type == DataType::UNKNOWN) {
             result = stringToValue(Utility::stringRShift(left.name, right.name));
         } else {
-            throw std::runtime_error("Expected numbers or strings for bitwise right shift operation at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected numbers or strings for bitwise right shift operation at " + Utility::position(currentToken().start, input) + ".");
         }
     }
 
@@ -3262,9 +3260,9 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
 
         Value funcValue = resolveVariableValue(funcName, false);
         if (funcValue.type == DataType::FUNCTION) {
-            result = callFunction(funcValue, args, position, doExecute);
+            result = callFunction(funcValue, args, currentToken().start, doExecute);
         } else {
-            result = executeFunction(funcName, args, position);
+            result = executeFunction(funcName, args, currentToken().start);
         }
     }
 
@@ -3285,7 +3283,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
     }
 
     else {
-        throw std::runtime_error("Unexpected operator \"" + op + "\" at " + Utility::position(position, input) + ".");
+        throw std::runtime_error("Unexpected operator \"" + op + "\" at " + Utility::position(currentToken().start, input) + ".");
     }
 
     return result;
@@ -3686,9 +3684,9 @@ Value Parser::functionHTTP(size_t startPos, const std::string& method, const std
             if (result.object_value.find(funcName) != result.object_value.end()) {
                 return result.object_value[funcName];
             } else {
-                throw std::runtime_error("HTTP.Response: Unknown function \"" + funcName + "\" at " + Utility::position(startPos, input) + ".");
+                throw std::runtime_error("HTTP.Response: Unknown function \"" + funcName + "\" at " + Utility::position(currentToken().start, input) + ".");
             }
-        } else throw std::runtime_error("Expected function call at " + Utility::position(startPos, input) + ".");
+        } else throw std::runtime_error("Expected function call at " + Utility::position(currentToken().start, input) + ".");
     } else return result;
 }
 
@@ -4005,7 +4003,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
         conditionBodyContext = conditionContext;
     }
 
-    std::vector<Value> importedContext = parseLambda(doExecute, startPos);
+    std::vector<Value> importedContext = parseLambda(doExecute, currentToken().start);
     for (Value importedVar : importedContext) {
         conditionContext[importedVar.name] = importedVar;
         conditionBodyContext[importedVar.name] = importedVar;
@@ -4027,7 +4025,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
                 currKeyword = "if";
                 break;
         }
-        throw std::runtime_error("Expected '(' after '" + currKeyword + "' at " + Utility::position(startPos, input) + ".");
+        throw std::runtime_error("Expected '(' after '" + currKeyword + "' at " + Utility::position(currentToken().start, input) + ".");
     }
     advance();
 
@@ -4065,15 +4063,15 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
                         break;
                 }
             }
-            if (ssnum > 3) throw std::runtime_error("Unexpected ';' at " + Utility::position(startPos, input) + ".");
+            if (ssnum > 3) throw std::runtime_error("Unexpected ';' at " + Utility::position(currentToken().start, input) + ".");
         }
         advance();
     }
 
     if (braceCount != 0) {
-        throw std::runtime_error("Expected ')' after condition at " + Utility::position(startPos, input) + ".");
+        throw std::runtime_error("Expected ')' after condition at " + Utility::position(currentToken().start, input) + ".");
     }
-    std::string conditionBodyErr = "Expected '{' for condition body at " + Utility::position(startPos, input) + ".";
+    std::string conditionBodyErr = "Expected '{' for condition body at " + Utility::position(currentToken().start, input) + ".";
     if (!match("{")) {
         throw std::runtime_error(conditionBodyErr);
     }
@@ -4092,7 +4090,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
         advance();
     }
 
-    std::string unclosedBody = "Unclosed condition body at " + Utility::position(startPos, input) + ".";
+    std::string unclosedBody = "Unclosed condition body at " + Utility::position(currentToken().start, input) + ".";
     if (braceCount != 0) {
         throw std::runtime_error(unclosedBody);
     }
@@ -4102,10 +4100,10 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
     switch (conditionType) {
         case 0: case 3: { // if/elseif
             std::string currOp = conditionType == 0 ? "if" : "elseif";
-            bool conditionResult = i2v(isolated("return " + first.str() + " .", doExecute, startPos, &conditionContext, "'" + currOp + "' condition at " + Utility::position(startPos, input))).toBoolean();
+            bool conditionResult = i2v(isolated("return " + first.str() + " .", doExecute, startPos, &conditionContext, "'" + currOp + "' condition at " + Utility::position(currentToken().start, input))).toBoolean();
 
             if (conditionResult) {
-                return shared(conditionBody, doExecute, startPos, &conditionBodyContext, "'" + currOp + "' body at " + Utility::position(startPos, input), !isIsolated);
+                return shared(conditionBody, doExecute, startPos, &conditionBodyContext, "'" + currOp + "' body at " + Utility::position(currentToken().start, input), !isIsolated);
             } else if (match("keyword", "else")) {
                 advance();
                 if (peekToken().type == "keyword" && peekToken().value == "if") {
@@ -4129,15 +4127,15 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
                 }
                 if (braceCount4 != 0) throw std::runtime_error(unclosedBody);
 
-                return shared(elsebody.str(), doExecute, startPos, &conditionBodyContext, "'else' body at " + Utility::position(startPos, input), !isIsolated);
+                return shared(elsebody.str(), doExecute, startPos, &conditionBodyContext, "'else' body at " + Utility::position(currentToken().start, input), !isIsolated);
             } else if (match("keyword", "elseif")) {
                 return parseCondition(doExecute, isIsolated);
             } else return Value::createNull();
         } case 2: { // while
             std::string conditionStr = "return " + first.str() + " .";
-            bool conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input))).toBoolean();
+            bool conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(currentToken().start, input))).toBoolean();
             while (conditionResult) {
-                shared(conditionBody, doExecute, startPos, &conditionBodyContext, "'while' body at " + Utility::position(startPos, input), !isIsolated);
+                shared(conditionBody, doExecute, startPos, &conditionBodyContext, "'while' body at " + Utility::position(currentToken().start, input), !isIsolated);
                 for (const auto& [key, value] : this->variables) {
                     try {
                         conditionContext[key] = resolveVariableValue(key, false);
@@ -4145,7 +4143,7 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
                         conditionContext[key] = value;
                     }
                 }
-                conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(startPos, input))).toBoolean();
+                conditionResult = i2v(isolated(conditionStr, doExecute, startPos, &conditionContext, "'while' condition at " + Utility::position(currentToken().start, input))).toBoolean();
             }
             return Value::createNull();
         } default:
@@ -4154,7 +4152,6 @@ Value Parser::parseCondition(bool doExecute, bool wasIsolated) {
 }
 
 Value Parser::parseFunctionDeclaration(bool doExecute, std::string funcName, bool requireName) {
-    size_t startPos = currentToken().start;
     bool isIsolated = false;
 
     if (match("keyword", "isolated")) {
@@ -4162,13 +4159,13 @@ Value Parser::parseFunctionDeclaration(bool doExecute, std::string funcName, boo
         advance();
     }
     if (!match("keyword", "function")) {
-        throw std::runtime_error("Expected 'function' keyword at " + Utility::position(startPos, input));
+        throw std::runtime_error("Expected 'function' keyword at " + Utility::position(currentToken().start, input));
     }
     advance();
 
     if (requireName) {
         if (!match("identifier")) {
-            throw std::runtime_error("Expected function name at " + Utility::position(startPos, input));
+            throw std::runtime_error("Expected function name at " + Utility::position(currentToken().start, input));
         }
         funcName = currentToken().value;
         advance();
@@ -4179,10 +4176,10 @@ Value Parser::parseFunctionDeclaration(bool doExecute, std::string funcName, boo
         }
     }
 
-    std::vector<Value> importedContext = parseLambda(doExecute, startPos);
+    std::vector<Value> importedContext = parseLambda(doExecute, currentToken().start);
 
     if (!match("(")) {
-        throw std::runtime_error("Expected '(' after function name at " + Utility::position(startPos, input));
+        throw std::runtime_error("Expected '(' after function name at " + Utility::position(currentToken().start, input));
     }
     advance();
 
@@ -4204,8 +4201,7 @@ Value Parser::parseFunctionDeclaration(bool doExecute, std::string funcName, boo
                 if (match("identifier")) {
                     std::string typeName = currentToken().value;
                     try {
-                        paramType = Utility::typeDeclaration2dataType(typeName,
-                                    Utility::position(position, input));
+                        paramType = Utility::typeDeclaration2dataType(typeName, Utility::position(currentToken().start, input));
                     } catch (...) {
                         paramType = DataType::UNKNOWN;
                     }
@@ -4227,17 +4223,17 @@ Value Parser::parseFunctionDeclaration(bool doExecute, std::string funcName, boo
                 advance();
             }
         } else {
-            throw std::runtime_error("Expected parameter name at " + Utility::position(position, input));
+            throw std::runtime_error("Expected parameter name at " + Utility::position(currentToken().start, input));
         }
     }
 
     if (!match(")")) {
-        throw std::runtime_error("Expected ')' after parameters at " + Utility::position(startPos, input));
+        throw std::runtime_error("Expected ')' after parameters at " + Utility::position(currentToken().start, input));
     }
     advance();
 
     if (!match("{")) {
-        throw std::runtime_error("Expected '{' for function body at " + Utility::position(startPos, input));
+        throw std::runtime_error("Expected '{' for function body at " + Utility::position(currentToken().start, input));
     }
     advance();
 
@@ -4255,7 +4251,7 @@ Value Parser::parseFunctionDeclaration(bool doExecute, std::string funcName, boo
     }
 
     if (braceCount != 0) {
-        throw std::runtime_error("Unclosed function body at " + Utility::position(startPos, input));
+        throw std::runtime_error("Unclosed function body at " + Utility::position(currentToken().start, input));
     }
 
     std::string functionBody = body.str();
@@ -4673,8 +4669,6 @@ Value Parser::parseJustcObject(bool doExecute) {
     if (!match("|")) {
         throw std::runtime_error("Expected '|' for JUSTC object.");
     }
-
-    size_t startPos = position;
     advance();
 
     auto objectContext = createObjectContext(true);
@@ -4740,7 +4734,7 @@ Value Parser::parseJustcObject(bool doExecute) {
     }
 
     if (pipeCount > 0) {
-        throw std::runtime_error("Unclosed JUSTC object at " + Utility::position(startPos, input) + ".");
+        throw std::runtime_error("Unclosed JUSTC object at " + Utility::position(currentToken().start, input) + ".");
     }
 
     auto lexerResult = Lexer::parse(objectContent, false);
@@ -4806,8 +4800,6 @@ Value Parser::parseJsonObject(bool doExecute) {
     if (!match("{")) {
         throw std::runtime_error("Expected \"{\" for JSON object.");
     }
-
-    size_t startPos = position;
     advance();
 
     std::unordered_map<std::string, Value> properties;
@@ -4826,7 +4818,7 @@ Value Parser::parseJsonObject(bool doExecute) {
         if (match(":") || match("=") || match("-") || match("keyword", "is")) {
             advance();
         } else if (!CanIgnoreNoAssigmentOperator()) {
-            throw std::runtime_error("Expected \":\" after key in JSON object at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Expected \":\" after key in JSON object at " + Utility::position(currentToken().start, input) + ".");
         }
 
         Value valueVal = parseExpression(doExecute);
@@ -4840,7 +4832,7 @@ Value Parser::parseJsonObject(bool doExecute) {
     }
 
     if (!match("}")) {
-        throw std::runtime_error("Expected \"}\" to close JSON object at " + Utility::position(startPos, input) + ".");
+        throw std::runtime_error("Expected \"}\" to close JSON object at " + Utility::position(currentToken().start, input) + ".");
     }
     advance();
 
@@ -4856,8 +4848,6 @@ Value Parser::parseJsonArray(bool doExecute) {
     if (!match("[")) {
         throw std::runtime_error("Expected '[' for JSON array.");
     }
-
-    size_t startPos = position;
     advance();
 
     std::vector<Value> elements;
@@ -4875,7 +4865,7 @@ Value Parser::parseJsonArray(bool doExecute) {
     }
 
     if (!match("]")) {
-        throw std::runtime_error("Expected ']' to close JSON array at " + Utility::position(startPos, input) + ".");
+        throw std::runtime_error("Expected ']' to close JSON array at " + Utility::position(currentToken().start, input) + ".");
     }
     advance();
 
@@ -4898,7 +4888,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
         if (match(".")) {
             advance();
             if (!match("identifier") && !match("keyword") && !isEnd()) {
-                throw std::runtime_error("Expected property name after \".\" at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Expected property name after \".\" at " + Utility::position(currentToken().start, input) + ".");
             }
             std::string propName = currentToken().value;
             accessChain.push_back(propName);
@@ -4911,10 +4901,10 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
             } else if (indexVal.type == DataType::NUMBER) {
                 accessChain.push_back(static_cast<size_t>(indexVal.toNumber()));
             } else {
-                throw std::runtime_error("Expected string or numeric index in bracket access, got <" + dataTypeToString(indexVal.type) + "> at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Expected string or numeric index in bracket access, got <" + dataTypeToString(indexVal.type) + "> at " + Utility::position(currentToken().start, input) + ".");
             }
             if (!match("]")) {
-                throw std::runtime_error("Expected \"]\" to close array access, got \"" + currentToken().value + "\" at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Expected \"]\" to close array access, got \"" + currentToken().value + "\" at " + Utility::position(currentToken().start, input) + ".");
             }
             advance();
         }
@@ -4924,7 +4914,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
     Value currentValue = resolveVariableValue(rootName, false);
 
     if (!currentValue.isObject() && accessChain.size() > 1) {
-        throw std::runtime_error("\"" + rootName + "\" is not an object. Attempt to access property or index of not an object at " + Utility::position(position, input) + ".");
+        throw std::runtime_error("\"" + rootName + "\" is not an object. Attempt to access property or index of not an object at " + Utility::position(currentToken().start, input) + ".");
     }
 
     for (size_t i = 1; i < accessChain.size() - 1; i++) {
@@ -4937,7 +4927,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
         }
 
         if (!currentValue.isObject()) {
-            throw std::runtime_error("Cannot access property of non-object at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Cannot access property of non-object at " + Utility::position(currentToken().start, input) + ".");
         }
     }
 
@@ -4952,9 +4942,9 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
         Value func = accessProperty(currentValue, funcName);
 
         if (func.type == DataType::FUNCTION) { // user funciton
-            return callFunction(func, parseArguments(doExecute), position, doExecute);
+            return callFunction(func, parseArguments(doExecute), currentToken().start, doExecute);
         } else { // built-in function
-            return executeFunction(funcName, parseArguments(doExecute), position);
+            return executeFunction(funcName, parseArguments(doExecute), currentToken().start);
         }
     } else { // property/index
         if (std::holds_alternative<std::string>(last)) { // object
@@ -4968,7 +4958,7 @@ Value Parser::accessProperty(const Value& obj, const std::string& propName) {
     if (obj.type == DataType::JUSTC_OBJECT) {
         if (obj.object_context && obj.object_context->parser) {
             if (obj.object_context->parser->outputMode == "disabled") {
-                throw std::runtime_error("Attempt to access \"" + propName + "\" of a closure (Object with output mode \"disabled\") at " + Utility::position(position, input) + ".");
+                throw std::runtime_error("Attempt to access \"" + propName + "\" of a closure (Object with output mode \"disabled\") at " + Utility::position(currentToken().start, input) + ".");
             }
 
             auto it = obj.properties.find(propName);
@@ -4982,19 +4972,19 @@ Value Parser::accessProperty(const Value& obj, const std::string& propName) {
                 return varIt->second;
             }
 
-            throw std::runtime_error("Property '" + propName + "' not found in object at " + Utility::position(position, input) + ".");
+            throw std::runtime_error("Property '" + propName + "' not found in object at " + Utility::position(currentToken().start, input) + ".");
         }
     } else if (obj.type == DataType::JSON_OBJECT) {
         auto it = obj.properties.find(propName);
         if (it != obj.properties.end()) {
             return it->second;
         }
-        throw std::runtime_error("Property '" + propName + "' not found in JSON object at " + Utility::position(position, input) + ".");
+        throw std::runtime_error("Property '" + propName + "' not found in JSON object at " + Utility::position(currentToken().start, input) + ".");
     } else if (obj.type == DataType::JSON_ARRAY) {
-        throw std::runtime_error("Cannot access property '" + propName + "' on array at " + Utility::position(position, input) + ".");
+        throw std::runtime_error("Cannot access property '" + propName + "' on array at " + Utility::position(currentToken().start, input) + ".");
     }
 
-    throw std::runtime_error("Cannot access property '" + propName + "' on non-object at " + Utility::position(position, input) + ".");
+    throw std::runtime_error("Cannot access property '" + propName + "' on non-object at " + Utility::position(currentToken().start, input) + ".");
 }
 Value Parser::accessIndex(const Value& arr, size_t index) {
     if (arr.type == DataType::JSON_ARRAY) {
@@ -5003,7 +4993,7 @@ Value Parser::accessIndex(const Value& arr, size_t index) {
         }
         return Value::createNull();
     }
-    throw std::runtime_error("Cannot access index " + std::to_string(index) + " on non-array at " + Utility::position(position, input) + ".");
+    throw std::runtime_error("Cannot access index " + std::to_string(index) + " on non-array at " + Utility::position(currentToken().start, input) + ".");
 }
 std::vector<Value> Parser::parseArguments(bool doExecute) {
     std::vector<Value> args;
@@ -5015,7 +5005,7 @@ std::vector<Value> Parser::parseArguments(bool doExecute) {
     }
 
     if (!match(")")) {
-        throw std::runtime_error("Expected ')' after function arguments at " + Utility::position(position, input) + ".");
+        throw std::runtime_error("Expected ')' after function arguments at " + Utility::position(currentToken().start, input) + ".");
     }
     advance();
 

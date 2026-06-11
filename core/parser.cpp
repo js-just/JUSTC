@@ -1796,7 +1796,7 @@ Value Parser::parsePrimary(bool doExecute) {
         if (varName == "$TIME" || varName == "$VERSION" || varName == "$LATEST" ||
             varName == "$DBID" || varName == "$SHA" || varName == "$NAV" ||
             varName == "$PAGES" || varName == "$CSS" ||
-            varName == "$BACKSLASH" || varName == "$JUST_VERSION" ||
+            varName == "$BACKSLASH" || varName == "$JUST_VERSION"
         ) {
             advance();
             return executeFunction(varName.substr(1), {}, currentToken().start);

@@ -8,7 +8,7 @@ const JUSTCWASM = require('./justc.node.js');
             b is a + 123,
             c : string = <example>,
             d = Math.Random(),
-            import JUSTC(test.justc).
+            import JUSTO test.justo ,.
         `).then((result)=>{
             console.log(JSON.stringify(result))
         })

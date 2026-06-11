@@ -751,9 +751,9 @@ void Lexer::tokenize() {
                 if (currToken.value == "goto") {
                     if (std::find(gotopos.begin(), gotopos.end(), currPos) != gotopos.end()) {
                         #ifdef __EMSCRIPTEN__
-                        warn_lexer_goto(Parser::getCurrentTimestamp().c_str(), Utility::position(currToken.start(), input).c_str());
+                        warn_lexer_goto(Parser::getCurrentTimestamp().c_str(), Utility::position(position, input).c_str());
                         #else
-                        std::cout << warnPrefix + "Warning: Found goto loop at " + Utility::position(currToken.start(), input) + "." << std::endl;
+                        std::cout << warnPrefix + "Warning: Found goto loop at " + Utility::position(position, input) + "." << std::endl;
                         #endif
                         continue;
                     }
@@ -770,7 +770,7 @@ void Lexer::tokenize() {
 
                         continue;
                     } catch (...) {
-                        throw std::runtime_error("Invalid goto usage at " + Utility::position(currToken.start(), input) + ".");
+                        throw std::runtime_error("Invalid goto usage at " + Utility::position(position, input) + ".");
                     }
                 } else if (currToken.value == "embeds" && tokens[tokens.size() - 1].type == "keyword" && (
                     tokens[tokens.size() - 1].value == "enable" || tokens[tokens.size() - 1].value == "disable"

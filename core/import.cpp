@@ -60,9 +60,7 @@ std::pair<ParseResult, std::string> Import::JUSTC(const std::string path, const 
     return {Parser::parseTokens(lexerResult.second, doExecute, asynchronously, lexerResult.first, allowJavaScript, false, path, imports ? "module" : "script", allowLuau, false), File};
 }
 
-std::pair<Value, std::string> Import::JUSTO(const std::string path, const std::string position, const bool isLink, const bool isString) {
-    std::unordered_map<std::string, Value> justoPointers;
-
+std::pair<Value, std::string> Import::JUSTO(const std::string path, const std::string position, const bool isLink, const bool isString, std::unordered_map<std::string, Value> justoPointers) {
     Value nanVal;
     nanVal.type = DataType::NOT_A_NUMBER;
     nanVal.name = "NaN";

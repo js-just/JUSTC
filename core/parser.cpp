@@ -1018,92 +1018,343 @@ ASTNode Parser::parseAllowCommand() {
     return node;
 }
 
+std::string Parser::readVariableName() {
+    std::stringstream name;
+    while (!isEnd() && (match("identifier") || match("string") || match("minus") || match("-"))) {
+        name << currentToken().value;
+        advance();
+    }
+    return name.str();
+}
+void Parser::checkVariableNameAvailable(std::string name) {
+    auto constIt = constVars.find(name);
+    if (constIt != constVars.end() && constIt->second) {
+        throw new std::runtime_error("Assignment to constant variable \"" + name + "\" at " + Utility::position(position, input) + ".");
+    }
+}
+
 ASTNode Parser::parseImportCommand() {
     ASTNode node("IMPORT_COMMAND", "", currentToken().start);
     advance();
 
-    if (match("identifier", "JUSTC")) {
-        advance();
-        std::string path;
-        bool mode = true; // true = "export", false = "return"
-        bool isLink = false;
-        if (match("string") || match("path") || match("identifier")) {
-            path = currentToken().value;
-            advance();
-            while (match("/") || match("path") || match("string") || match("identifier") || match(".")) {
-                if (isEnd()) {
-                    throw std::runtime_error("Unexpected EOF.");
-                }
-                path += currentToken().value;
-                advance();
-            }
-        } else if (match("link")) {
-            path = currentToken().value;
-            advance();
-            isLink = true;
-        } else throw std::runtime_error("Expected <path | link>, got <" + currentToken().type + "> at " + Utility::position(position, input));
-        // if (match("keyword", "REQUIRE") || match("keyword", "EXECUTE"));
+    std::vector<std::string> imports;
+    std::vector<std::string> renames;
+    bool importAll = false;
+    bool rename = false;
+    bool single = false;
 
-        std::pair<ParseResult, std::string> imports;
-        std::string importType = mode ? "module" : "script";
+    if (match("identifier")) {
+        imports.push_back(readVariableName());
+        single = true;
+    } else if (!match("keyword", "as") && !match("keyword", "from")) {
+        Value exprValue = parseExpression(doExecute, true);
+        switch (exprValue.type) {
+            case DataType::JSON_OBJECT:
+            case DataType::JUSTC_OBJECT: {
+                rename = true;
+                for (const auto& [key, value] : exprValue.properties) {
+                    imports.push_back(value.toString());
+                    renames.push_back(key);
+                }
+                break;
+            }
+            case DataType::JSON_ARRAY: {
+                for (size_t i = 0; i < exprValue.array_elements.size(); i++) {
+                    imports.push_back(exprValue.array_elements[i].toString());
+                }
+                break;
+            }
+            default:
+                imports.push_back(exprValue.toString());
+                break;
+        }
+    } else {
+        importAll = true;
+    }
+
+    if (match("keyword", "as")) {
+        single = false;
+        if (rename) renames.clear();
+        rename = true;
+        if (match("identifier")) {
+            renames.push_back(readVariableName());
+        } else {
+            Value exprValue = parseExpression(doExecute, true);
+            switch (exprValue.type) {
+                case DataType::JSON_ARRAY: {
+                    for (size_t i = 0; i < exprValue.array_elements.size(); i++) {
+                        imports.push_back(exprValue.array_elements[i].toString());
+                    }
+                    break;
+                }
+                default:
+                    renames.push_back(exprValue.toString());
+            }
+        }
+    }
+    if (!match("keyword", "from")) throw new std::runtime_error("Expected keyword \"from\" at " + Utility::position(position, input) + ".");
+    advance();
+
+    std::string importType = parseExpression(doExecute).toString();
+    if (importType == "JUSTC") {
+        int importStringType = 0; // 0 = link module; 1 = path module; 2 = string module; 3 = link script; 4 = path script; 5 = string script
+        bool typeDeclared = false;
+        if (match(":")) {
+            typeDeclared = true;
+            std::string typeDeclaration = parseExpression(doExecute).toString();
+            if (typeDeclaration == "webmodule") {
+                importStringType = 0;
+            } else if (typeDeclaration == "module") {
+                importStringType = 1;
+            } else if (typeDeclaration == "strmodule") {
+                importStringType = 2;
+            } else if (typeDeclaration == "webscript") {
+                importStringType = 3;
+            } else if (typeDeclaration == "script") {
+                importStringType = 4;
+            } else if (typeDeclaration == "strscript") {
+                importStringType = 5;
+            } else {
+                throw std::runtime_error("Invalid JUSTC import type \"" + typeDeclaration + "\" at " + Utility::position(position, input) + ".");
+            }
+        }
+
+        std::string location;
+        Value locationVal = parseExpression(doExecute);
+        location = locationVal.toString();
+        if (!typeDeclared) switch (locationVal.type) {
+            case DataType::LINK:
+                importStringType = 0;
+                break;
+            default:
+                importStringType = 1;
+                break;
+        };
+
+        bool importExecute = doExecute;
+        bool importJavaScript = doExecute && allowJavaScript;
+        bool importLuau = doExecute && allowLuau;
+        if (match("keyword", "options")) {
+            advance();
+            Value optionsVal = parseExpression(doExecute);
+            if (optionsVal.type != DataType::JSON_OBJECT && optionsVal.type != DataType::JUSTC_OBJECT) {
+                throw std::runtime_error("Expected object for import options at " + Utility::position(position, input) + ".");
+            }
+
+            bool optionsExecute     = optionsVal.getProperty("Execute",     booleanToValue(importExecute)).toBoolean();
+            bool optionsJavaScript  = optionsVal.getProperty("JavaScript",  booleanToValue(importJavaScript)).toBoolean();
+            bool optionsLuau        = optionsVal.getProperty("Luau",        booleanToValue(importLuau)).toBoolean();
+
+            if (!importExecute && optionsExecute) {
+                throw std::runtime_error("Attempt to execute JUSTC at " + Utility::position(position, input) + ".");
+            }
+            if (!importJavaScript && optionsJavaScript) {
+                throw std::runtime_error("Attempt to allow JavaScript at " + Utility::position(position, input) + ".");
+            }
+            if (!importLuau && optionsLuau) {
+                throw std::runtime_error("Attempt to allow Luau at " + Utility::position(position, input) + ".");
+            }
+
+            importExecute = optionsExecute;
+            importJavaScript = optionsJavaScript;
+            importLuau = optionsLuau;
+        }
+
+        std::pair<ParseResult, std::string> imported;
+        std::string importedType;
+        bool mode; // true = "export", false = "return"
+        bool isLink = false;
+        bool isString = true;
+        switch (importStringType) {
+            case 0:
+                isLink = true;
+            case 1:
+                isString = false;
+            case 2:
+                importedType = "module";
+                mode = true;
+                break;
+
+            case 3:
+                isLink = true;
+            case 4:
+                isString = false;
+            case 5:
+                importedType = "script";
+                mode = false;
+                break;
+
+            default:
+                throw std::runtime_error("Unknown JUSTC import type.");
+        }
         try {
-            imports = Import::JUSTC(path, Utility::position(position, input), doExecute, runAsync, allowJavaScript, mode, allowLuau, isLink, false);
+            imported = Import::JUSTC(location, Utility::position(position, input), importExecute, runAsync, importJavaScript, mode, importLuau, isLink, isString);
         } catch (const std::exception& e) {
-            throw std::runtime_error(std::string(e.what()) + "\n    at <import JUSTC " + importType + " \"" + path + "\"> at " + Utility::position(currentToken().start, input) + ".");
+            throw std::runtime_error(std::string(e.what()) + "\n    at <import JUSTC " + importedType + " \"" + location + "\"> at " + Utility::position(currentToken().start, input) + ".");
         } catch (...) {
-            throw std::runtime_error("Invalid import JUSTC \"" + path + "\" at " + Utility::position(position, input));
+            throw std::runtime_error("Invalid import JUSTC \"" + location + "\" at " + Utility::position(position, input));
         }
-        addImportLog(path, imports.second, "JUSTC " + importType);
-        for (const auto& pair : imports.first.returnValues) {
-            ASTNode node = ASTNode("VARIABLE_DECLARATION", pair.first, position);
-            constVars[pair.first] = true;
-            node.value = pair.second;
-            ast.push_back(node);
-        }
-        for (size_t i = 0; i < imports.first.importLogs.size(); i++) {
-            std::vector<std::string> importLog = imports.first.importLogs[i];
+
+        addImportLog(location, imported.second, "JUSTC " + importedType);
+        for (size_t i = 0; i < imported.first.importLogs.size(); i++) {
+            std::vector<std::string> importLog = imported.first.importLogs[i];
             std::string _path = importLog[0];
             std::string _script = importLog[1];
             std::string _type = importLog[2];
             addImportLog(_path, _script, _type);
         }
-    } else if (match("identifier", "JUSTO")) {
-        advance();
-        std::string path;
-        bool isLink = false;
-        if (match("string") || match("path") || match("identifier")) {
-            path = currentToken().value;
-            advance();
-            while (match("/") || match("path") || match("string") || match("identifier") || match(".")) {
-                if (isEnd()) {
-                    throw std::runtime_error("Unexpected EOF.");
-                }
-                path += currentToken().value;
-                advance();
-            }
-        } else if (match("link")) {
-            path = currentToken().value;
-            advance();
-            isLink = true;
-        } else throw std::runtime_error("Expected <path | link>, got <" + currentToken().type + "> at " + Utility::position(position, input));
 
-        std::pair<Value, std::string> imports;
-        try {
-            imports = Import::JUSTO(path, Utility::position(position, input), isLink, false);
-        } catch (const std::exception& e) {
-            throw std::runtime_error(std::string(e.what()) + "\n    at <import JUSTO object \"" + path + "\"> at " + Utility::position(currentToken().start, input) + ".");
-        } catch (...) {
-            throw std::runtime_error("Invalid import JUSTO \"" + path + "\" at " + Utility::position(position, input));
+        if (single) {
+            std::string name = imports[0];
+            checkVariableNameAvailable(name);
+
+            auto objCtx = std::make_shared<ObjectContext>();
+            std::vector<std::string> outputVars;
+            for (const auto& [key, value] : imported.first.returnValues) {
+                objCtx->variables[key] = value;
+                outputVars.push_back(key);
+            }
+            objCtx->outputMode = "specified";
+            objCtx->outputVariables = outputVars;
+            Value objVal = Value::createJustcObject(objCtx);
+            objVal.name = name;
+            objVal.properties = imported.first.returnValues;
+            objVal.type = DataType::JSON_OBJECT;
+
+            ASTNode node("VARIABLE_DECLARATION", name, position);
+            variables[name] = objVal;
+            constVars[name] = true;
+            node.value = objVal;
+            ast.push_back(name);
+        } else {
+            size_t i = 0;
+            for (const auto& pair : imported.first.returnValues) {
+                std::string key = pair.first;
+
+                auto constIt = constVars.find(key);
+                if (constIt != constVars.end() && constIt->second) {
+                    continue;
+                }
+                if (isBuiltinVariable(key)) {
+                    continue;
+                }
+                if (!importAll) {
+                    auto importIt = imports.find(key);
+                    if (!(importIt != imports.end() && importIt->second)) {
+                        continue;
+                    }
+                }
+
+                if (rename) {
+                    ++i;
+                    key = (i < renames.size()) ? renames[i] : key;
+                }
+
+                ASTNode node("VARIABLE_DECLARATION", key, position);
+                variables[key] = pair.second;
+                constVars[key] = true;
+                node.value = pair.second;
+                ast.push_back(node);
+            }
         }
-        addImportLog(path, imports.second, "JUSTO object");
-        for (const auto& [key, value] : imports.first.properties) {
-            ASTNode node = ASTNode("VARIABLE_DECLARATION", key, position);
-            constVars[key] = true;
-            node.value = value;
+    } else if (importType == "JUSTO") {
+        int importStringType = 0; // 0 = link; 1 = path; 2 = string
+        bool typeDeclared = false;
+        if (match(":")) {
+            typeDeclared = true;
+            std::string typeDeclaration = parseExpression(doExecute).toString();
+            if (typeDeclaration == "web") {
+                importStringType = 0;
+            } else if (typeDeclaration == "file") {
+                importStringType = 1;
+            } else if (typeDeclaration == "string") {
+                importStringType = 2;
+            } else {
+                throw std::runtime_error("Invalid JUSTO import type \"" + typeDeclaration + "\" at " + Utility::position(position, input) + ".");
+            }
+        }
+
+        std::string location;
+        Value locationVal = parseExpression(doExecute);
+        location = locationVal.toString();
+        if (!typeDeclared) switch (locationVal.type) {
+            case DataType::LINK:
+                importStringType = 0;
+                break;
+            default:
+                importStringType = 1;
+                break;
+        };
+
+        std::unordered_map<std::string, Value> justoPointers;
+        if (match("keyword", "options")) {
+            advance();
+            Value optionsVal = parseExpression(doExecute);
+            if (optionsVal.type != DataType::JSON_OBJECT && optionsVal.type != DataType::JUSTC_OBJECT) {
+                throw std::runtime_error("Expected object for import options at " + Utility::position(position, input) + ".");
+            }
+
+            auto nanIt = optionsVal.properties.find("nan");
+            auto infIt = optionsVal.properties.find("inf");
+            if (nanIt != optionsVal.properties.end() || infIt != optionsVal.properties.end()) {
+                throw std::runtime_error("Attempt to redefine built-in JUSTO pointer at " + Utility::position(position, input) + ".");
+            }
+
+            justoPointers = optionsVal.properties;
+        }
+
+        std::pair<Value, std::string> imported;
+        try {
+            imported = Import::JUSTO(location, Utility::position(position, input), importStringType == 0, importStringType == 2, justoPointers);
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::string(e.what()) + "\n    at <import JUSTO object \"" + location + "\"> at " + Utility::position(currentToken().start, input) + ".");
+        } catch (...) {
+            throw std::runtime_error("Invalid import JUSTO \"" + location + "\" at " + Utility::position(position, input));
+        }
+        addImportLog(location, imported.second, "JUSTO object");
+        if (single) {
+            std::string name = imports[0];
+            checkVariableNameAvailable(name);
+
+            imported.first.name = name;
+            ASTNode node("VARIABLE_DECLARATION", name, position);
+            variables[name] = imported.first;
+            constVars[name] = true;
+            node.value = imported.first;
             ast.push_back(node);
+        } else {
+            size_t i = 0;
+            for (const auto& [keyRaw, value] : imported.first.properties) {
+                std::string key = keyRaw;
+
+                auto constIt = constVars.find(key);
+                if (constIt != constVars.end() && constIt->second) {
+                    continue;
+                }
+                if (isBuiltinVariable(key)) {
+                    continue;
+                }
+                if (!importAll) {
+                    auto importIt = imports.find(key);
+                    if (!(importIt != imports.end() && importIt->second)) {
+                        continue;
+                    }
+                }
+
+                if (rename) {
+                    ++i;
+                    key = (i < renames.size()) ? renames[i] : key;
+                }
+
+                ASTNode node("VARIABLE_DECLARATION", key, position);
+                variables[key] = value;
+                constVars[key] = true;
+                node.value = value;
+                ast.push_back(node);
+            }
         }
     } else {
-        throw std::runtime_error("Cannot import from \"" + currentToken().value + "\" at " + Utility::position(position, input));
+        throw std::runtime_error("Cannot import from \"" + importType + "\" at " + Utility::position(position, input));
     }
 
     return node;
@@ -1233,10 +1484,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
         }
     }
 
-    auto constIt = constVars.find(identifier);
-    if (constIt != constVars.end() && constIt->second) {
-        throw std::runtime_error("Cannot reassign const variable \"" + identifier + "\" at " + Utility::position(startPos, input));
-    }
+    checkVariableNameAvailable(identifier);
 
     std::string assignOp;
     std::string typeDecl;
@@ -1329,7 +1577,7 @@ ASTNode Parser::parseVariableDeclaration(bool doExecute, bool constant) {
 
     if (node.value.type == DataType::FUNCTION) {
         if (userFunctions.find(identifier) != userFunctions.end() && userFunctionsConst.find(identifier)->second) {
-            throw std::runtime_error("Cannot override const function: " + identifier);
+            throw std::runtime_error("Assignment to constant function \"" + identifier + "\" at " + Utility::position(position, input) + ".");
         }
         try {
             userFunctions.erase(identifier);

@@ -42,7 +42,7 @@ const monacoJUSTClang = {
 
         escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
-        builtinFunctions: /\b(echo|log|logfile|valueof|String(::((Grapheme|CodePoint|Byte|)(Reverse|Slice|Length)|Trim|Repeat|(Start|End)sWith|Size|Lower|Upper|NormalizeNF(K|)(C|D)|EqualsIgnoreCase|IsWhitespace)|)|Number|Link|Binary(::((To|From)(Text|DataURL))|)|Octal|Hexadecimal|typeid|typeof|JSON(\.(Parse|Stringify)|)|file|size|env|config|parseInt|JUSTC(\.(Parse(r|)|Execute|Stringify|Version|Lexer)|)|TIME|PI|Backslash|Version|HTTP::(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math::(A(bs|cos|sin|tan(2|))|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|To(Degrees|Radians)|ParseNum)|Data|JavaScript(\.(Execute|About)|)|Luau(\.(Execute|Version)|))\b/i,
+        builtinFunctions: /\b(echo|log|logfile|valueof|String(::((Grapheme|CodePoint|Byte|)(Reverse|Slice|Length)|Trim|Repeat|(Start|End)sWith|Size|Lower|Upper|NormalizeNF(K|)(C|D)|EqualsIgnoreCase|IsWhitespace)|)|Number|Link|Binary(::((To|From)(Text|DataURL))|)|Octal|Hexadecimal|typeid|typeof|JSON(\.(Parse|Stringify)|)|file|size|env|config|parseInt|JUSTC(\.(Parse(r|)|Execute|Stringify|Version|Lexer)|)|TIME|PI|Backslash|Version|HTTP\.(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)|Math\.(A(bs|cos|sin|tan(2|))|Ceil|Cos|Clamp|Cube|Double|Exp|Factorial|Floor|Hypot|IsPrime|Lerp|Log(10|)|Max|Min|Pow|Random|Round|Sign|Sin|Sqrt|Square|Tan|To(Degrees|Radians)|ParseNum)|Data|JavaScript(\.(Execute)|)|Luau(\.(Execute|Compile)|)|JUSTO(\.(Parse|Stringify|Version)|))\b/i,
 
         constants: /\b(True|TRUE|False|FALSE|Yes|YES|No|NO|Y|N|Null|NULL|Nil|NIL|Infinity|NaN|undefined)\b/,
 

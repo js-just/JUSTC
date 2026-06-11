@@ -520,6 +520,7 @@ private:
     void handleBuiltinVariableAssignment(const std::string& name, const Value& value, size_t startPos);
     void removeBuiltinVariablesFromOutput();
     void builtinObject(const std::string& name, std::unordered_map<std::string, Value> props);
+    Value builtinObjectFunction(const std::string& name);
 
     void updateCharType(const std::string& newType, size_t startPos);
 

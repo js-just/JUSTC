@@ -45,7 +45,7 @@ std::string Import::ReadFile(const std::string path, const std::string position,
         #ifndef __EMSCRIPTEN__
             std::ifstream file(path);
             if (!file.is_open()) {
-                throw std::runtime_error((isImport ? "Import error: " : "") + "Unable to read the file \"" + path + "\" at " + position + ".");
+                throw std::runtime_error(std::string(isImport ? "Import error: " : "") + "Unable to read the file \"" + path + "\" at " + position + ".");
             }
             return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         #else
@@ -61,6 +61,18 @@ std::pair<ParseResult, std::string> Import::JUSTC(const std::string path, const 
 }
 
 std::pair<Value, std::string> Import::JUSTO(const std::string path, const std::string position, const bool isLink, const bool isString) {
+    std::unordered_map<std::string, Value> justoPointers;
+
+    Value nanVal;
+    nanVal.type = DataType::NOT_A_NUMBER;
+    nanVal.name = "NaN";
+    justoPointers["nan"] = nanVal;
+
+    Value infVal;
+    infVal.type = DataType::INFINITE;
+    infVal.name = "Infinity";
+    justoPointers["inf"] = infVal;
+
     std::string File = isString ? path : ReadFile(path, position, isLink, true);
     JUSTO::JUSTOParser parser;
     for (const auto& [key, value] : justoPointers) {

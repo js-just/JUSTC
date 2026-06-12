@@ -1,4 +1,4 @@
-import JUSTC(test/linux/import.justc),
+import from "JUSTC" "test/linux/import.justc",
 a is b,
 b is 10 + 2,
 echo(a).

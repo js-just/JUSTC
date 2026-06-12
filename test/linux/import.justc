@@ -1,3 +1,3 @@
-import JUSTC(test/linux/luau.justc),
-test is {{console.log(String(10+10+10+109))}},
-<<print('Hi!')>>.
+import from "JUSTC" "test/linux/luau.justc",
+testJ is JavaScript("console.log(String(10+10+10+109))"),
+testL is Luau("print'Hi!'").

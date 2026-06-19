@@ -23,12 +23,16 @@ const monacoJUSTClang = {
             "nor", "xor", "xnor", "imply", "nimply",
 
             "true", "false", "yes", "no", "y", "n",
-            "null", "nil"
+            "null", "nil",
         ],
 
         typeKeywords: [
             'number', 'string', 'boolean', 'null', 'link', 'path', 'binary', 'octal', 'hexadecimal', 'object', 'json', 'array', 'nan', 'infinity', 'data', 'auto',
             'num', 'str', 'bool', 'nil', 'bin', 'oct', 'hex', 'obj', 'inf',
+
+            "int8", "int16", "int32", "int64", "int128",
+            "uint8", "uint16", "uint32", "uint64",
+            "uint128", "float32", "float64", "float128",
         ],
 
         operators: [

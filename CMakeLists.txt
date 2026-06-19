@@ -232,6 +232,7 @@ set(CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/builtins.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/from.justo.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/to.justo.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/cpptypes.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/http/http.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/math/math.cpp

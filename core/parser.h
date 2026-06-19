@@ -42,6 +42,31 @@ SOFTWARE.
 #include <iomanip>
 #include <limits>
 
+#ifdef _MSC_VER
+    #define JUSTC_HAS_INT128 0
+    #define JUSTC_HAS_UINT128 0
+    #define JUSTC_HAS_FLOAT128 0
+    using int128_t = long long;
+    using uint128_t = unsigned long long;
+#elif defined(__SIZEOF_INT128__)
+    #define JUSTC_HAS_INT128 1
+    #define JUSTC_HAS_UINT128 1
+    using int128_t = __int128;
+    using uint128_t = unsigned __int128;
+    #ifdef __SIZEOF_FLOAT128__
+        #define JUSTC_HAS_FLOAT128 1
+        #include <quadmath.h>
+    #else
+        #define JUSTC_HAS_FLOAT128 0
+    #endif
+#else
+    #define JUSTC_HAS_INT128 0
+    #define JUSTC_HAS_UINT128 0
+    #define JUSTC_HAS_FLOAT128 0
+    using int128_t = long long;
+    using uint128_t = unsigned long long;
+#endif
+
 struct Value;
 class Parser;
 
@@ -179,9 +204,11 @@ struct NumericValue {
         else if constexpr (std::is_same_v<T, uint16_t>) type = NumericType::UINT16;
         else if constexpr (std::is_same_v<T, uint32_t>) type = NumericType::UINT32;
         else if constexpr (std::is_same_v<T, uint64_t>) type = NumericType::UINT64;
+        #if JUSTC_HAS_INT128
         else if constexpr (std::is_same_v<T, __int128>) type = NumericType::INT128;
         else if constexpr (std::is_same_v<T, unsigned __int128>) type = NumericType::UINT128;
-        #ifdef __SIZEOF_FLOAT128__
+        #endif
+        #if JUSTC_HAS_FLOAT128
         else if constexpr (std::is_same_v<T, __float128>) type = NumericType::FLOAT128;
         #endif
         else type = NumericType::FLOAT64;
@@ -232,17 +259,21 @@ struct NumericValue {
             case NumericType::FLOAT32: return sizeof(float);
             case NumericType::FLOAT64: return sizeof(double);
             case NumericType::BIGNUM: return sizeof(long double);
+            #if JUSTC_HAS_FLOAT128
             case NumericType::FLOAT128: return 16; // __float128
+            #endif
             case NumericType::INT8: return sizeof(int8_t);
             case NumericType::INT16: return sizeof(int16_t);
             case NumericType::INT32: return sizeof(int32_t);
             case NumericType::INT64: return sizeof(int64_t);
+            #if JUSTC_HAS_INT128
             case NumericType::INT128: return sizeof(__int128);
+            case NumericType::UINT128: return sizeof(unsigned __int128);
+            #endif
             case NumericType::UINT8: return sizeof(uint8_t);
             case NumericType::UINT16: return sizeof(uint16_t);
             case NumericType::UINT32: return sizeof(uint32_t);
             case NumericType::UINT64: return sizeof(uint64_t);
-            case NumericType::UINT128: return sizeof(unsigned __int128);
             default: return sizeof(double);
         }
     }

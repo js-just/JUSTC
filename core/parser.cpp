@@ -3771,7 +3771,7 @@ std::string Parser::stripUnderscores(const std::string& str) {
     }
     return result;
 }
-#ifdef
+#ifdef __SIZEOF_INT128__
 __int128 Parser::parseToInt128(const std::string& str) {
     std::string cleaned = stripUnderscores(str);
     bool isNegative = false;

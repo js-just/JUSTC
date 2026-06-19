@@ -150,14 +150,14 @@ jobs:
           }
 
           ./vcpkg/bootstrap-vcpkg.bat
-          ./vcpkg/vcpkg install boost-multiprecision:x64-windows-static
+          ./vcpkg/vcpkg install boost-multiprecision:x64-windows-static --recurse
       - name: Install dependencies
         run: |
-          ./vcpkg/vcpkg install cpr:x64-windows-static
-          ./vcpkg/vcpkg install libidn2:x64-windows-static
-          ./vcpkg/vcpkg install icu:x64-windows-static
+          ./vcpkg/vcpkg install cpr:x64-windows-static --recurse
+          ./vcpkg/vcpkg install libidn2:x64-windows-static --recurse
+          ./vcpkg/vcpkg install icu:x64-windows-static --recurse
       - name: Configure CMake
-        run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DBoost_USE_STATIC_LIBS=ON
+        run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DBoost_USE_STATIC_LIBS=ON -DCMAKE_PREFIX_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static" -DCMAKE_LIBRARY_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static/lib" -DCMAKE_INCLUDE_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static/include"
       - name: Remove QuickJS version file
         shell: pwsh
         run: |

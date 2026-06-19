@@ -158,6 +158,12 @@ jobs:
           ./vcpkg/vcpkg install icu:x64-windows-static
       - name: Configure CMake
         run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DBoost_USE_STATIC_LIBS=ON
+      - name: Remove QuickJS version file
+        shell: pwsh
+        run: |
+          if (Test-Path "build/_deps/quickjs-src/version") {
+            Remove-Item build/_deps/quickjs-src/version
+          }
       - name: Build
         run: |
           $cores = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors

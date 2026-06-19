@@ -51,6 +51,11 @@ SOFTWARE.
 #include <cstdint>
 #include <limits>
 #include "cpptypes.h"
+#include <iomanip>
+#include <functional>
+#ifdef __SIZEOF_FLOAT128__
+#include <quadmath.h>
+#endif
 
 #ifdef __EMSCRIPTEN__
     #include "parser.emscripten.h"
@@ -395,6 +400,23 @@ Value Value::createNumberWithType(T num, NumericType numType) {
     return result;
 }
 
+template Value Value::createNumberWithType<int8_t>(int8_t, NumericType);
+template Value Value::createNumberWithType<int16_t>(int16_t, NumericType);
+template Value Value::createNumberWithType<int32_t>(int32_t, NumericType);
+template Value Value::createNumberWithType<int64_t>(int64_t, NumericType);
+template Value Value::createNumberWithType<__int128>(__int128, NumericType);
+template Value Value::createNumberWithType<uint8_t>(uint8_t, NumericType);
+template Value Value::createNumberWithType<uint16_t>(uint16_t, NumericType);
+template Value Value::createNumberWithType<uint32_t>(uint32_t, NumericType);
+template Value Value::createNumberWithType<uint64_t>(uint64_t, NumericType);
+template Value Value::createNumberWithType<unsigned __int128>(unsigned __int128, NumericType);
+template Value Value::createNumberWithType<float>(float, NumericType);
+template Value Value::createNumberWithType<double>(double, NumericType);
+template Value Value::createNumberWithType<long double>(long double, NumericType);
+#ifdef __SIZEOF_FLOAT128__
+template Value Value::createNumberWithType<__float128>(__float128, NumericType);
+#endif
+
 std::string Value::toNumericString() const {
     if (!numeric_data) {
         return std::to_string(number_value);
@@ -403,7 +425,7 @@ std::string Value::toNumericString() const {
     std::stringstream ss;
     switch (numeric_data->type) {
         case NumericType::FLOAT32:
-            ss << *(float*)numeric_data->data;
+            ss << std::setprecision(7) << *(float*)numeric_data->data;
             break;
         case NumericType::FLOAT64:
             ss << std::setprecision(15) << *(double*)numeric_data->data;
@@ -423,7 +445,7 @@ std::string Value::toNumericString() const {
         case NumericType::INT64:
             ss << *(int64_t*)numeric_data->data;
             break;
-        case NumericType::INT128:
+        case NumericType::INT128: {
             __int128 val = *(const __int128*)numeric_data->data;
             if (val < 0) {
                 ss << "-";
@@ -437,8 +459,9 @@ std::string Value::toNumericString() const {
             }
             ss << (str.empty() ? "0" : str);
             break;
+        }
         case NumericType::UINT8:
-            ss << *(uint8_t*)numeric_data->data;
+            ss << (unsigned int)*(uint8_t*)numeric_data->data;
             break;
         case NumericType::UINT16:
             ss << *(uint16_t*)numeric_data->data;
@@ -449,7 +472,7 @@ std::string Value::toNumericString() const {
         case NumericType::UINT64:
             ss << *(uint64_t*)numeric_data->data;
             break;
-        case NumericType::UINT128:
+        case NumericType::UINT128: {
             unsigned __int128 val = *(const unsigned __int128*)numeric_data->data;
             std::string str;
             while (val > 0) {
@@ -459,14 +482,17 @@ std::string Value::toNumericString() const {
             }
             ss << (str.empty() ? "0" : str);
             break;
+        }
         case NumericType::FLOAT128:
             #ifdef __SIZEOF_FLOAT128__
+            {
                 char buffer[64];
-                quadmath_snprintf(buffer, sizeof(buffer), "%.20Qe", *(const __float128*)numeric_data->data);
+                quadmath_snprintf(buffer, sizeof(buffer), "%.20Qe", 
+                                 *(const __float128*)numeric_data->data);
                 ss << buffer;
+            }
             #else
-                const long double* val = static_cast<const long double*>(numeric_data->data);
-                ss << std::setprecision(18) << *val;
+                ss << std::setprecision(18) << *(long double*)numeric_data->data;
             #endif
             break;
         default:

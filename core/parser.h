@@ -38,6 +38,9 @@ SOFTWARE.
 #include "lexer.h"
 #include "version.h"
 #include <functional>
+#include <cstring>
+#include <iomanip>
+#include <limits>
 
 struct Value;
 class Parser;
@@ -350,22 +353,8 @@ struct Value {
         return result;
     }
 
-    static Value createNumberWithType(double num, NumericType numType = NumericType::FLOAT64);
-    static Value createNumber(int8_t num);
-    static Value createNumber(int16_t num);
-    static Value createNumber(int32_t num);
-    static Value createNumber(int64_t num);
-    static Value createNumber(uint8_t num);
-    static Value createNumber(uint16_t num);
-    static Value createNumber(uint32_t num);
-    static Value createNumber(uint64_t num);
-    static Value createNumber(float num);
-    static Value createNumber(long double num);
-    static Value createNumber(__int128 num);
-    static Value createNumber(unsigned __int128 num);
-    #ifdef __SIZEOF_FLOAT128__
-    static Value createNumber(__float128 num);
-    #endif
+    template<typename T>
+    static Value createNumberWithType(T num, NumericType numType);
     
     template<typename T>
     T getNumericValue() const {

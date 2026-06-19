@@ -66,14 +66,6 @@ if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 endif()
 
-if(MSVC)
-    target_compile_options(justc_core PRIVATE /std:c++20)
-    target_compile_options(justc_cli PRIVATE /std:c++20)
-else()
-    target_compile_options(justc_core PRIVATE -std=c++17)
-    target_compile_options(justc_cli PRIVATE -std=c++17)
-endif()
-
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported)
 if(ipo_supported)
@@ -316,6 +308,14 @@ add_executable(
     justc_cli
     core/entry/cli.cpp
 )
+
+if(MSVC)
+    target_compile_options(justc_core PRIVATE /std:c++20)
+    target_compile_options(justc_cli PRIVATE /std:c++20)
+else()
+    target_compile_options(justc_core PRIVATE -std=c++17)
+    target_compile_options(justc_cli PRIVATE -std=c++17)
+endif()
 
 set_property(TARGET justc_core PROPERTY
     MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

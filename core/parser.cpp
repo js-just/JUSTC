@@ -53,8 +53,23 @@ SOFTWARE.
 #include "cpptypes.h"
 #include <iomanip>
 #include <functional>
+
 #ifdef __SIZEOF_FLOAT128__
-#include <quadmath.h>
+    #include <quadmath.h>
+    #define JUSTC_FLOAT128_SUPPORT 1
+#else
+    #define JUSTC_FLOAT128_SUPPORT 0
+#endif
+
+#ifdef _MSC_VER
+    #define JUSTC_INT128_SUPPORT 0
+    #define JUSTC_UINT128_SUPPORT 0
+#elif defined(__SIZEOF_INT128__)
+    #define JUSTC_INT128_SUPPORT 1
+    #define JUSTC_UINT128_SUPPORT 1
+#else
+    #define JUSTC_INT128_SUPPORT 0
+    #define JUSTC_UINT128_SUPPORT 0
 #endif
 
 #ifdef __EMSCRIPTEN__
@@ -342,7 +357,7 @@ Value Value::createNumberWithType(T num, NumericType numType) {
     
     size_t size = NumericValue::getTypeSize(numType);
     result.numeric_data->data = malloc(size);
-    if (result.numeric_data->data) {
+    if (static_cast<bool>(result.numeric_data->data)) {
         switch (numType) {
             case NumericType::FLOAT32:
                 *(float*)result.numeric_data->data = static_cast<float>(num);
@@ -417,7 +432,7 @@ template Value Value::createNumberWithType<__float128>(__float128, NumericType);
 #endif
 
 std::string Value::toNumericString() const {
-    if (!numeric_data) {
+    if (!static_cast<bool>(numeric_data)) {
         return std::to_string(number_value);
     }
     
@@ -760,6 +775,9 @@ Parser::Parser(
             runner += " ARM";
         #endif
     scriptProperties["Runner"] = stringToValue(runner);
+    scriptProperties["int128"] = booleanToValue(JUSTC_INT128_SUPPORT);
+    scriptProperties["uint128"] = booleanToValue(JUSTC_UINT128_SUPPORT);
+    scriptProperties["float128"] = booleanToValue(JUSTC_FLOAT128_SUPPORT);
     builtinObject("Script", scriptProperties);
 
     Value chartypeValue;
@@ -3753,6 +3771,7 @@ std::string Parser::stripUnderscores(const std::string& str) {
     }
     return result;
 }
+#ifdef
 __int128 Parser::parseToInt128(const std::string& str) {
     std::string cleaned = stripUnderscores(str);
     bool isNegative = false;
@@ -3866,6 +3885,16 @@ unsigned __int128 Parser::parseToUInt128(const std::string& str) {
     
     return result;
 }
+#else
+long long Parser::parseToInt128(const std::string& str) {
+    std::string cleaned = stripUnderscores(str);
+    return std::stoll(cleaned);
+}
+unsigned long long Parser::parseToUInt128(const std::string& str) {
+    std::string cleaned = stripUnderscores(str);
+    return std::stoull(cleaned);
+}
+#endif
 #ifdef __SIZEOF_FLOAT128__
 __float128 Parser::parseToFloat128(const std::string& str) {
     std::string cleaned = stripUnderscores(str);
@@ -3896,8 +3925,7 @@ Value Parser::applyCPPTypeDeclaration(const Value value, const std::string& cppt
                     int64_t num = std::stoll(cleaned);
                     result = Value::createNumberWithType(num, NumericType::INT64);
                 } else if (cpptype == "int128") {
-                    __int128 num = parseToInt128(value.name);
-                    result = Value::createNumberWithType(num, NumericType::INT128);
+                    result = Value::createNumberWithType(parseToInt128(value.name), NumericType::INT128);
                 } else if (cpptype == "uint8") {
                     result = Value::createNumberWithType(static_cast<uint8_t>(std::stoul(cleaned)), NumericType::UINT8);
                 } else if (cpptype == "uint16") {
@@ -3909,8 +3937,7 @@ Value Parser::applyCPPTypeDeclaration(const Value value, const std::string& cppt
                     uint64_t num = std::stoull(cleaned);
                     result = Value::createNumberWithType(num, NumericType::UINT64);
                 } else if (cpptype == "uint128") {
-                    unsigned __int128 num = parseToUInt128(cleaned);
-                    result = Value::createNumberWithType(num, NumericType::UINT128);
+                    result = Value::createNumberWithType(parseToUInt128(value.name), NumericType::UINT128);
                 } else if (cpptype == "float32") {
                     float num = std::stof(cleaned);
                     result = Value::createNumberWithType(num, NumericType::FLOAT32);

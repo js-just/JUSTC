@@ -33,7 +33,7 @@ sudo apt-get install -y libluau-dev libluau0 || echo "Luau not available in pack
 
 mkdir -p build
 cd build
-cmake .. $OPTIONS
+cmake .. $OPTIONS -DCMAKE_EXE_LINKER_FLAGS="-lquadmath" -DCMAKE_SHARED_LINKER_FLAGS="-lquadmath"
 make -j$(nproc)
 
 sudo make install

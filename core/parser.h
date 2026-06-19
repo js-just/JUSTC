@@ -604,8 +604,13 @@ private:
     void extractReferences(const Value& value, std::vector<std::string>& references);
 
     std::string stripUnderscores(const std::string& str);
-    __int128 parseToInt128(const std::string& str);
-    unsigned __int128 parseToUInt128(const std::string& str);
+    #ifdef __SIZEOF_INT128__
+        __int128 parseToInt128(const std::string& str);
+        unsigned __int128 parseToUInt128(const std::string& str);
+    #else
+        long long parseToInt128(const std::string& str);
+        unsigned long long parseToUInt128(const std::string& str);
+    #endif
     #ifdef __SIZEOF_FLOAT128__
     __float128 parseToFloat128(const std::string& str);
     #endif

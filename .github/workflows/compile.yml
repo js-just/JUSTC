@@ -97,13 +97,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
+      - name: Install Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+      
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      
       - name: Install CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: '3.28'
-      - name: Setup MSVC
-        uses: microsoft/setup-msbuild@v2
-      - name: Cache vcpkg + CMake deps
+      
+      - name: Cache vcpkg
         uses: actions/cache@v4
         with:
           path: |
@@ -114,9 +122,10 @@ jobs:
             vcpkg/packages
             vcpkg/installed
             vcpkg_cache
-          key: ${{ runner.os }}-vcpkg-${{ hashFiles('CMakeLists.txt') }}
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('CMakeLists.txt', 'vcpkg.json') }}
           restore-keys: |
             ${{ runner.os }}-vcpkg-
+      
       - name: Cache vcpkg binaries
         uses: actions/cache@v4
         with:
@@ -124,9 +133,28 @@ jobs:
           key: ${{ runner.os }}-vcpkg-binary-${{ hashFiles('vcpkg.json','CMakeLists.txt') }}
           restore-keys: |
             ${{ runner.os }}-vcpkg-binary-
-      - name: Clean everything before Ninja build
+      
+      - name: Setup vcpkg
         shell: pwsh
-        run:
+        run: |
+          New-Item -ItemType Directory -Force -Path vcpkg_cache
+          if (!(Test-Path "vcpkg")) {
+            git clone --depth=1 https://github.com/microsoft/vcpkg.git
+          }
+          ./vcpkg/bootstrap-vcpkg.bat
+      
+      - name: Install dependencies (MSVC)
+        shell: pwsh
+        run: |
+          ./vcpkg/vcpkg install cpr:x64-windows-static --recurse
+          ./vcpkg/vcpkg install libidn2:x64-windows-static --recurse
+          ./vcpkg/vcpkg install icu:x64-windows-static --recurse
+          ./vcpkg/vcpkg install boost-multiprecision:x64-windows-static --recurse
+          ./vcpkg/vcpkg install quickjs:x64-windows-static --recurse
+      
+      - name: Clean build directory
+        shell: pwsh
+        run: |
           if (Test-Path "build") {
             Remove-Item -Recurse -Force build
           }
@@ -139,25 +167,21 @@ jobs:
           if (Test-Path "_deps") {
             Remove-Item -Recurse -Force _deps
           }
-      - name: Create vcpkg cache directory
+      
+      - name: Configure CMake with Ninja + MSVC
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path vcpkg_cache
-      - name: Install Boost
-        run: |
-          if (!(Test-Path "vcpkg")) {
-            git clone https://github.com/microsoft/vcpkg.git
-          }
-
-          ./vcpkg/bootstrap-vcpkg.bat
-          ./vcpkg/vcpkg install boost-multiprecision:x64-mingw-static --recurse
-      - name: Install dependencies
-        run: |
-          ./vcpkg/vcpkg install cpr:x64-mingw-static --recurse
-          ./vcpkg/vcpkg install libidn2:x64-mingw-static --recurse
-          ./vcpkg/vcpkg install icu:x64-mingw-static --recurse
-      - name: Configure CMake
-        run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DBoost_USE_STATIC_LIBS=ON -DCMAKE_PREFIX_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static" -DCMAKE_LIBRARY_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static/lib" -DCMAKE_INCLUDE_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static/include"
+          cmake -B build -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+            -DBoost_USE_STATIC_LIBS=ON `
+            -DCMAKE_CXX_COMPILER=cl.exe `
+            -DCMAKE_C_COMPILER=cl.exe `
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static" `
+            -DCMAKE_LIBRARY_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static/lib" `
+            -DCMAKE_INCLUDE_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static/include"
+      
       - name: Remove QuickJS version file
         shell: pwsh
         run: |
@@ -168,16 +192,19 @@ jobs:
           )
           foreach ($p in $paths) {
             if (Test-Path $p) {
-              Remove-Item $p
-              Write-Host "removed $p"
+              Remove-Item $p -Force
+              Write-Host "Removed: $p"
             }
           }
+      
       - name: Build
+        shell: pwsh
         run: |
           $cores = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
           $jobs = [Math]::Min($cores + 1, 8)
-          Write-Host "-j $jobs"
+          Write-Host "Building with -j $jobs"
           cmake --build build --config Release -j $jobs
+      
       - name: Upload CLI
         uses: actions/upload-artifact@v4
         with:

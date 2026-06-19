@@ -208,7 +208,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: justc-windows-cli
-          path: ${{ github.workspace }}/build/Release/justc.exe
+          path: ${{ github.workspace }}/build/justc.exe
           retention-days: 1
 
   compile-macos:

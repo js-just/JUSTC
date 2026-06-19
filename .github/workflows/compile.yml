@@ -152,6 +152,7 @@ jobs:
           ./vcpkg/vcpkg install libidn2:x64-windows-static
           ./vcpkg/vcpkg install icu:x64-windows-static
           ./vcpkg/vcpkg install boost-multiprecision:x64-windows-static
+          ./vcpkg/vcpkg install quickjs:x64-windows-static
       - name: Configure CMake
         shell: pwsh
         run: |

@@ -161,8 +161,16 @@ jobs:
       - name: Remove QuickJS version file
         shell: pwsh
         run: |
-          if (Test-Path "build/_deps/quickjs-src/version") {
-            Remove-Item build/_deps/quickjs-src/version
+          $paths = @(
+            "build/_deps/quickjs-src/version",
+            "_deps/quickjs-src/version",
+            "build/_deps/quickjscmake-build/__/quickjs-src/version"
+          )
+          foreach ($p in $paths) {
+            if (Test-Path $p) {
+              Remove-Item $p
+              Write-Host "removed $p"
+            }
           }
       - name: Build
         run: |

@@ -143,14 +143,13 @@ jobs:
           }
           ./vcpkg/bootstrap-vcpkg.bat
       
-      - name: Install dependencies (MSVC)
+      - name: Install dependencies
         shell: pwsh
         run: |
           ./vcpkg/vcpkg install cpr:x64-windows-static --recurse
           ./vcpkg/vcpkg install libidn2:x64-windows-static --recurse
           ./vcpkg/vcpkg install icu:x64-windows-static --recurse
           ./vcpkg/vcpkg install boost-multiprecision:x64-windows-static --recurse
-          ./vcpkg/vcpkg install quickjs:x64-windows-static --recurse
       
       - name: Clean build directory
         shell: pwsh

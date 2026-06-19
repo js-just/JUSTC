@@ -388,7 +388,6 @@ Value Value::createNumberWithType(T num, NumericType numType) {
             case NumericType::UINT128:
                 *(unsigned __int128*)result.numeric_data->data = static_cast<unsigned __int128>(num);
                 break;
-            case NumericType::FLOAT128:
             default:
                 *(double*)result.numeric_data->data = static_cast<double>(num);
                 break;

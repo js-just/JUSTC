@@ -1606,7 +1606,7 @@ ASTNode Parser::parseStatement(bool doExecute) {
 
     } else if (keyword == "echo" || keyword == "log" || keyword == "logfile") {
         return parseCommand(doExecute);
-    } else if ((match("identifier") || match("string") || isCPPType(currentToken().value)) && !isJSONArray) {
+    } else if ((match("identifier") || match("string") || isCPPType()) && !isJSONArray) {
         return parseVariableDeclaration(doExecute);
     } else if (match("keyword", "const") && !isJSONArray) {
         advance();

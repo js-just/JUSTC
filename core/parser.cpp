@@ -3926,7 +3926,7 @@ unsigned long long Parser::parseToUInt128(const std::string& str) {
     }
 }
 #endif
-#ifdef JUSTC_FLOAT128_SUPPORT
+#if JUSTC_FLOAT128_SUPPORT
 __float128 Parser::parseToFloat128(const std::string& str) {
     std::string cleaned = stripUnderscores(str);
     return strtoflt128(cleaned.c_str(), nullptr);

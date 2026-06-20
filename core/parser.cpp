@@ -3973,7 +3973,7 @@ Value Parser::applyCPPTypeDeclaration(const Value value, const std::string& cppt
                     float num = std::stof(cleaned);
                     result = Value::createNumberWithType(num, NumericType::FLOAT32);
                 } else if (cpptype == "float128") {
-                    #ifdef JUSTC_FLOAT128_SUPPORT
+                    #if JUSTC_FLOAT128_SUPPORT
                         __float128 num = parseToFloat128(cleaned);
                         result = Value::createNumberWithType(num, NumericType::FLOAT128);
                     #else

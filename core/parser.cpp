@@ -3926,7 +3926,7 @@ unsigned long long Parser::parseToUInt128(const std::string& str) {
     }
 }
 #endif
-#ifdef __SIZEOF_FLOAT128__
+#ifdef JUSTC_FLOAT128_SUPPORT
 __float128 Parser::parseToFloat128(const std::string& str) {
     std::string cleaned = stripUnderscores(str);
     return strtoflt128(cleaned.c_str(), nullptr);
@@ -3973,7 +3973,7 @@ Value Parser::applyCPPTypeDeclaration(const Value value, const std::string& cppt
                     float num = std::stof(cleaned);
                     result = Value::createNumberWithType(num, NumericType::FLOAT32);
                 } else if (cpptype == "float128") {
-                    #ifdef __SIZEOF_FLOAT128__
+                    #ifdef JUSTC_FLOAT128_SUPPORT
                         __float128 num = parseToFloat128(cleaned);
                         result = Value::createNumberWithType(num, NumericType::FLOAT128);
                     #else

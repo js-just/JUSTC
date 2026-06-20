@@ -368,7 +368,7 @@ Value Value::createNumberWithType(T num, NumericType numType) {
             case NumericType::BIGNUM:
                 *(long double*)result.numeric_data->data = static_cast<long double>(num);
                 break;
-            #ifdef __SIZEOF_FLOAT128__
+            #if JUSTC_FLOAT128_SUPPORT
             case NumericType::FLOAT128:
                 *(__float128*)result.numeric_data->data = static_cast<__float128>(num);
                 break;
@@ -385,9 +385,16 @@ Value Value::createNumberWithType(T num, NumericType numType) {
             case NumericType::INT64:
                 *(int64_t*)result.numeric_data->data = static_cast<int64_t>(num);
                 break;
+            #if JUSTC_INT128_SUPPORT
             case NumericType::INT128:
                 *(__int128*)result.numeric_data->data = static_cast<__int128>(num);
                 break;
+            #endif
+            #if JUSTC_UINT128_SUPPORT
+            case NumericType::UINT128:
+                *(unsigned __int128*)result.numeric_data->data = static_cast<unsigned __int128>(num);
+                break;
+            #endif
             case NumericType::UINT8:
                 *(uint8_t*)result.numeric_data->data = static_cast<uint8_t>(num);
                 break;
@@ -399,9 +406,6 @@ Value Value::createNumberWithType(T num, NumericType numType) {
                 break;
             case NumericType::UINT64:
                 *(uint64_t*)result.numeric_data->data = static_cast<uint64_t>(num);
-                break;
-            case NumericType::UINT128:
-                *(unsigned __int128*)result.numeric_data->data = static_cast<unsigned __int128>(num);
                 break;
             default:
                 *(double*)result.numeric_data->data = static_cast<double>(num);
@@ -418,16 +422,20 @@ template Value Value::createNumberWithType<int8_t>(int8_t, NumericType);
 template Value Value::createNumberWithType<int16_t>(int16_t, NumericType);
 template Value Value::createNumberWithType<int32_t>(int32_t, NumericType);
 template Value Value::createNumberWithType<int64_t>(int64_t, NumericType);
+#if JUSTC_INT128_SUPPORT
 template Value Value::createNumberWithType<__int128>(__int128, NumericType);
+#endif
+#if JUSTC_UINT128_SUPPORT
+template Value Value::createNumberWithType<unsigned __int128>(unsigned __int128, NumericType);
+#endif
 template Value Value::createNumberWithType<uint8_t>(uint8_t, NumericType);
 template Value Value::createNumberWithType<uint16_t>(uint16_t, NumericType);
 template Value Value::createNumberWithType<uint32_t>(uint32_t, NumericType);
 template Value Value::createNumberWithType<uint64_t>(uint64_t, NumericType);
-template Value Value::createNumberWithType<unsigned __int128>(unsigned __int128, NumericType);
 template Value Value::createNumberWithType<float>(float, NumericType);
 template Value Value::createNumberWithType<double>(double, NumericType);
 template Value Value::createNumberWithType<long double>(long double, NumericType);
-#ifdef __SIZEOF_FLOAT128__
+#if JUSTC_FLOAT128_SUPPORT
 template Value Value::createNumberWithType<__float128>(__float128, NumericType);
 #endif
 
@@ -459,21 +467,44 @@ std::string Value::toNumericString() const {
         case NumericType::INT64:
             ss << *(int64_t*)numeric_data->data;
             break;
+        #if JUSTC_INT128_SUPPORT
         case NumericType::INT128: {
             __int128 val = *(const __int128*)numeric_data->data;
             if (val < 0) {
                 ss << "-";
                 val = -val;
             }
-            std::string str;
-            while (val > 0) {
-                int digit = val % 10;
-                str = char('0' + digit) + str;
-                val /= 10;
+            if (val == 0) {
+                ss << "0";
+            } else {
+                std::string str;
+                while (val > 0) {
+                    int digit = val % 10;
+                    str = char('0' + digit) + str;
+                    val /= 10;
+                }
+                ss << str;
             }
-            ss << (str.empty() ? "0" : str);
             break;
         }
+        #endif
+        #if JUSTC_UINT128_SUPPORT
+        case NumericType::UINT128: {
+            unsigned __int128 val = *(const unsigned __int128*)numeric_data->data;
+            if (val == 0) {
+                ss << "0";
+            } else {
+                std::string str;
+                while (val > 0) {
+                    int digit = val % 10;
+                    str = char('0' + digit) + str;
+                    val /= 10;
+                }
+                ss << str;
+            }
+            break;
+        }
+        #endif
         case NumericType::UINT8:
             ss << (unsigned int)*(uint8_t*)numeric_data->data;
             break;
@@ -486,29 +517,15 @@ std::string Value::toNumericString() const {
         case NumericType::UINT64:
             ss << *(uint64_t*)numeric_data->data;
             break;
-        case NumericType::UINT128: {
-            unsigned __int128 val = *(const unsigned __int128*)numeric_data->data;
-            std::string str;
-            while (val > 0) {
-                int digit = val % 10;
-                str = char('0' + digit) + str;
-                val /= 10;
-            }
-            ss << (str.empty() ? "0" : str);
+        #if JUSTC_FLOAT128_SUPPORT
+        case NumericType::FLOAT128: {
+            char buffer[64];
+            quadmath_snprintf(buffer, sizeof(buffer), "%.20Qe", 
+                             *(const __float128*)numeric_data->data);
+            ss << buffer;
             break;
         }
-        case NumericType::FLOAT128:
-            #ifdef __SIZEOF_FLOAT128__
-            {
-                char buffer[64];
-                quadmath_snprintf(buffer, sizeof(buffer), "%.20Qe", 
-                                 *(const __float128*)numeric_data->data);
-                ss << buffer;
-            }
-            #else
-                ss << std::setprecision(18) << *(long double*)numeric_data->data;
-            #endif
-            break;
+        #endif
         default:
             ss << numeric_data->value;
             break;
@@ -3888,11 +3905,19 @@ unsigned __int128 Parser::parseToUInt128(const std::string& str) {
 #else
 long long Parser::parseToInt128(const std::string& str) {
     std::string cleaned = stripUnderscores(str);
-    return std::stoll(cleaned);
+    try {
+        return std::stoll(cleaned);
+    } catch (...) {
+        return 0;
+    }
 }
 unsigned long long Parser::parseToUInt128(const std::string& str) {
     std::string cleaned = stripUnderscores(str);
-    return std::stoull(cleaned);
+    try {
+        return std::stoull(cleaned);
+    } catch (...) {
+        return 0;
+    }
 }
 #endif
 #ifdef __SIZEOF_FLOAT128__

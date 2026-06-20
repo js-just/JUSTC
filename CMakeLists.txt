@@ -317,6 +317,14 @@ else()
     target_compile_options(justc_cli PRIVATE -std=c++17)
 endif()
 
+
+find_library(QUADMATH_LIB quadmath)
+if(QUADMATH_LIB)
+    target_link_libraries(justc_core PRIVATE ${QUADMATH_LIB})
+    target_link_libraries(justc_cli PRIVATE ${QUADMATH_LIB})
+    target_link_libraries(justc_lib PRIVATE ${QUADMATH_LIB})
+endif()
+
 set_property(TARGET justc_core PROPERTY
     MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 

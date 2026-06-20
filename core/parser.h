@@ -54,8 +54,10 @@ SOFTWARE.
     using int128_t = __int128;
     using uint128_t = unsigned __int128;
     #ifdef __SIZEOF_FLOAT128__
-        #define JUSTC_HAS_FLOAT128 1
-        #include <quadmath.h>
+        #if JUSTC_HAS_QUADMATH
+            #define JUSTC_HAS_FLOAT128 1
+            #include <quadmath.h>
+        #endif
     #else
         #define JUSTC_HAS_FLOAT128 0
     #endif

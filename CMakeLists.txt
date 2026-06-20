@@ -323,6 +323,9 @@ if(QUADMATH_LIB)
     target_link_libraries(justc_core PRIVATE ${QUADMATH_LIB})
     target_link_libraries(justc_cli PRIVATE ${QUADMATH_LIB})
     target_link_libraries(justc_lib PRIVATE ${QUADMATH_LIB})
+    target_compile_definitions(justc_core PRIVATE JUSTC_HAS_QUADMATH=1)
+else()
+    target_compile_definitions(justc_core PRIVATE JUSTC_HAS_QUADMATH=0)
 endif()
 
 set_property(TARGET justc_core PROPERTY

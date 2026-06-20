@@ -55,8 +55,10 @@ SOFTWARE.
 #include <functional>
 
 #ifdef __SIZEOF_FLOAT128__
-    #include <quadmath.h>
-    #define JUSTC_FLOAT128_SUPPORT 1
+    #if JUSTC_HAS_QUADMATH
+        #include <quadmath.h>
+        #define JUSTC_FLOAT128_SUPPORT 1
+    #endif
 #else
     #define JUSTC_FLOAT128_SUPPORT 0
 #endif
@@ -517,15 +519,17 @@ std::string Value::toNumericString() const {
         case NumericType::UINT64:
             ss << *(uint64_t*)numeric_data->data;
             break;
-        #if JUSTC_FLOAT128_SUPPORT
         case NumericType::FLOAT128: {
-            char buffer[64];
-            quadmath_snprintf(buffer, sizeof(buffer), "%.20Qe", 
-                             *(const __float128*)numeric_data->data);
-            ss << buffer;
+            #if JUSTC_FLOAT128_SUPPORT
+                char buffer[64];
+                quadmath_snprintf(buffer, sizeof(buffer), "%.20Qe", 
+                                *(const __float128*)numeric_data->data);
+                ss << buffer;
+            #else
+                ss << std::setprecision(18) << *(long double*)numeric_data->data;
+            #endif
             break;
         }
-        #endif
         default:
             ss << numeric_data->value;
             break;

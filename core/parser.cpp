@@ -58,6 +58,8 @@ SOFTWARE.
     #if JUSTC_HAS_QUADMATH
         #include <quadmath.h>
         #define JUSTC_FLOAT128_SUPPORT 1
+    #else
+        #define JUSTC_FLOAT128_SUPPORT 0
     #endif
 #else
     #define JUSTC_FLOAT128_SUPPORT 0

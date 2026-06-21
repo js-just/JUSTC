@@ -667,32 +667,32 @@ Parser::Parser(
     // built-in spaces / type methods
 
     typeMethods[DataType::STRING] = {
-        {"Reverse", builtinObjectFunction("String::Reverse")},
-        {"GraphemeReverse", builtinObjectFunction("String::GraphemeReverse")},
-        {"CodePointReverse", builtinObjectFunction("String::CodePointReverse")},
-        {"ByteReverse", builtinObjectFunction("String::ByteReverse")},
-        {"Trim", builtinObjectFunction("String::Trim")},
-        {"Repeat", builtinObjectFunction("String::Repeat")},
-        {"Slice", builtinObjectFunction("String::Slice")},
-        {"GraphemeSlice", builtinObjectFunction("String::GraphemeSlice")},
-        {"CodePointSlice", builtinObjectFunction("String::CodePointSlice")},
-        {"ByteSlice", builtinObjectFunction("String::ByteSlice")},
-        {"Lower", builtinObjectFunction("String::Lower")},
-        {"Upper", builtinObjectFunction("String::Upper")},
-        {"NormalizeNFC", builtinObjectFunction("String::NormalizeNFC")},
-        {"NormalizeNFD", builtinObjectFunction("String::NormalizeNFD")},
-        {"NormalizeNFKC", builtinObjectFunction("String::NormalizeNFKC")},
-        {"NormalizeNFKD", builtinObjectFunction("String::NormalizeNFKD")},
-        {"Length", builtinObjectFunction("String::Length")},
-        {"GraphemeLength", builtinObjectFunction("String::GraphemeLength")},
-        {"CodePointLength", builtinObjectFunction("String::CodePointLength")},
-        {"ByteLength", builtinObjectFunction("String::ByteLength")},
-        {"Size", builtinObjectFunction("String::Size")},
-        {"EqualsIgnoreCase", builtinObjectFunction("String::EqualsIgnoreCase")},
-        {"IsWhitespace", builtinObjectFunction("String::IsWhitespace")},
-        {"StartsWith", builtinObjectFunction("String::StartsWith")},
-        {"EndsWith", builtinObjectFunction("String::EndsWith")},
-        {"Split", builtinObjectFunction("String::Split")},
+        {"Reverse", "String::Reverse"},
+        {"GraphemeReverse", "String::GraphemeReverse"},
+        {"CodePointReverse", "String::CodePointReverse"},
+        {"ByteReverse", "String::ByteReverse"},
+        {"Trim", "String::Trim"},
+        {"Repeat", "String::Repeat"},
+        {"Slice", "String::Slice"},
+        {"GraphemeSlice", "String::GraphemeSlice"},
+        {"CodePointSlice", "String::CodePointSlice"},
+        {"ByteSlice", "String::ByteSlice"},
+        {"Lower", "String::Lower"},
+        {"Upper", "String::Upper"},
+        {"NormalizeNFC", "String::NormalizeNFC"},
+        {"NormalizeNFD", "String::NormalizeNFD"},
+        {"NormalizeNFKC", "String::NormalizeNFKC"},
+        {"NormalizeNFKD", "String::NormalizeNFKD"},
+        {"Length", "String::Length"},
+        {"GraphemeLength", "String::GraphemeLength"},
+        {"CodePointLength", "String::CodePointLength"},
+        {"ByteLength", "String::ByteLength"},
+        {"Size", "String::Size"},
+        {"EqualsIgnoreCase", "String::EqualsIgnoreCase"},
+        {"IsWhitespace", "String::IsWhitespace"},
+        {"StartsWith", "String::StartsWith"},
+        {"EndsWith", "String::EndsWith"},
+        {"Split", "String::Split"}
     };
 
     // built-in variables
@@ -5484,7 +5484,8 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
     std::string rootName = std::get<std::string>(accessChain[0]);
     Value currentValue = resolveVariableValue(rootName, false);
 
-    void checkTypeMethods() {
+    std::string error = "\"" + rootName + "\" is not an object. Attempt to access property or index of not an object";
+    auto checkTypeMethods = [&]() -> Value {
         if (doExecute) {
             auto it = typeMethods.find(currentValue.type);
             auto last = accessChain.back();
@@ -5512,10 +5513,11 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
                 }, currentToken().start);
             }
         }
-        throw std::runtime_error("\"" + rootName + "\" is not an object. Attempt to access property or index of not an object at " + Utility::position(currentToken().start, input) + ".");
-    }
+        throw std::runtime_error(error + " at " + Utility::position(currentToken().start, input) + ".");
+    };
 
-    if (!currentValue.isObject() && accessChain.size() > 1) checkTypeMethods();
+    if (!currentValue.isObject() && accessChain.size() > 1) return checkTypeMethods();
+    error = "Cannot access property of non-object";
 
     for (size_t i = 1; i < accessChain.size() - 1; i++) {
         if (std::holds_alternative<std::string>(accessChain[i])) {
@@ -5526,7 +5528,7 @@ Value Parser::parseObjectPropertyAccess(bool doExecute) {
             currentValue = accessIndex(currentValue, index);
         }
 
-        if (!currentValue.isObject()) checkTypeMethods();
+        if (!currentValue.isObject()) return checkTypeMethods();
     }
 
     auto last = accessChain.back();

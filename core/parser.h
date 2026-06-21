@@ -557,7 +557,7 @@ private:
     uint64_t currentScope;
     uint64_t rootIndex;
     
-    std::unordered_map<DataType, std::unordered_map<std::string, value>> typeMethods;
+    std::unordered_map<DataType, std::unordered_map<std::string, std::string>> typeMethods;
 
     // logs
     void addLog(const std::string& type, const std::string& message, size_t position = 0);

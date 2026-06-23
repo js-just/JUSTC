@@ -3600,15 +3600,15 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
         auto it = typeMethods.find(left.type);
         std::string funcName = right.toString();
         if (it != typeMethods.end()) {
-            auto itFunc = typeMethods[currentValue.type].find(funcName);
-            if (itFunc != typeMethods[currentValue.type].end()) {
+            auto itFunc = typeMethods[left.type].find(funcName);
+            if (itFunc != typeMethods[left.type].end()) {
                 if (match("(")) {
-                    std::vector<Value> args = {currentValue};
+                    std::vector<Value> args = {left};
                     std::vector<Value> additionalArgs = parseArguments(doExecute);
                     args.insert(args.end(), additionalArgs.begin(), additionalArgs.end());
-                    return executeFunction(typeMethods[currentValue.type][funcName], args, currentToken().start);
+                    return executeFunction(typeMethods[left.type][funcName], args, currentToken().start);
                 } else {
-                    return executeFunction(typeMethods[currentValue.type][funcName], {currentValue}, currentToken().start);
+                    return executeFunction(typeMethods[left.type][funcName], {left}, currentToken().start);
                 }
             }
         }

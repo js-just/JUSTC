@@ -186,7 +186,7 @@ std::string Value::toIdentifier() const {
         case DataType::CLASS:
         case DataType::SPACE:
             return name;
-        default
+        default:
             return toString();
     }
 }

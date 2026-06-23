@@ -191,14 +191,14 @@ std::string Value::toString() const {
                 std::string td = dataTypeToTypeDecl(function_info.paramTypes[i]);
                 Value dv = function_info.defaultValues[i];
 
-                args << arg.name;
+                args << arg;
                 if (td != "auto") args << " : " << td;
                 if (dv.type != DataType::UNKNOWN && dv.type != DataType::NULL_TYPE) args << " = " << dv.toString();
                 
                 first = false;
             }
 
-            return "[" + (
+            return std::string("[") + (
                 function_info.isIsolated ? "isolated " : ""
             ) + "function" + name + (
                 array_elements.size() > 0 ? " [" + ae.str() + "] " : ""

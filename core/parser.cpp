@@ -202,7 +202,7 @@ std::string Value::toString() const {
                 function_info.isIsolated ? "isolated " : ""
             ) + "function" + name + (
                 array_elements.size() > 0 ? " [" + ae.str() + "] " : ""
-            ) + "(" + args + ") {" + string_value + "}]";
+            ) + "(" + args.str() + ") {" + string_value + "}]";
         }
         default:
             return "unknown";

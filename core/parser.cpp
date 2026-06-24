@@ -959,6 +959,7 @@ void Parser::advance() {
     if (position < tokens.size()) {
         position++;
     }
+    addLog("ECHO", std::string(position), position);
 }
 
 bool Parser::match(const std::string& type) const {

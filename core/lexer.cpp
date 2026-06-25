@@ -636,7 +636,7 @@ void Lexer::tokenize() {
             char qch = peek();
             position++;
             ParserToken str = readString(qch, qch == '\'');
-            std::srting type = ch == 'l' ? "Luau" : ch == 'j' ? "JavaScript" : ch == 'c' ? "JUSTC" : "JUSTO";
+            std::string type = ch == 'l' ? "Luau" : ch == 'j' ? "JavaScript" : ch == 'c' ? "JUSTC" : "JUSTO";
             tokens.push_back(ParserToken{type, str.value, str.start});
             if (warn) {
                 #ifdef __EMSCRIPTEN__

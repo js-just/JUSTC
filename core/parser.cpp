@@ -1059,7 +1059,7 @@ ParseResult Parser::parse(bool doExecute) {
                     auto it = typeMethods.find(var.type);
 
                     if (var.type != DataType::UNKNOWN && it != typeMethods.end()) {
-                        std::string funcName = match("identifier") ? getIdentifier() : parseExpression(doExecute, true, false).toIdentifier();
+                        std::string funcName = (match("identifier") ? getIdentifier() : parseExpression(doExecute, true, false)).toIdentifier();
                         auto itFunc = typeMethods[var.type].find(funcName);
 
                         if (itFunc != typeMethods[var.type].end() && match("(")) {
@@ -2277,7 +2277,7 @@ Value Parser::parseFactor(bool doExecute, bool identifierMode, bool doFunctionCa
         advance();
 
         Value right = op == ":" && !Utility::checkNumber(right) ? (
-            match("identifier") ? getIdentifier() : parsePower(doExecute, true, false); // method call
+            match("identifier") ? getIdentifier() : parsePower(doExecute, true, false) // method call
         ) : parsePower(doExecute, identifierMode, doFunctionCall);
         
         left = evaluateExpression(left, op, right, doExecute);
@@ -3727,7 +3727,7 @@ Value Parser::evaluateExpression(const Value& left, const std::string& op, const
                     std::vector<Value> additionalArgs = parseArguments(doExecute);
                     args.insert(args.end(), additionalArgs.begin(), additionalArgs.end());
                     result = executeFunction(typeMethods[left.type][funcName], args, currentToken().start);
-                } 
+                }
                 else throw std::runtime_error("Expected \"(\" for function call at " + Utility::position(currentToken().start, input) + ".");
             } 
             else throw std::runtime_error("<" + dataTypeToString(left.type) + ">" + op + funcName + " is not a function. Call attempt at " + Utility::position(currentToken().start, input) + ".");

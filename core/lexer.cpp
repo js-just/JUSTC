@@ -640,7 +640,7 @@ void Lexer::tokenize() {
             tokens.push_back(ParserToken{type, str.value, str.start});
             if (warn) {
                 #ifdef __EMSCRIPTEN__
-                warn_lexer_lang(Parser::getCurrentTimestamp().c_str(), Utility::position(startPos, input).c_str(), type.c_str());
+                warn_lexer_lang(Parser::getCurrentTimestamp().c_str(), Utility::position(position, input).c_str(), type.c_str());
                 #else
                 std::cout << warnPrefix + "Warning: " + type + " may be corrupted in the lexer output." << std::endl;
                 #endif

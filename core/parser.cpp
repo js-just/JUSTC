@@ -2434,7 +2434,7 @@ Value Parser::parseTerm(bool doExecute, bool identifierMode, bool doFunctionCall
     return left;
 }
 
-Value Parser::parseFactor(bool doExecute, bool identifierMode, bool doFunctionCal, bool ignoreColon) {
+Value Parser::parseFactor(bool doExecute, bool identifierMode, bool doFunctionCall, bool ignoreColon) {
     Value left = parsePower(doExecute, identifierMode, doFunctionCall, ignoreColon);
 
     while (match("*") || match("/") || match("%") || (match(":") && !(identifierMode || ignoreColon))) {

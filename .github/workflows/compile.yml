@@ -357,7 +357,7 @@ jobs:
       - name: Download compiled files
         uses: actions/download-artifact@v4
         with:
-          name: compiled-wasm
+          name: justc-javascript-wasm
           path: javascript_output/${{ needs.determine-dirpath.outputs.dirpath }}/
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -373,7 +373,7 @@ jobs:
       - name: Download compiled files
         uses: actions/download-artifact@v4
         with:
-          name: compiled-wasm
+          name: justc-javascript-wasm
           path: javascript_output/${{ needs.determine-dirpath.outputs.dirpath }}/
       - name: Cleanup
         run: rm javascript_output/$OUTPUT_DIR/test.js && rm -rf javascript/JUSTC

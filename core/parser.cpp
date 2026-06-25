@@ -1144,7 +1144,7 @@ ParseResult Parser::parse(bool doExecute) {
 
                             ASTNode node("VARIABLE_DECLARATION", var.isVariable ? var.variable : result.name, currentToken().start);
                             node.value = result;
-                            if (var.isVariable) assign(var, val, " at " + Utility::position(currentToken().start, input) + ".");
+                            if (var.isVariable) assign(var, result, " at " + Utility::position(currentToken().start, input) + ".");
                             else variables[result.name] = result;
 
                             ast.push_back(node);

@@ -1,6 +1,3 @@
-#!/bin/bash
-set -e
-
 # MIT License
 #
 # Copyright (c) 2025-2026 JustStudio. <https://juststudio.is-a.dev/>
@@ -23,6 +20,8 @@ set -e
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+#!/bin/bash
+set -e
 OPTIONS="${1:-""}"
 
 g++ --version

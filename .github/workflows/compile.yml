@@ -97,11 +97,112 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Compile
+      
+      - name: Install Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+      
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      
+      - name: Install CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.28'
+      
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            vcpkg
+            build/vcpkg_installed
+            build/_deps
+            vcpkg/downloads
+            vcpkg/packages
+            vcpkg/installed
+            vcpkg_cache
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('CMakeLists.txt', 'vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+      
+      - name: Cache vcpkg binaries
+        uses: actions/cache@v4
+        with:
+          path: vcpkg_cache
+          key: ${{ runner.os }}-vcpkg-binary-${{ hashFiles('vcpkg.json','CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-binary-
+      
+      - name: Setup vcpkg
         shell: pwsh
         run: |
-          ./windows/compile.ps1
+          New-Item -ItemType Directory -Force -Path vcpkg_cache
+          if (!(Test-Path "vcpkg")) {
+            git clone --depth=1 https://github.com/microsoft/vcpkg.git
+          }
+          ./vcpkg/bootstrap-vcpkg.bat
+      
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          ./vcpkg/vcpkg install cpr:x64-windows-static --recurse
+          ./vcpkg/vcpkg install libidn2:x64-windows-static --recurse
+          ./vcpkg/vcpkg install icu:x64-windows-static --recurse
+          ./vcpkg/vcpkg install boost-multiprecision:x64-windows-static --recurse
+      
+      - name: Clean build directory
+        shell: pwsh
+        run: |
+          if (Test-Path "build") {
+            Remove-Item -Recurse -Force build
+          }
+          if (Test-Path "CMakeCache.txt") {
+            Remove-Item CMakeCache.txt
+          }
+          if (Test-Path "CMakeFiles") {
+            Remove-Item -Recurse -Force CMakeFiles
+          }
+          if (Test-Path "_deps") {
+            Remove-Item -Recurse -Force _deps
+          }
+      
+      - name: Configure CMake with Ninja + MSVC
+        shell: pwsh
+        run: |
+          cmake -B build -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+            -DBoost_USE_STATIC_LIBS=ON `
+            -DCMAKE_CXX_COMPILER=cl.exe `
+            -DCMAKE_C_COMPILER=cl.exe `
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static" `
+            -DCMAKE_LIBRARY_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static/lib" `
+            -DCMAKE_INCLUDE_PATH="${{ github.workspace }}/vcpkg/installed/x64-windows-static/include"
+      
+      - name: Remove QuickJS version file
+        shell: pwsh
+        run: |
+          $paths = @(
+            "build/_deps/quickjs-src/version",
+            "_deps/quickjs-src/version",
+            "build/_deps/quickjscmake-build/__/quickjs-src/version"
+          )
+          foreach ($p in $paths) {
+            if (Test-Path $p) {
+              Remove-Item $p -Force
+              Write-Host "Removed: $p"
+            }
+          }
+      
+      - name: Build
+        shell: pwsh
+        run: |
+          $cores = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+          $jobs = [Math]::Min($cores + 1, 8)
+          Write-Host "Building with -j $jobs"
+          cmake --build build --config Release -j $jobs
       
       - name: Upload CLI
         uses: actions/upload-artifact@v4
@@ -114,10 +215,25 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Compile
-        run: bash macos/compile.sh
-
+      - name: Install dependencies
+        run: |
+          brew install libidn2 pkg-config boost icu4c
+          if [ ! -f /opt/homebrew/lib/libidn2.dylib ] && [ -f /opt/homebrew/lib/libidn2.0.dylib ]; then
+            ln -sf /opt/homebrew/lib/libidn2.0.dylib /opt/homebrew/lib/libidn2.dylib
+          fi
+      - name: Configure with explicit library path
+        run: |
+          export LDFLAGS="-L/opt/homebrew/lib"
+          export CPPFLAGS="-I/opt/homebrew/include"
+          export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXE_LINKER_FLAGS="-L/opt/homebrew/lib" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-L/opt/homebrew/lib" \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix icu4c)"
+      - name: Fix QuickJS version conflict
+        run: rm -f build/_deps/quickjs-src/version
+      - name: Build
+        run: cmake --build build --config Release
       - name: Upload CLI
         uses: actions/upload-artifact@v4
         with:

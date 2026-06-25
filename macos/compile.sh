@@ -25,18 +25,29 @@ set -e
 
 OPTIONS="${1:-""}"
 
-g++ --version
+brew --version
 
-sudo apt-get update
-sudo apt-get install -y libcurl4-openssl-dev cmake build-essential pkg-config zip libboost-all-dev libicu-dev libidn2-dev
+brew install libidn2 pkg-config boost icu4c
 
-sudo apt-get install -y libluau-dev libluau0 || echo "Luau not available in packages, will build from source"
+if [ ! -f /opt/homebrew/lib/libidn2.dylib ] && [ -f /opt/homebrew/lib/libidn2.0.dylib ]; then
+    ln -sf /opt/homebrew/lib/libidn2.0.dylib /opt/homebrew/lib/libidn2.dylib
+fi
+
+export LDFLAGS="-L/opt/homebrew/lib"
+export CPPFLAGS="-I/opt/homebrew/include"
+export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 mkdir -p build
 cd build
-cmake .. $OPTIONS -DCMAKE_EXE_LINKER_FLAGS="-lquadmath" -DCMAKE_SHARED_LINKER_FLAGS="-lquadmath"
-make -j$(nproc)
+cmake .. $OPTIONS \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_EXE_LINKER_FLAGS="-L/opt/homebrew/lib" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-L/opt/homebrew/lib" \
+    -DCMAKE_PREFIX_PATH="$(brew --prefix icu4c)"
 
+rm -f build/_deps/quickjs-src/version 2>/dev/null || true
+
+make -j$(sysctl -n hw.ncpu)
 sudo make install
 
 hash -r
@@ -49,9 +60,6 @@ if [[ "$OPTIONS" == "" ]] && ! command -v justc &> /dev/null; then
     echo -e "::error::CMake error." && exit 1
 fi
 
-sudo ldconfig
-
 echo "Built files:"
-
-find . -name "*.so"
+find . -name "*.dylib"
 find . -name "justc"

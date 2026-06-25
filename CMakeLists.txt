@@ -49,6 +49,14 @@ if(NUM_PROCESSORS EQUAL 0)
 endif()
 set(CMAKE_BUILD_PARALLEL_LEVEL ${NUM_PROCESSORS})
 
+option(JUSTC_WITHOUT_LUAU "Build without Luau support" OFF)
+option(JUSTC_WITHOUT_JAVASCRIPT "Build without JavaScript support" OFF)
+option(JUSTC_WITHOUT_JS_LUAU "Build without both JavaScript and Luau" OFF)
+if(JUSTC_WITHOUT_JS_LUAU)
+    set(JUSTC_WITHOUT_LUAU ON)
+    set(JUSTC_WITHOUT_JAVASCRIPT ON)
+endif()
+
 if(MSVC)
     add_compile_options(
         /O2
@@ -102,113 +110,117 @@ else()
     message(STATUS "Found system CPR: ${cpr_VERSION}")
 endif()
 
-message(STATUS "Installing QuickJS CMake...")
-if(NOT MSVC)
-    FetchContent_Declare(quickjscmake
-        GIT_REPOSITORY https://github.com/robloach/quickjs-cmake.git
-        GIT_TAG master
-    )
-    FetchContent_MakeAvailable(quickjscmake)
-endif()
-
-if(NOT MSVC)
-    # MSVC compatibility for QuickJS - not needed since disabled
-endif()
-
-message(STATUS "Installing Luau...")
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
-    FetchContent_Declare(luau
-        GIT_REPOSITORY https://github.com/Roblox/luau.git
-        GIT_TAG 0.699
-    )
-
-    set(LUAU_BUILD_CLI OFF CACHE BOOL "Disable CLI")
-    set(LUAU_BUILD_TESTS OFF CACHE BOOL "Disable tests")
-    set(LUAU_BUILD_WEB OFF CACHE BOOL "Disable web build")
-
-    FetchContent_MakeAvailable(luau)
-
-    if(luau_POPULATED)
-        message(STATUS "Luau successfully configured")
-
-        add_library(luau_lib STATIC
-            ${luau_SOURCE_DIR}/Ast/src/Ast.cpp
-            ${luau_SOURCE_DIR}/Ast/src/Confusables.cpp
-            ${luau_SOURCE_DIR}/Ast/src/Lexer.cpp
-            ${luau_SOURCE_DIR}/Ast/src/Location.cpp
-            ${luau_SOURCE_DIR}/Ast/src/Parser.cpp
-            ${luau_SOURCE_DIR}/Common/src/StringUtils.cpp
-            ${luau_SOURCE_DIR}/Ast/src/TimeTrace.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/Builtins.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/BuiltinFolding.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/BytecodeBuilder.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/Compiler.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/ConstantFolding.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/CostModel.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/lcode.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/TableShape.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/ValueTracking.cpp
-            ${luau_SOURCE_DIR}/VM/src/lapi.cpp
-            ${luau_SOURCE_DIR}/VM/src/laux.cpp
-            ${luau_SOURCE_DIR}/VM/src/lbaselib.cpp
-            ${luau_SOURCE_DIR}/VM/src/lbitlib.cpp
-            ${luau_SOURCE_DIR}/VM/src/lbuiltins.cpp
-            ${luau_SOURCE_DIR}/VM/src/lcorolib.cpp
-            ${luau_SOURCE_DIR}/VM/src/ldblib.cpp
-            ${luau_SOURCE_DIR}/VM/src/ldebug.cpp
-            ${luau_SOURCE_DIR}/VM/src/ldo.cpp
-            ${luau_SOURCE_DIR}/VM/src/lfunc.cpp
-            ${luau_SOURCE_DIR}/VM/src/lgc.cpp
-            ${luau_SOURCE_DIR}/VM/src/linit.cpp
-            ${luau_SOURCE_DIR}/VM/src/lmathlib.cpp
-            ${luau_SOURCE_DIR}/VM/src/lmem.cpp
-            ${luau_SOURCE_DIR}/VM/src/lobject.cpp
-            ${luau_SOURCE_DIR}/VM/src/loslib.cpp
-            ${luau_SOURCE_DIR}/VM/src/lperf.cpp
-            ${luau_SOURCE_DIR}/VM/src/lstate.cpp
-            ${luau_SOURCE_DIR}/VM/src/lstring.cpp
-            ${luau_SOURCE_DIR}/VM/src/lstrlib.cpp
-            ${luau_SOURCE_DIR}/VM/src/ltable.cpp
-            ${luau_SOURCE_DIR}/VM/src/ltablib.cpp
-            ${luau_SOURCE_DIR}/VM/src/ltm.cpp
-            ${luau_SOURCE_DIR}/VM/src/ludata.cpp
-            ${luau_SOURCE_DIR}/VM/src/lutf8lib.cpp
-            ${luau_SOURCE_DIR}/VM/src/lvmexecute.cpp
-            ${luau_SOURCE_DIR}/VM/src/lvmload.cpp
-            ${luau_SOURCE_DIR}/VM/src/lvmutils.cpp
-            ${luau_SOURCE_DIR}/Ast/src/Allocator.cpp
-            ${luau_SOURCE_DIR}/Ast/src/Cst.cpp
-            ${luau_SOURCE_DIR}/Ast/src/PrettyPrinter.cpp
-            ${luau_SOURCE_DIR}/Compiler/src/Types.cpp
-            ${luau_SOURCE_DIR}/VM/src/lbuffer.cpp
-            ${luau_SOURCE_DIR}/VM/src/lbuflib.cpp
-            ${luau_SOURCE_DIR}/VM/src/lgcdebug.cpp
-            ${luau_SOURCE_DIR}/VM/src/lnumprint.cpp
-            ${luau_SOURCE_DIR}/VM/src/lveclib.cpp
+if(NOT JUSTC_WITHOUT_JAVASCRIPT)
+    message(STATUS "Installing QuickJS CMake...")
+    if(NOT MSVC)
+        FetchContent_Declare(quickjscmake
+            GIT_REPOSITORY https://github.com/robloach/quickjs-cmake.git
+            GIT_TAG master
         )
-
-        target_include_directories(luau_lib PUBLIC
-            ${luau_SOURCE_DIR}/Ast/include
-            ${luau_SOURCE_DIR}/Compiler/include
-            ${luau_SOURCE_DIR}/VM/include
-            ${luau_SOURCE_DIR}/Common/include
-        )
-
-        target_compile_definitions(luau_lib PRIVATE
-            LUA_USE_LINUX
-            LUAU_FASTCALL
-        )
-
-        if(MSVC)
-            target_compile_options(luau_lib PRIVATE /W0)
-        else()
-            target_compile_options(luau_lib PRIVATE -w)
-        endif()
-
-        message(STATUS "Luau built from source")
+        FetchContent_MakeAvailable(quickjscmake)
     endif()
 else()
-    message(WARNING "Please use CMake 3.14+")
+    message(STATUS "Building WITHOUT JavaScript support")
+endif()
+
+if(NOT JUSTC_WITHOUT_LUAU)
+    message(STATUS "Installing Luau...")
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
+        FetchContent_Declare(luau
+            GIT_REPOSITORY https://github.com/Roblox/luau.git
+            GIT_TAG 0.699
+        )
+
+        set(LUAU_BUILD_CLI OFF CACHE BOOL "Disable CLI")
+        set(LUAU_BUILD_TESTS OFF CACHE BOOL "Disable tests")
+        set(LUAU_BUILD_WEB OFF CACHE BOOL "Disable web build")
+
+        FetchContent_MakeAvailable(luau)
+
+        if(luau_POPULATED)
+            message(STATUS "Luau successfully configured")
+
+            add_library(luau_lib STATIC
+                ${luau_SOURCE_DIR}/Ast/src/Ast.cpp
+                ${luau_SOURCE_DIR}/Ast/src/Confusables.cpp
+                ${luau_SOURCE_DIR}/Ast/src/Lexer.cpp
+                ${luau_SOURCE_DIR}/Ast/src/Location.cpp
+                ${luau_SOURCE_DIR}/Ast/src/Parser.cpp
+                ${luau_SOURCE_DIR}/Common/src/StringUtils.cpp
+                ${luau_SOURCE_DIR}/Ast/src/TimeTrace.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/Builtins.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/BuiltinFolding.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/BytecodeBuilder.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/Compiler.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/ConstantFolding.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/CostModel.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/lcode.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/TableShape.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/ValueTracking.cpp
+                ${luau_SOURCE_DIR}/VM/src/lapi.cpp
+                ${luau_SOURCE_DIR}/VM/src/laux.cpp
+                ${luau_SOURCE_DIR}/VM/src/lbaselib.cpp
+                ${luau_SOURCE_DIR}/VM/src/lbitlib.cpp
+                ${luau_SOURCE_DIR}/VM/src/lbuiltins.cpp
+                ${luau_SOURCE_DIR}/VM/src/lcorolib.cpp
+                ${luau_SOURCE_DIR}/VM/src/ldblib.cpp
+                ${luau_SOURCE_DIR}/VM/src/ldebug.cpp
+                ${luau_SOURCE_DIR}/VM/src/ldo.cpp
+                ${luau_SOURCE_DIR}/VM/src/lfunc.cpp
+                ${luau_SOURCE_DIR}/VM/src/lgc.cpp
+                ${luau_SOURCE_DIR}/VM/src/linit.cpp
+                ${luau_SOURCE_DIR}/VM/src/lmathlib.cpp
+                ${luau_SOURCE_DIR}/VM/src/lmem.cpp
+                ${luau_SOURCE_DIR}/VM/src/lobject.cpp
+                ${luau_SOURCE_DIR}/VM/src/loslib.cpp
+                ${luau_SOURCE_DIR}/VM/src/lperf.cpp
+                ${luau_SOURCE_DIR}/VM/src/lstate.cpp
+                ${luau_SOURCE_DIR}/VM/src/lstring.cpp
+                ${luau_SOURCE_DIR}/VM/src/lstrlib.cpp
+                ${luau_SOURCE_DIR}/VM/src/ltable.cpp
+                ${luau_SOURCE_DIR}/VM/src/ltablib.cpp
+                ${luau_SOURCE_DIR}/VM/src/ltm.cpp
+                ${luau_SOURCE_DIR}/VM/src/ludata.cpp
+                ${luau_SOURCE_DIR}/VM/src/lutf8lib.cpp
+                ${luau_SOURCE_DIR}/VM/src/lvmexecute.cpp
+                ${luau_SOURCE_DIR}/VM/src/lvmload.cpp
+                ${luau_SOURCE_DIR}/VM/src/lvmutils.cpp
+                ${luau_SOURCE_DIR}/Ast/src/Allocator.cpp
+                ${luau_SOURCE_DIR}/Ast/src/Cst.cpp
+                ${luau_SOURCE_DIR}/Ast/src/PrettyPrinter.cpp
+                ${luau_SOURCE_DIR}/Compiler/src/Types.cpp
+                ${luau_SOURCE_DIR}/VM/src/lbuffer.cpp
+                ${luau_SOURCE_DIR}/VM/src/lbuflib.cpp
+                ${luau_SOURCE_DIR}/VM/src/lgcdebug.cpp
+                ${luau_SOURCE_DIR}/VM/src/lnumprint.cpp
+                ${luau_SOURCE_DIR}/VM/src/lveclib.cpp
+            )
+
+            target_include_directories(luau_lib PUBLIC
+                ${luau_SOURCE_DIR}/Ast/include
+                ${luau_SOURCE_DIR}/Compiler/include
+                ${luau_SOURCE_DIR}/VM/include
+                ${luau_SOURCE_DIR}/Common/include
+            )
+
+            target_compile_definitions(luau_lib PRIVATE
+                LUA_USE_LINUX
+                LUAU_FASTCALL
+            )
+
+            if(MSVC)
+                target_compile_options(luau_lib PRIVATE /W0)
+            else()
+                target_compile_options(luau_lib PRIVATE -w)
+            endif()
+
+            message(STATUS "Luau built from source")
+        endif()
+    else()
+        message(WARNING "Please use CMake 3.14+")
+    endif()
+else()
+    message(STATUS "Building WITHOUT Luau support")
 endif()
 
 find_package(ICU REQUIRED COMPONENTS uc i18n)
@@ -250,11 +262,15 @@ target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
-target_link_libraries(justc_core PRIVATE
-    luau_lib
-)
+if (NOT JUSTC_WITHOUT_LUAU)
+    target_link_libraries(justc_core PRIVATE
+        luau_lib
+    )
+else()
+    target_compile_definitions(justc_core PRIVATE JUSTC_WITHOUT_LUAU=1)
+endif()
 
-if(NOT MSVC)
+if(NOT JUSTC_WITHOUT_JAVASCRIPT AND NOT MSVC)
     target_link_libraries(justc_core PRIVATE
         quickjs
         cpr
@@ -263,6 +279,9 @@ else()
     target_link_libraries(justc_core PRIVATE
         cpr::cpr
     )
+endif()
+if(JUSTC_WITHOUT_JAVASCRIPT)
+    target_compile_definitions(justc_core PRIVATE JUSTC_WITHOUT_JAVASCRIPT=1)
 endif()
 
 target_include_directories(justc_core SYSTEM PRIVATE

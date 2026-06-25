@@ -2133,7 +2133,7 @@ Value Parser::parsePipelineOrMethodCall(bool doExecute, bool identifierMode, boo
 
     while (match("|>") || (
         left.type != DataType::VARIABLE && left.type != DataType::UNKNOWN && (match("[") ||
-            (match(".") && position + 1 < tokens.size())
+            (match(".") && position + 1 < tokens.size() && ((position - 1 >= 0 && tokens[position - 1].type != "keyword") || !(position - 1 >= 0)))
         )
     )) {
         std::string op = currentToken().value;

@@ -219,20 +219,21 @@ set(CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/lexer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/keywords.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/from.json.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/to.json.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/fetch.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/to.xml.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/to.yaml.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/run.js.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/import.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/run.luau.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/unicode.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/builtins.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/from.justo.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/to.justo.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/cpptypes.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/serializer/json.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/serializer/justo.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/serializer/xml.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/serializer/yaml.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/parser/json.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/parser/justo.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/http/http.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/built-in/math/math.cpp

@@ -76,9 +76,6 @@ if(NOT Cereal_FOUND)
     )
     FetchContent_MakeAvailable(cereal)
     set(CEREAL_INCLUDE_DIR ${cereal_SOURCE_DIR}/include)
-    if(TARGET cereal)
-        target_compile_options(cereal PRIVATE -w)
-    endif()
 else()
     set(CEREAL_INCLUDE_DIR ${Cereal_INCLUDE_DIR})
 endif()
@@ -265,7 +262,7 @@ target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
-target_include_directories(justc_core PRIVATE ${CEREAL_INCLUDE_DIR})
+target_include_directories(justc_core SYSTEM PRIVATE ${CEREAL_INCLUDE_DIR})
 
 target_link_libraries(justc_core PRIVATE luau_lib)
 
@@ -280,7 +277,7 @@ target_link_libraries(justc_core PRIVATE ICU::uc ICU::i18n)
 add_library(justc_lib SHARED core/entry/lib.cpp)
 target_compile_definitions(justc_lib PRIVATE JUSTC_BUILD)
 target_include_directories(justc_lib PUBLIC core)
-target_include_directories(justc_lib PRIVATE ${CEREAL_INCLUDE_DIR})
+target_include_directories(justc_lib SYSTEM PRIVATE ${CEREAL_INCLUDE_DIR})
 target_link_libraries(justc_lib PUBLIC justc_core)
 
 if(NOT MSVC)
@@ -290,7 +287,7 @@ else()
 endif()
 
 add_executable(justc_cli core/entry/cli.cpp)
-target_include_directories(justc_cli PRIVATE ${CEREAL_INCLUDE_DIR})
+target_include_directories(justc_cli SYSTEM PRIVATE ${CEREAL_INCLUDE_DIR})
 target_link_libraries(justc_cli PRIVATE justc_core)
 set_target_properties(justc_cli PROPERTIES OUTPUT_NAME "justc")
 

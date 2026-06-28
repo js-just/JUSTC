@@ -24,8 +24,6 @@ SOFTWARE.
 
 */
 
-const { version } = require('os');
-
 (()=>{
     "use strict";
 

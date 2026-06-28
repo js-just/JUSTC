@@ -63,9 +63,10 @@ endif()
 
 include(FetchContent)
 
-set(CEREAL_BUILD_SANDBOX OFF CACHE BOOL "Disable sandbox examples")
-set(CEREAL_BUILD_DOCS OFF CACHE BOOL "Disable documentation")
-set(CEREAL_BUILD_TESTS OFF CACHE BOOL "Disable tests")
+set(BUILD_SANDBOX OFF CACHE BOOL "" FORCE)
+set(CEREAL_BUILD_SANDBOX OFF CACHE BOOL "Disable sandbox examples" FORCE)
+set(CEREAL_BUILD_DOCS OFF CACHE BOOL "Disable documentation" FORCE)
+set(CEREAL_BUILD_TESTS OFF CACHE BOOL "Disable tests" FORCE)
 find_package(Cereal QUIET)
 if(NOT Cereal_FOUND)
     message(STATUS "Cereal not found, downloading from GitHub...")

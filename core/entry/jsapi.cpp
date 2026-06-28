@@ -41,6 +41,7 @@ SOFTWARE.
 #include <unordered_map>
 #include <memory>
 #include <algorithm>
+#include "../compiler/justb.hpp"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -54,6 +55,10 @@ std::string outputString(std::string mode, Args... args) {
         return YamlSerializer::serialize(args...);
     } else if (mode == "justo") {
         return JUSTOSerializer::serialize(args...);
+    } else if (mode == "justb") {
+        std::stringstream ss;
+        JustbCompiler::compile(args[0], ss);
+        return ss.str();
     } else {
         return JsonSerializer::serialize(args...);
     }
@@ -131,7 +136,7 @@ extern "C" {
 
 char* lexer(const char* input, const char* outputMode) {
     if (input == nullptr) return nullptr;
-    std::string mode(outputMode == nullptr ? "justo" : outputMode);
+    std::string mode(outputMode == nullptr || outputMode == "justb" ? "justo" : outputMode);
 
     try {
         auto parsed = Lexer::parse(input, true);
@@ -393,6 +398,17 @@ char* justoParse(const char* justoString) {
     } catch (const std::exception& e) {
         return strdup(";");
     }
+}
+
+char* load(const char* bytes, const char* outputMode) {
+    if (bytes == nullptr) return nullptr;
+    std::string mode(outputMode == nullptr ? "json" : outputMode);
+
+    std::stringstream ss(std::string(bytes));
+    ParseResult result = JustbLoader::load(ss);
+
+    std::string json = outputString(mode, result);
+    return strdup(json.c_str());
 }
 
 }

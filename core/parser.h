@@ -41,6 +41,10 @@ SOFTWARE.
 #include <cstring>
 #include <iomanip>
 #include <limits>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/unordered_map.hpp>
+#include <cereal/types/memory.hpp>
 
 #ifdef _MSC_VER
     #define JUSTC_HAS_INT128 0
@@ -445,6 +449,43 @@ struct Value {
     }
     
     std::string toNumericString() const;
+
+    template <class Archive>
+    void serialize(Archive& archive) {
+        archive(type);
+        switch (type) {
+            case DataType::NUMBER:
+            case DataType::HEXADECIMAL:
+            case DataType::BINARY:
+            case DataType::OCTAL:
+                archive(number_value);
+                break;
+            case DataType::STRING:
+            case DataType::LINK:
+            case DataType::PATH:
+            case DataType::VARIABLE:
+                archive(string_value);
+                break;
+            case DataType::BOOLEAN:
+                archive(boolean_value);
+                break;
+            case DataType::JSON_OBJECT:
+            case DataType::JUSTC_OBJECT:
+                archive(properties);
+                break;
+            case DataType::JSON_ARRAY:
+                archive(array_elements);
+                break;
+            case DataType::FUNCTION:
+                archive(name, string_value, function_info);
+                break;
+            case DataType::BINARY_DATA:
+                archive(binary_data);
+                break;
+            default:
+                break;
+        }
+    }
 };
 
 struct LogEntry {

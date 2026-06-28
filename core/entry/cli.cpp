@@ -38,6 +38,7 @@ SOFTWARE.
 #include <tuple>
 #include "../utility.h"
 #include "../justo.hpp"
+#include "../compiler/justb.hpp"
 
 void logError(const std::string error) {
     if (Utility::isGitHubActions()) std::cerr << "::error::" + error << std::endl;
@@ -126,6 +127,7 @@ void printUsage() {
     std::cout << "" << std::endl;
     std::cout << "Flags:" << std::endl;
     std::cout << "  -a, --async                           - Evaluate script variables asynchronously (may run faster)" << std::endl;
+    std::cout << "  -b, --justb                           - Output as JUSTB (Just an Ultimate Site Tool Binary file format)" << std::endl;
     std::cout << "  -e, --eval                            - Execute (Evaluate) script (not file)" << std::endl;
     std::cout << "  -E, --execute                         - Execute JUSTC from lexer output tokens as JSON" << std::endl;
     std::cout << "  -h, --help                            - Print JUSTC command line options (this list)" << std::endl;
@@ -220,6 +222,10 @@ std::string outputString(cmdFlags flags, Args... args) {
         return YamlSerializer::serialize(args...);
     } else if (flags.outputMode == "justo") {
         return JUSTOSerializer::serialize(args...);
+    } else if (flags.outputMode == "justb") {
+        std::stringstream ss;
+        JustbCompiler::compile(args[0], ss);
+        return ss.str();
     } else {
         return JsonSerializer::serialize(args...);
     }
@@ -324,6 +330,9 @@ int main(int argc, char* argv[]) {
             else if (arg == "--json-justc" || arg == "-O") {
                 flags.mode = "stringify";
                 flags.outputMode = "justc";
+            }
+            else if (arg == "--justb" || arg == "-b") {
+                flags.outputMode = "justb";
             }
 
             // hidden flags. IMPORTANT: DO NOT USE THESE FLAGS! THESE FLAGS ARE ONLY FOR JUST AN ULTIMATE SITE TOOL ENVIRONMENT.

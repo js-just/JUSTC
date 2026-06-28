@@ -207,6 +207,23 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
 
         message(STATUS "Luau built from source")
     endif()
+
+    find_package(Cereal)
+    if(NOT Cereal_FOUND)
+        message(STATUS "Installing Cereal...")
+        include(FetchContent)
+        FetchContent_Declare(
+            cereal
+            GIT_REPOSITORY https://github.com/USCiLab/cereal.git
+            GIT_TAG v1.3.2
+        )
+        FetchContent_MakeAvailable(cereal)
+        set(CEREAL_INCLUDE_DIR ${cereal_SOURCE_DIR}/include)
+    else()
+        set(CEREAL_INCLUDE_DIR ${Cereal_INCLUDE_DIR})
+    endif()
+    target_include_directories(justc PRIVATE ${CEREAL_INCLUDE_DIR})
+
 else()
     message(WARNING "Please use CMake 3.14+")
 endif()

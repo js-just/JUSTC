@@ -4,6 +4,6 @@ module.exports = {
         uglifyjs: true
     },
     uglifyjs: {
-        reserve: "['JUSTC','code','JUSTO']"
+        reserve: "['JUSTC','code','JUSTO','JUSTB']"
     }
 }

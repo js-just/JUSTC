@@ -25,12 +25,8 @@ cmake_minimum_required(VERSION 3.14)
 project(JUSTC)
 
 if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY
-        "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-    add_compile_options(
-        /MT$<$<CONFIG:Debug>:d>
-    )
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    add_compile_options(/MT$<$<CONFIG:Debug>:d>)
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -50,16 +46,9 @@ endif()
 set(CMAKE_BUILD_PARALLEL_LEVEL ${NUM_PROCESSORS})
 
 if(MSVC)
-    add_compile_options(
-        /O2
-        /MP
-        /EHsc
-    )
+    add_compile_options(/O2 /MP /EHsc)
 else()
-    add_compile_options(
-        -O3
-        -pipe
-    )
+    add_compile_options(-O3 -pipe)
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -74,8 +63,21 @@ endif()
 
 include(FetchContent)
 
-find_package(cpr QUIET)
+find_package(Cereal QUIET)
+if(NOT Cereal_FOUND)
+    message(STATUS "Cereal not found, downloading from GitHub...")
+    FetchContent_Declare(
+        cereal
+        GIT_REPOSITORY https://github.com/USCiLab/cereal.git
+        GIT_TAG v1.3.2
+    )
+    FetchContent_MakeAvailable(cereal)
+    set(CEREAL_INCLUDE_DIR ${cereal_SOURCE_DIR}/include)
+else()
+    set(CEREAL_INCLUDE_DIR ${Cereal_INCLUDE_DIR})
+endif()
 
+find_package(cpr QUIET)
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost CONFIG REQUIRED)
 
@@ -207,23 +209,6 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.14)
 
         message(STATUS "Luau built from source")
     endif()
-
-    find_package(Cereal)
-    if(NOT Cereal_FOUND)
-        message(STATUS "Installing Cereal...")
-        include(FetchContent)
-        FetchContent_Declare(
-            cereal
-            GIT_REPOSITORY https://github.com/USCiLab/cereal.git
-            GIT_TAG v1.3.2
-        )
-        FetchContent_MakeAvailable(cereal)
-        set(CEREAL_INCLUDE_DIR ${cereal_SOURCE_DIR}/include)
-    else()
-        set(CEREAL_INCLUDE_DIR ${Cereal_INCLUDE_DIR})
-    endif()
-    target_include_directories(justc PRIVATE ${CEREAL_INCLUDE_DIR})
-
 else()
     message(WARNING "Please use CMake 3.14+")
 endif()
@@ -242,6 +227,10 @@ set(CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/unicode.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/builtins.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/cpptypes.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/justb.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/compiler/justb.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/loader/justb.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/core/serializer/json.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core/serializer/justo.cpp
@@ -270,64 +259,34 @@ target_include_directories(justc_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>
 )
 
-target_link_libraries(justc_core PRIVATE
-    luau_lib
-)
+target_include_directories(justc_core PRIVATE ${CEREAL_INCLUDE_DIR})
+
+target_link_libraries(justc_core PRIVATE luau_lib)
 
 if(NOT MSVC)
-    target_link_libraries(justc_core PRIVATE
-        quickjs
-        cpr
-    )
+    target_link_libraries(justc_core PRIVATE quickjs cpr)
 else()
-    target_link_libraries(justc_core PRIVATE
-        cpr::cpr
-    )
+    target_link_libraries(justc_core PRIVATE cpr::cpr)
+endif()
+target_include_directories(justc_core SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(justc_core PRIVATE ICU::uc ICU::i18n)
+
+add_library(justc_lib SHARED core/entry/lib.cpp)
+target_compile_definitions(justc_lib PRIVATE JUSTC_BUILD)
+target_include_directories(justc_lib PUBLIC core)
+target_include_directories(justc_lib PRIVATE ${CEREAL_INCLUDE_DIR})
+target_link_libraries(justc_lib PUBLIC justc_core)
+
+if(NOT MSVC)
+    set_target_properties(justc_lib PROPERTIES OUTPUT_NAME "justc")
+else()
+    set_target_properties(justc_lib PROPERTIES OUTPUT_NAME "libjustc")
 endif()
 
-target_include_directories(justc_core SYSTEM PRIVATE
-    ${Boost_INCLUDE_DIRS}
-)
-
-target_link_libraries(justc_core PRIVATE
-    ICU::uc
-    ICU::i18n
-)
-
-add_library(justc_lib SHARED
-    core/entry/lib.cpp
-)
-
-target_compile_definitions(
-    justc_lib
-    PRIVATE
-    JUSTC_BUILD
-)
-
-target_include_directories(justc_lib PUBLIC
-    core
-)
-
-target_link_libraries(justc_lib PUBLIC
-    justc_core
-)
-
-if (NOT MSVC)
-    set_target_properties(
-        justc_lib
-        PROPERTIES OUTPUT_NAME "justc"
-    )
-else()
-    set_target_properties(
-        justc_lib
-        PROPERTIES OUTPUT_NAME "libjustc"
-    )
-endif()
-
-add_executable(
-    justc_cli
-    core/entry/cli.cpp
-)
+add_executable(justc_cli core/entry/cli.cpp)
+target_include_directories(justc_cli PRIVATE ${CEREAL_INCLUDE_DIR})
+target_link_libraries(justc_cli PRIVATE justc_core)
+set_target_properties(justc_cli PROPERTIES OUTPUT_NAME "justc")
 
 if(MSVC)
     target_compile_options(justc_core PRIVATE /std:c++20)
@@ -348,28 +307,8 @@ else()
     target_compile_definitions(justc_core PRIVATE JUSTC_HAS_QUADMATH=0)
 endif()
 
-set_property(TARGET justc_core PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set_property(TARGET justc_core PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set_property(TARGET justc_lib PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set_property(TARGET justc_cli PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-set_property(TARGET justc_lib PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-set_property(TARGET justc_cli PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-target_link_libraries(
-    justc_cli
-    PRIVATE
-    justc_core
-)
-
-set_target_properties(
-    justc_cli
-    PROPERTIES OUTPUT_NAME "justc"
-)
-
-install(
-    TARGETS
-    justc_cli
-    RUNTIME DESTINATION bin
-)
+install(TARGETS justc_cli RUNTIME DESTINATION bin)

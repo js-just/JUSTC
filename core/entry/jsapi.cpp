@@ -400,11 +400,12 @@ char* justoParse(const char* justoString) {
     }
 }
 
-char* load(const char* bytes, const char* outputMode) {
+char* load(const unsigned char* bytes, size_t length, const char* outputMode) {
     if (bytes == nullptr) return nullptr;
     std::string mode(outputMode == nullptr ? "json" : outputMode);
 
-    std::stringstream ss(std::string(bytes));
+    std::string data(reinterpret_cast<const char*>(bytes), length);
+    std::stringstream ss(data);
     ParseResult result = JustbLoader::load(ss);
 
     std::string json = outputString(mode, result);

@@ -47,20 +47,30 @@ SOFTWARE.
 #include <emscripten.h>
 #endif
 
-template<typename... Args>
-std::string outputString(std::string mode, Args... args) {
+std::string outputString(const std::string& mode, const ParseResult& result) {
     if (mode == "xml") {
-        return XmlSerializer::serialize(args...);
+        return XmlSerializer::serialize(result);
     } else if (mode == "yaml") {
-        return YamlSerializer::serialize(args...);
+        return YamlSerializer::serialize(result);
     } else if (mode == "justo") {
-        return JUSTOSerializer::serialize(args...);
+        return JUSTOSerializer::serialize(result);
     } else if (mode == "justb") {
         std::stringstream ss;
-        JustbCompiler::compile(args[0], ss);
+        JustbCompiler::compile(result, ss);
         return ss.str();
     } else {
-        return JsonSerializer::serialize(args...);
+        return JsonSerializer::serialize(result);
+    }
+}
+std::string outputString(const std::string& mode, const std::vector<ParserToken>& tokens, const std::string& input) {
+    if (mode == "xml") {
+        return XmlSerializer::serialize(tokens, input);
+    } else if (mode == "yaml") {
+        return YamlSerializer::serialize(tokens, input);
+    } else if (mode == "justo") {
+        return JUSTOSerializer::serialize(tokens, input);
+    } else {
+        return JsonSerializer::serialize(tokens, input);
     }
 }
 

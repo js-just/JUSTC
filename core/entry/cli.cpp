@@ -214,22 +214,34 @@ struct cmdFlags {
     std::string builtinvarPAGES;
     std::string builtinvarCSS;
 };
-template<typename... Args>
-std::string outputString(cmdFlags flags, Args... args) {
+
+std::string outputString(cmdFlags flags, const ParseResult& result) {
     if (flags.outputMode == "xml") {
-        return XmlSerializer::serialize(args...);
+        return XmlSerializer::serialize(result);
     } else if (flags.outputMode == "yaml") {
-        return YamlSerializer::serialize(args...);
+        return YamlSerializer::serialize(result);
     } else if (flags.outputMode == "justo") {
-        return JUSTOSerializer::serialize(args...);
+        return JUSTOSerializer::serialize(result);
     } else if (flags.outputMode == "justb") {
         std::stringstream ss;
-        JustbCompiler::compile(args[0], ss);
+        JustbCompiler::compile(result, ss);
         return ss.str();
     } else {
-        return JsonSerializer::serialize(args...);
+        return JsonSerializer::serialize(result);
     }
 }
+std::string outputString(cmdFlags flags, const std::vector<ParserToken>& tokens, const std::string& input) {
+    if (flags.outputMode == "xml") {
+        return XmlSerializer::serialize(tokens, input);
+    } else if (flags.outputMode == "yaml") {
+        return YamlSerializer::serialize(tokens, input);
+    } else if (flags.outputMode == "justo") {
+        return JUSTOSerializer::serialize(tokens, input);
+    } else {
+        return JsonSerializer::serialize(tokens, input);
+    }
+}
+
 int main(int argc, char* argv[]) {
     setupGlobalExceptionHandler();
 

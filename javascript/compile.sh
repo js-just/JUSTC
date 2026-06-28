@@ -225,7 +225,7 @@ for file in $SOURCE_FILES; do
     fi
 done
 head -c-2 $srcfile > $srcfile.tmp && mv $srcfile.tmp $srcfile
-echo "]}" >> $srcfile
+echo "]" >> $srcfile
 cp javascript/core.txt $JSOUT_DIR/JUSTC/javascript/core.js
 cp javascript/index.d.txt $JSOUT_DIR/JUSTC/javascript/core.d.ts
 cp javascript/cli.js.txt $JSOUT_DIR/JUSTC/javascript/cli.js

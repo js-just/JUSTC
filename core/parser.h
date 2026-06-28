@@ -116,12 +116,6 @@ enum class DataType {
     HTTP_ERROR   = 27,
     UNKNOWN      =-1
 };
-template <class Archive>
-void serialize(Archive& archive, DataType& type) {
-    int t = static_cast<int>(type);
-    archive(t);
-    type = static_cast<DataType>(t);
-}
 
 inline std::string dataTypeToString(DataType type) {
     switch (type) {
@@ -324,10 +318,24 @@ struct FunctionInfo {
 
     template <class Archive>
     void serialize(Archive& archive) {
+        std::vector<int> paramTypesInt;
+        if (Archive::is_loading::value) {
+            archive(paramTypesInt);
+            paramTypes.resize(paramTypesInt.size());
+            for (size_t i = 0; i < paramTypesInt.size(); ++i) {
+                paramTypes[i] = static_cast<DataType>(paramTypesInt[i]);
+            }
+        } else {
+            paramTypesInt.resize(paramTypes.size());
+            for (size_t i = 0; i < paramTypes.size(); ++i) {
+                paramTypesInt[i] = static_cast<int>(paramTypes[i]);
+            }
+            archive(paramTypesInt);
+        }
+        
         archive(
             code,
             paramNames,
-            paramTypes,
             defaultValues,
             hasVarArgs,
             isIsolated
@@ -470,7 +478,10 @@ struct Value {
 
     template <class Archive>
     void serialize(Archive& archive) {
-        archive(type);
+        int typeInt = static_cast<int>(type);
+        archive(typeInt);
+        type = static_cast<DataType>(typeInt);
+
         switch (type) {
             case DataType::NUMBER:
             case DataType::HEXADECIMAL:

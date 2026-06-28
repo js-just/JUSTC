@@ -116,6 +116,12 @@ enum class DataType {
     HTTP_ERROR   = 27,
     UNKNOWN      =-1
 };
+template <class Archive>
+void serialize(Archive& archive, DataType& type) {
+    int t = static_cast<int>(type);
+    archive(t);
+    type = static_cast<DataType>(t);
+}
 
 inline std::string dataTypeToString(DataType type) {
     switch (type) {
@@ -315,6 +321,18 @@ struct FunctionInfo {
     bool isIsolated;
 
     FunctionInfo() : hasVarArgs(false), isIsolated(false) {}
+
+    template <class Archive>
+    void serialize(Archive& archive) {
+        archive(
+            code,
+            paramNames,
+            paramTypes,
+            defaultValues,
+            hasVarArgs,
+            isIsolated
+        );
+    }
 };
 
 enum class VariableType : uint8_t {

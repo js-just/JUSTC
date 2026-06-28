@@ -35,7 +35,7 @@ JUSTB - Just an Ultimate Site Tool Binary file format.
 
 namespace JUSTB {
 
-bool writeHeader(std::ofstream& out, const std::string& version) {
+bool writeHeader(std::ostream& out, const std::string& version) {
     Header header;
     memcpy(header.magic, MAGIC, MAGIC_SIZE);
     header.filetype = 0;
@@ -51,7 +51,7 @@ bool writeHeader(std::ofstream& out, const std::string& version) {
     return out.good();
 }
 
-bool readHeader(std::ifstream& in, Header& header) {
+bool readHeader(std::istream& in, Header& header) {
     in.read(header.magic, MAGIC_SIZE);
     if (memcmp(header.magic, MAGIC, MAGIC_SIZE) != 0) return false;
     in.read(reinterpret_cast<char*>(&header.filetype), sizeof(header.filetype));

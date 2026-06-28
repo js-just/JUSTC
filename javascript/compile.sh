@@ -40,6 +40,9 @@ tar -xzf wabt-1.0.34-ubuntu.tar.gz
 sudo cp wabt-1.0.34/bin/* /usr/local/bin/
 rm -rf wabt-1.0.34 wabt-1.0.34-ubuntu.tar.gz
 
+git clone --depth 1 --branch v1.3.2 https://github.com/USCiLab/cereal.git _deps/cereal-src
+CEREAL_INCLUDE="-I./_deps/cereal-src/include"
+
 SOURCE_FILES="core/entry/jsapi.cpp core/lexer.cpp core/parser.cpp core/parser/json.cpp core/serializer/json.cpp core/keywords.cpp \
 core/fetch.cpp core/serializer/xml.cpp core/serializer/yaml.cpp core/utility.cpp core/import.cpp core/lang/luau.cpp core/built-in/http/http.cpp \
 core/built-in/math/math.cpp core/built-in/binary/binary.cpp core/built-in/string/string.cpp core/unicode.cpp core/builtins.cpp core/serializer/justo.cpp \
@@ -78,7 +81,7 @@ COMMON_FLAGS="-s EXPORTED_FUNCTIONS=[\"_malloc\",\"_free\",\"_registerFunction\"
 --bind \
 -s DEMANGLE_SUPPORT=0 \
 -I./third-party \
-$LUAU_INCLUDE"
+$LUAU_INCLUDE $CEREAL_INCLUDE"
 
 WEB_FLAGS="-s ENVIRONMENT=web,worker \
 -s ASYNCIFY_IMPORTS=['fetch','emscripten_fetch','emscripten_fetch_close','use_luau']"

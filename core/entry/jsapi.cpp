@@ -42,6 +42,7 @@ SOFTWARE.
 #include <memory>
 #include <algorithm>
 #include "../compiler/justb.hpp"
+#include "../loader/justb.hpp"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>

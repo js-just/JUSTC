@@ -150,6 +150,7 @@ jobs:
           ./vcpkg/vcpkg install libidn2:x64-windows-static --recurse
           ./vcpkg/vcpkg install icu:x64-windows-static --recurse
           ./vcpkg/vcpkg install boost-multiprecision:x64-windows-static --recurse
+          ./vcpkg/vcpkg install boost-serialization:x64-windows-static --recurse
       
       - name: Clean build directory
         shell: pwsh

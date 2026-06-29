@@ -42,6 +42,7 @@ SOFTWARE.
 #include "../justo.hpp"
 #include "../compiler/justb.hpp"
 #include "../loader/justb.hpp"
+#include "../justb.hpp"
 
 void logError(const std::string& error) {
     if (Utility::isGitHubActions()) {

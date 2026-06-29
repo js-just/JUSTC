@@ -562,8 +562,8 @@ void handelJsonToJusto(const CommandLineFlags& flags) {
 
     std::string json = readFile(flags.input);
     std::string justc = JsonParser::stringify(json);
-    auto lexerResult = Lexer::parse(code);
-    ParseResult result = Parser::parseTokens(lexerResult.second, false, flags.async, code, flags.allowJS, flags.allowJS, flags.input, "script", flags.allowLuau, flags.allowLuau);
+    auto lexerResult = Lexer::parse(justc);
+    ParseResult result = Parser::parseTokens(lexerResult.second, false, flags.async, justc, flags.allowJS, flags.allowJS, flags.input, "script", flags.allowLuau, flags.allowLuau);
     std::string justo = serializeResult(result, "justo");
 
     if (!flags.output.empty()) {

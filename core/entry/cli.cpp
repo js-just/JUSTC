@@ -348,10 +348,12 @@ CommandLineFlags parseArguments(int argc, char* argv[]) {
 
         if (wait == 1 || wait == 2) {
             flags.format = arg;
+            ++i;
             wait = 0;
             continue;
         } else if (wait == 3) {
             flags.language = arg;
+            ++i;
             wait = 0;
             continue;
         }

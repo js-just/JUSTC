@@ -91,6 +91,7 @@ private:
     ParserToken readJSXOpeningTag();
     std::string readJSXAttributeValue();
     bool isJSXIdentifier(char ch) const;
+    void skipWhitespace();
 
 public:
     Lexer(const std::string& input, const bool& warn);

@@ -421,8 +421,9 @@ struct Value {
         return placeholder;
     }
     Value getProperty(const std::string& name, Value placeholder) const {
-        if (properties.find(name) != properties.end()) {
-            return properties[name];
+        auto it = properties.find(name);
+        if (it != properties.end()) {
+            return it->second;
         }
         return placeholder;
     }

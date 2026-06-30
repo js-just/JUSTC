@@ -28,85 +28,59 @@ if ! command -v justc &> /dev/null; then
     echo -e "::error::Failed to compile." && exit 1
 fi
 
-echo ""
-echo ""
-echo "running JUSTC"
-echo ""
-echo "--version:"
-justc --version
-echo ""
-echo "--help:"
-justc --help
-echo ""
-echo "execute:"
-justc $FILE.justc $FILE.json -r
-echo ""
-echo "lexer:"
-justc $FILE.justc $FILE.lexer.json -r -l
-echo ""
-echo "parse:"
-justc $FILE.justc $FILE.parse.json -r -p
-echo ""
-echo "parser:"
-justc $FILE.lexer.json $FILE.parser.json -r -P
-echo ""
-echo "parserExecute:"
-justc $FILE.lexer.json $FILE.parsEr.json -r -E
-echo ""
-echo "stringify:"
-justc $FILE.json.json $FILE.json.justc -r -J
+hexdump -C $FILE.justc
 
-echo ""
-echo "reading outputs"
-RESULT=$(cat $FILE.json)
-RESULT2=$(cat $FILE.lexer.json)
-RESULT3=$(cat $FILE.parse.json)
-RESULT4=$(cat $FILE.parser.json)
-RESULT5=$(cat $FILE.parsEr.json)
-RESULT6=$(cat $FILE.json.justc)
-echo "Executed:           $RESULT"
-echo "Parsed (string):    $RESULT3"
-echo "Tokenized:          $RESULT2"
-echo "Parsed (tokens):    $RESULT4"
-echo "Parsed (tokens,-E): $RESULT5"
-echo "Stringified:        $RESULT6"
+echo "::group::version"
+justc -v
+echo "::endgroup::"
 
-echo ""
-echo "executing JUSTC to XML"
-justc $FILE.justc $FILE.xml -r -x
-echo "reading output"
-RESULTX=$(cat $FILE.xml)
-echo "Executed (XML):     $RESULTX"
+echo "::group::help"
+justc -h
+echo "::endgroup::"
 
-echo ""
-echo "executing JUSTC to YAML"
-justc $FILE.justc $FILE.yml -r -y
-echo "reading output"
-RESULTX=$(cat $FILE.yml)
-echo "Executed (YAML):    $RESULTX"
+echo "::group::interpret"
+justc interpret -p $FILE.justc
+echo "::endgroup::"
 
-echo ""
-echo ""
-echo "running speed tests..."
+echo "::group::compile"
+justc compile justb -p $FILE.justc $FILE.justb
+hexdump -C $FILE.justb
+echo "::endgroup::"
 
-declare -a outputModes=("json" "xml" "yaml")
+echo "::group::execute"
+justc execute -p $FILE.justb
+echo "::endgroup::"
 
+echo "::group::serialize - JSON"
+justc serialize json -p $FILE.justc $FILE.json
+hexdump -C $FILE.json
+echo "::endgroup::"
+
+echo "::group::serialize - JUSTO"
+justc serialize justo -p $FILE.justc $FILE.justo
+hexdump -C $FILE.justo
+echo "::endgroup::"
+
+echo "::group::serialize - XML"
+justc serialize xml -p $FILE.justc $FILE.xml
+hexdump -C $FILE.xml
+echo "::endgroup::"
+
+echo "::group::serialize - YAML"
+justc serialize yaml -p $FILE.justc $FILE.yaml
+hexdump -C $FILE.yaml
+echo "::endgroup::"
+
+echo "::group::benchmark"
+
+declare -a outputModes=("json" "justo" "xml" "yaml")
 for outputMode in "${outputModes[@]}"; do
+    
     timeName="JUSTC -> ${outputMode^^}"
     (
         start=$(date +%s%3N)
 
-        case "$outputMode" in
-            json)
-                justc -e "оутпутмод = ${outputMode}, aka = \"${timeName}\"." -r -j
-                ;;
-            xml)
-                justc -e "оутпутмод = ${outputMode}, aka = \"${timeName}\"." -r -x
-                ;;
-            yaml)
-                justc -e "оутпутмод = ${outputMode}, aka = \"${timeName}\"." -r -y
-                ;;
-        esac
+        justc serialize $outputMode -p $FILE.justc
 
         end=$(date +%s%3N)
         duration=$((end - start))
@@ -115,3 +89,5 @@ for outputMode in "${outputModes[@]}"; do
 done
 
 wait
+
+echo "::endgroup::"

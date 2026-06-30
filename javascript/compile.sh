@@ -135,7 +135,7 @@ mv javascript/$SAFE_DIR/justc.core.js $JSOUT_DIR/justc.core.js
 mv javascript/core.js $JSOUT_DIR/justc.js
 mv javascript/test.js $JSOUT_DIR/test.js
 
-JUSTC_VERSION=$(justc -v 2>/dev/null || echo "undefined")
+JUSTC_VERSION=$(justc --raw-version 2>/dev/null || echo "undefined")
 JUSTC_NAME="Just an Ultimate Site Tool Configuration language"
 JUSTC_HELP=$(justc -h || echo "undefined")
 

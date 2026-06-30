@@ -669,7 +669,7 @@ int main(int argc, char* argv[]) {
         } else {
             if (!flags.input.empty()) {
                 handleExecute(flags);
-            } else {
+            } else if (!flags.hasInp) {
                 printUsage();
                 return 1;
             }

@@ -274,7 +274,7 @@ jobs:
       - name: Test
         run: |
           Copy-Item ${{ github.workspace }}/downloaded_artifacts/justc.exe C:\
-          & C:\justc.exe test/linux/test.justc
+          & C:\justc.exe interpret -p test/linux/test.justc
 
   download-luau:
     runs-on: ubuntu-latest

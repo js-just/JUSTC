@@ -6,7 +6,7 @@ const JUSTCWASM = require('./justc.node.js');
         JUSTC.execute(`
             a is 123,
             b is a + 123,
-            c : string = <example>,
+            c : string = l<example>,
             d = Math.Random().
         `).then((result)=>{
             console.log(JSON.stringify(result))

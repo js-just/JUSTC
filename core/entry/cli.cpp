@@ -317,6 +317,8 @@ struct CommandLineFlags {
     bool allowJS = true;
     bool allowLuau = true;
 
+    bool hasInp = false;
+
     std::string command;
     std::string format;
     std::string language;
@@ -370,15 +372,19 @@ CommandLineFlags parseArguments(int argc, char* argv[]) {
 
         if (arg == "-h" || arg == "--help") {
             printUsage();
+            flags.hasInp = true;
             ++i;
         } else if (arg == "-v" || arg == "--version") {
             printVersion();
+            flags.hasInp = true;
             ++i;
         } else if (arg == "--license") {
             printLicense();
+            flags.hasInp = true;
             ++i;
         } else if (arg == "--raw-version") {
             std::cout << JUSTC_VERSION << std::endl;
+            flags.hasInp = true;
             ++i;
         } else if (arg == "-s" || arg == "--silent") {
             flags.silent = true;
@@ -611,7 +617,7 @@ int main(int argc, char* argv[]) {
             outputRedirector = new OutputRedirector(true, false);
         }
 
-        if (flags.input.empty() && flags.command != "evaluate") {
+        if (flags.input.empty() && !flags.hasInp) {
             printUsage();
             return 1;
         }

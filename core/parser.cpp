@@ -6503,6 +6503,16 @@ std::string Parser::renderJSX(const Value& jsxElement) {
 }
 
 ParseResult Parser::parseTokens(const std::vector<ParserToken>& tokens, bool doExecute, bool runAsync, const std::string& input, const bool allowJavaScript, const bool canAllowJS, const std::string scriptName, const std::string scriptType, const bool allowLuau, const bool canAllowLuau) {
-    Parser parser(tokens, doExecute, runAsync, input, allowJavaScript, canAllowJS, scriptName, scriptType, allowLuau, canAllowLuau, false, nullptr, CharType::GRAPHEME);
-    return parser.parse(doExecute);
+    #ifndef __EMSCRIPTEN__
+    try {
+    #endif
+
+        Parser parser(tokens, doExecute, runAsync, input, allowJavaScript, canAllowJS, scriptName, scriptType, allowLuau, canAllowLuau, false, nullptr, CharType::GRAPHEME);
+        return parser.parse(doExecute);
+
+    #ifndef __EMSCRIPTEN__
+    } catch (const std::exception& e) {
+        throw std::runtime_error(e.what() + "\n\nJUSTC v" + JUSTC_VERSION);
+    }
+    #endif
 }

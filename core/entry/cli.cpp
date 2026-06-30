@@ -176,7 +176,7 @@ The JUSTC Programming Language v)" << JUSTC_VERSION << R"(
 https://just.js.org/justc/
 
 Usage:
-  justc                      [options] [ script.justc ]            [arguments]
+  justc interpret            [options] [ script.justc ]            [arguments]
   justc compile   [format]   [options] [ input.justc ]  [ output ] [arguments]
   justc evaluate             [options] [ script ]                  [arguments]
   justc execute              [options] [ input.justb ]
@@ -616,16 +616,10 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        if (flags.command == "execute") {
-            if (flags.input.empty()) {
-                throwError("No input file specified for execution");
-            }
-            std::string ext = flags.input.substr(flags.input.find_last_of('.') + 1);
-            if (ext == "justb") {
-                handleExecuteJustb(flags);
-            } else {
-                handleExecute(flags);
-            }
+        if (flags.command == "interpret") {
+            handleExecute(flags);
+        } else if (flags.command == "execute") {
+            handleExecuteJustb(flags);
         } else if (flags.command == "serialize") {
             handleSerialize(flags);
         } else if (flags.command == "compile") {

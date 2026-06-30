@@ -420,6 +420,13 @@ ParserToken Lexer::readIdentifier() {
     }
 }
 
+void Lexer::skipWhitespace() {
+    while (isWhitespace(input[position])) {
+        position++;
+        continue;
+    }
+}
+
 bool Lexer::isJSXIdentifier(char ch) const {
     return isLetter(ch) || isDigit(ch) || ch == '_' || ch == '-' || ch == '.';
 }
@@ -541,12 +548,8 @@ ParserToken Lexer::readJSXOpeningTag() {
         }
         
         if (depth > 0) {
-            if (peek() == '{') {
-                children += parseExpression();
-            } else {
-                children += peek();
-                position++;
-            }
+            children += peek();
+            position++;
         }
     }
     

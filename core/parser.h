@@ -420,6 +420,12 @@ struct Value {
         }
         return placeholder;
     }
+    Value getProperty(const std::string& name, Value placeholder) const {
+        if (properties.find(name) != properties.end()) {
+            return properties[name];
+        }
+        return placeholder;
+    }
 
     static Value createNumber(double num);
     static Value createString(const std::string& str);

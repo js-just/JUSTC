@@ -420,6 +420,175 @@ ParserToken Lexer::readIdentifier() {
     }
 }
 
+bool Lexer::isJSXIdentifier(char ch) const {
+    return isLetter(ch) || isDigit(ch) || ch == '_' || ch == '-' || ch == '.';
+}
+
+std::string Lexer::readJSXAttributeValue() {
+    std::string value;
+    if (peek() == '"' || peek() == '\'') {
+        char quote = peek();
+        advance();
+        while (position < input.length() && peek() != quote) {
+            if (peek() == '\\' && position + 1 < input.length()) {
+                value += peek();
+                advance();
+                value += peek();
+                advance();
+            } else {
+                value += peek();
+                advance();
+            }
+        }
+        if (peek() == quote) advance();
+        return value;
+    } else if (peek() == '{') {
+        advance();
+        int braceDepth = 1;
+        std::string expr;
+        while (position < input.length() && braceDepth > 0) {
+            if (peek() == '{') braceDepth++;
+            else if (peek() == '}') braceDepth--;
+            if (braceDepth > 0) {
+                expr += peek();
+                advance();
+            }
+        }
+        if (peek() == '}') advance();
+        return "{" + expr + "}";
+    }
+    return "";
+}
+
+ParserToken Lexer::readJSXOpeningTag() {
+    size_t start = position;
+    std::string tagName;
+    
+    while (position < input.length() && isJSXIdentifier(peek())) {
+        tagName += peek();
+        advance();
+    }
+    
+    std::unordered_map<std::string, std::string> attributes;
+    bool selfClosing = false;
+    
+    while (position < input.length() && peek() != '>' && peek() != '/') {
+        skipWhitespace();
+        if (peek() == '/') {
+            advance();
+            if (peek() == '>') {
+                selfClosing = true;
+                advance();
+                break;
+            }
+            continue;
+        }
+        
+        std::string attrName;
+        while (position < input.length() && isJSXIdentifier(peek())) {
+            attrName += peek();
+            advance();
+        }
+        
+        skipWhitespace();
+        if (peek() == '=') {
+            advance();
+            skipWhitespace();
+            std::string attrValue = readJSXAttributeValue();
+            attributes[attrName] = attrValue;
+        } else {
+            attributes[attrName] = "true";
+        }
+        
+        skipWhitespace();
+    }
+    
+    if (!selfClosing && peek() == '>') {
+        advance();
+    }
+    
+    std::string attrsStr = "o{";
+    bool first = true;
+    for (const auto& [key, value] : attributes) {
+        if (!first) attrsStr += ";";
+        first = false;
+        if (value.find('{') == 0 && value.back() == '}') {
+            attrsStr += key + ": " + value.substr(1, value.length() - 2);
+        } else {
+            attrsStr += key + ": \"" + value + "\"";
+        }
+    }
+    attrsStr += "}";
+    
+    std::string result = "{\"type\":\"" + tagName + "\",\"props\":" + attrsStr + ",\"children\":";
+    
+    if (selfClosing) {
+        result += "[]}";
+        return ParserToken("jsx_element", result, start);
+    }
+    
+    std::string children;
+    int depth = 1;
+    while (position < input.length() && depth > 0) {
+        skipWhitespace();
+        if (position < input.length() && peek() == '<') {
+            if (position + 1 < input.length() && peek(1) == '/') {
+                depth--;
+                if (depth == 0) break;
+            } else if (peek(1) != ' ') {
+                depth++;
+            }
+        }
+        
+        if (depth > 0) {
+            if (peek() == '{') {
+                children += parseExpression();
+            } else {
+                children += peek();
+                advance();
+            }
+        }
+    }
+    
+    if (peek() == '<' && position + 1 < input.length() && peek(1) == '/') {
+        position += 2;
+        while (position < input.length() && isJSXIdentifier(peek())) {
+            position++;
+        }
+        if (peek() == '>') position++;
+    }
+    
+    result += "[" + children + "]}";
+    return ParserToken("jsx_element", result, start);
+}
+
+ParserToken Lexer::readJSX() {
+    size_t start = position;
+    advance();
+    
+    if (position >= input.length()) {
+        return ParserToken("error", "", start);
+    }
+    
+    if (peek() == '/') {
+        advance();
+        std::string tagName;
+        while (position < input.length() && isJSXIdentifier(peek())) {
+            tagName += peek();
+            advance();
+        }
+        if (peek() == '>') advance();
+        return ParserToken("jsx_closing", tagName, start);
+    }
+    
+    if (peek() == '>') {
+        advance();
+        return ParserToken("jsx_fragment_open", "", start);
+    }
+    
+    return readJSXOpeningTag();
+}
+
 void Lexer::addDollarBefore() {
     if (dollarBefore) {
         dollarBefore = false;
@@ -499,6 +668,12 @@ void Lexer::tokenize() {
         }
 
         if (ch == '<' && peek() != '<' && peek() != '=') {
+            addDollarBefore();
+            tokens.push_back(readJSX());
+            continue;
+        }
+
+        if (ch == 'l' && peek() == '<') {
             addDollarBefore();
             tokens.push_back(readLink());
             continue;

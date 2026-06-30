@@ -879,6 +879,9 @@ private:
     void assign(const Value& var, const Value& val, const std::string& pos = ".");
     bool isInBracketedExpression();
 
+    Value parseJSXElement(const std::string& jsxStr);
+    std::string renderJSX(const Value& jsxElement);
+
 public:
     static std::string getCurrentTimestamp();
     static Value stringToValue(const std::string& str);

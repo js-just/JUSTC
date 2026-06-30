@@ -87,6 +87,11 @@ private:
     void addDollarBefore();
     bool isNonAscii(char c);
 
+    ParserToken readJSX();
+    ParserToken readJSXOpeningTag();
+    std::string readJSXAttributeValue();
+    bool isJSXIdentifier(char ch) const;
+
 public:
     Lexer(const std::string& input, const bool& warn);
     std::vector<ParserToken> getTokens() const;

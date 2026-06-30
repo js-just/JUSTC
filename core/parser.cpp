@@ -1356,8 +1356,11 @@ ParseResult Parser::parse(bool doExecute) {
         result.importLogs = importLogs;
 
     } catch (const std::exception& e) {
-        result.error = e.what();
-        addLog("ERROR", e.what(), currentToken().start);
+        std::pair<size_t, size_t> pos = Utility::pos(currentToken().start, input);
+        std::string err = e.what() + "\n    at " + scriptName + ":" + std::to_string(pos.first) + ":" + std::to_string(pos.second);
+
+        result.error = err;
+        addLog("ERROR", err, currentToken().start);
     }
 
     return result;

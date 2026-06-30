@@ -279,7 +279,7 @@ Dependencies:
       (Luau is a fork of Lua)
 
 Acknowledgements:
-  - JavaScript™ is a trademark of Oracle Corporation.
+  - JavaScript is a trademark of Oracle Corporation.
     For more information, see https://www.oracle.com/legal/trademarks/
   - Special thanks to the authors and maintainers of:
     Cereal, CPR, ICU, Lua, Luau, nlohmann/json, QuickJS and QuickJS CMake
@@ -341,9 +341,20 @@ CommandLineFlags parseArguments(int argc, char* argv[]) {
 
     size_t i = 0;
     bool commandParsed = false;
+    int wait = 0; // 1 = compile format; 2 = serialize format; 3 = transpile lang
 
     while (i < args.size()) {
         const std::string& arg = args[i];
+
+        if (wait == 1 || wait == 2) {
+            flags.format = arg;
+            wait = 0;
+            continue;
+        } else if (wait == 3) {
+            flags.language = arg;
+            wait = 0;
+            continue;
+        }
 
         if (arg == "--") {
             flags.endOfOptions = true;
@@ -391,6 +402,13 @@ CommandLineFlags parseArguments(int argc, char* argv[]) {
             if (!commandParsed) {
                 flags.command = arg;
                 commandParsed = true;
+                if (arg == "compile") {
+                    wait = 1;
+                } else if (arg == "serialize") {
+                    wait = 2;
+                } else if (arg == "transpile") {
+                    wait = 3;
+                }
                 ++i;
             } else if (flags.input.empty()) {
                 flags.input = arg;
@@ -403,6 +421,11 @@ CommandLineFlags parseArguments(int argc, char* argv[]) {
                 ++i;
             }
         }
+    }
+
+    if (wait != 0) {
+        printUsage();
+        return flags;
     }
 
     return flags;

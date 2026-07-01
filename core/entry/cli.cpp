@@ -462,7 +462,7 @@ auto lexer(std::string code) {
     try {
         return Lexer::parse(code);
     } catch (const std::exception& e) {
-        throwError(e.what() + "\n\nJUSTC v" + JUSTC_VERSION);
+        throwError(std::string(e.what()) + "\n\nJUSTC v" + JUSTC_VERSION);
     }
 }
 
